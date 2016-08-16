@@ -1,0 +1,68 @@
+@(appConfig: uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig,
+  title: String,
+  mainClass: Option[String] = None,
+  mainDataAttributes: Option[Html] = None,
+  bodyClasses: Option[String] = None,
+  sidebar: Html = HtmlFormat.empty,
+  contentHeader: Option[Html] = None,
+  mainContent: Html = HtmlFormat.empty,
+  serviceInfoContent: Html = HtmlFormat.empty)(implicit request: Request[_])
+
+@import layouts.{govuk_template => hmrcGovUkTemplate}
+@import uk.gov.hmrc.play.views.html.{layouts => uiLayouts}
+
+@head = {
+    @uiLayouts.head(
+      assetsPrefix = appConfig.assetsPrefix,
+      linkElem = None,
+      headScripts = None)
+    <meta name="format-detection" content="telephone=no" />
+}
+
+@insideHeader = {
+    @uiLayouts.header_nav(
+      navTitle = Some("Your tax account"),
+      navTitleLink = None,
+      showBetaLink = false,
+      navLinks = None)
+}
+
+@afterHeader = {}
+
+@bodyEnd = {
+    @uiLayouts.footer(
+      analyticsToken = uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig.analyticsToken,
+      analyticsHost = uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig.analyticsHost,
+      assetsPrefix = uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig.assetsPrefix,
+      ssoUrl = None,
+      scriptElem = None,
+      gaCalls = None)
+}
+
+@footerTop = {}
+@footerLinks = {}
+
+@serviceInfo = {
+    @uiLayouts.serviceInfo(
+      betaBanner = Html(""),
+      includeGridWrapper = false,
+      serviceInfoContent = Some(serviceInfoContent))
+}
+
+@mainContentHeader = {
+    @if(contentHeader.isDefined) {
+        @uiLayouts.main_content_header(contentHeader = contentHeader.get)
+    }
+}
+
+@content = {
+    @uiLayouts.main_content(
+      article = mainContent,
+      mainClass = mainClass,
+      mainDataAttributes = mainDataAttributes,
+      mainContentHeader = mainContentHeader,
+      serviceInfo = serviceInfo,
+      sidebar = sidebar)
+}
+
+@hmrcGovUkTemplate(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiLayouts.footer_links()), true)(content)

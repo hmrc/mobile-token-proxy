@@ -1,0 +1,84 @@
+@(title: String,
+headerNav: Option[views.helpers.HeaderNav] = None,
+sidebarLinks: Option[Html] = None,
+sidebarClass: Option[String] = None,
+userLoggedIn: Boolean = false,
+supportLinkEnabled: Boolean = true,
+serviceInfoContent: Option[Html] = None,
+contentHeader: Option[Html] = None,
+footerLinks: Option[Html] = Some(uk.gov.hmrc.play.views.html.layouts.footer_links()),
+showFeedbackLinkInBetaBanner: Boolean = true,
+linkElement: Option[Html] = None,
+headScripts: Option[Html] = None,
+scriptElement: Option[Html] = None,
+bodyClasses: Option[String] = None,
+mainConfig: uk.gov.hmrc.mobiletokenproxy.config.MainConfig = uk.gov.hmrc.mobiletokenproxy.config.MainConfig(),
+articleClasses: Option[String] = None,
+includeGridWrapper: Boolean = false,
+gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit request : Request[_])
+
+@import uk.gov.hmrc.mobiletokenproxy.config.{ApplicationConfig => appConfig}
+@import play.api.Play.current
+@import play.api.Play
+@import uk.gov.hmrc.play.config.RunMode._
+@import uk.gov.hmrc.play.views.html.{layouts => playLayouts}
+@import layouts.govuk_template
+
+@head = {
+@playLayouts.head(appConfig.assetsPrefix, linkElement, headScripts)
+}
+
+@insideHeader = {
+@if(headerNav) {
+    @playLayouts.header_nav(headerNav.get.title,headerNav.get.titleLink, headerNav.get.showBetaLink, headerNav.get.links)
+}
+}
+
+@afterHeader = {
+}
+
+
+@serviceInfo = {
+@playLayouts.serviceInfo(Html(""),
+    includeGridWrapper,
+    serviceInfoContent)
+}
+
+@sidebar = {
+@if(sidebarLinks.isDefined) {
+    @playLayouts.sidebar(sidebarLinks.get, sidebarClass)
+}
+}
+
+@article = {
+@playLayouts.article(mainContent, includeGridWrapper, articleClasses)
+}
+
+@mainContentHeader = {
+@if( contentHeader.isDefined ) {
+    @playLayouts.main_content_header(contentHeader.get)
+}
+}
+
+@content = {
+@playLayouts.main_content(article,
+    mainConfig.maybeMainClass,
+    mainConfig.maybeMainDataAttributes,
+    mainContentHeader,
+    serviceInfo,
+    sidebar)
+}
+
+@footerTop = {
+}
+
+@bodyEnd = {
+@playLayouts.footer(analyticsToken = Play.configuration.getString(s"govuk-tax.$env.google-analytics.token"),
+    analyticsHost = Play.configuration.getString(s"govuk-tax.$env.google-analytics.host").getOrElse("service.gov.uk"),
+    assetsPrefix = appConfig.assetsPrefix,
+    ssoUrl = Play.configuration.getString(s"govuk-tax.$env.portal.ssoUrl"),
+    scriptElem = scriptElement,
+    gaCalls = gaCalls)
+}
+
+@govuk_template(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, footerLinks, headerNav.isDefined)(content)

@@ -1,0 +1,10 @@
+# microservice specific routes
+
+
+POST        /oauth/token             uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token()
+
+# Admin pages
+->          /                        health.Routes
+->          /template                template.Routes
+
+GET         /admin/metrics           com.kenshoo.play.metrics.MetricsController.metrics
