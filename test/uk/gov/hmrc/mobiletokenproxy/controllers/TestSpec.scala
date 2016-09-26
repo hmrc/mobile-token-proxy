@@ -19,14 +19,15 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
+import play.api.test.Helpers._
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 
 class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with BeforeAndAfterEach {
 
   "token request payloads" should {
 
-    "return BadRequest if the authorization code or ueid is missing" in new SuccessAccessCode {
-      val result = await(controller.token()(jsonRequestWithDeviceId))
+    "return BadRequest if the authorization code or refreshToken is missing" in new SuccessAccessCode {
+      val result = await(controller.token()(jsonRequestEmpty))
 
       status(result) shouldBe 400
     }
@@ -37,81 +38,107 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
       status(result) shouldBe 400
     }
 
-    "return BadRequest if both authorization code and ueid is supplied" in new SuccessAccessCode {
-      val result = await(controller.token()(jsonRequestRequestWithAuthCodeAndUeid))
+    "return BadRequest if both authorization code and refreshToken is supplied" in new SuccessAccessCode {
+      val result = await(controller.token()(jsonRequestWithAuthCodeAndRefreshToken))
 
       status(result) shouldBe 400
     }
   }
 
-  "requesting a new access-token from an access-code" should {
+  "requesting a new access-token/refresh-token from an access-code" should {
 
-    "successfully return access-token and UEID for a valid request " in new SuccessAccessCode {
-      val result = await(controller.token()(jsonRequestRequestWithAuth))
-
-      val ueid = buildUEID(deviceId, recordId)
+    "successfully return access-token and refresh token for a valid request " in new SuccessAccessCode {
+      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
 
       status(result) shouldBe 200
-      jsonBodyOf(result) shouldBe Json.parse( s"""{"accessToken":"495b5b1725d590eb87d0f6b7dcea32a9","ueid":"$ueid","expireTime":14400}""")
+      jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
-    "fail with ServiceUnavailable response when API Gateway returns a non 200 response " in new FailToReturnApiToken {
-      val result = await(controller.token()(jsonRequestRequestWithAuth))
+    "return 503 response when API Gateway returns a non 200 response " in new FailToReturnApiToken {
+      override lazy val httpCode = 500
+      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
 
       status(result) shouldBe 503
     }
 
-    "fail with Unauthorized response when API Gateway returns a BadRequest response " in new BadRequestExceptionReturnApiToken {
-      val result = await(controller.token()(jsonRequestRequestWithAuth))
+    "return 401 response when API Gateway returns a BadRequest response " in new FailToReturnApiToken {
+      override lazy val httpCode = 400
+      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
+
+      status(result) shouldBe 401
+    }
+
+    "return 401 response when API Gateway returns an Unauthorized response " in new FailToReturnApiToken {
+      override lazy val httpCode = 400
+      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
+
+      status(result) shouldBe 401
+    }
+
+    "return 503 response when API Gateway returns an incorrect response" in new BadResponseAPIGateway {
+      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
+
+      status(result) shouldBe 503
+    }
+
+  }
+
+  "requesting a new access-token from a refresh-token" should {
+
+    "successfully return access-token and refresh-token for a valid request " in new SuccessRefreshCode {
+      val result = await(controller.token()(jsonRequestRequestWithRefreshToken))
+
+      status(result) shouldBe 200
+      jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
+    }
+
+    "return 503 response when API Gateway returns a 500 response " in new FailToReturnApiToken {
+      override lazy val httpCode = 500
+      val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
+
+      status(result) shouldBe 503
+    }
+
+    "return 401 response when API Gateway returns a 400 response " in new FailToReturnApiToken {
+      override lazy val httpCode = 400
+      val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
+
+      status(result) shouldBe 401
+    }
+
+    "return 401 response when API Gateway returns a 401 response " in new FailToReturnApiToken {
+      override lazy val httpCode = 401
+      val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
 
       status(result) shouldBe 401
     }
 
     "return 500 response when response from API Gateway returns an incorrect response" in new BadResponseAPIGateway {
-      val result = await(controller.token()(jsonRequestRequestWithAuth))
+      val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
 
-      status(result) shouldBe 500
+      status(result) shouldBe 503
     }
 
-    "return the access-token without a UEID when the saving of the token fails" in new FailToSaveToken {
-      val result = await(controller.token()(jsonRequestRequestWithAuth))
+  }
 
-      status(result) shouldBe 200
-      jsonBodyOf(result) shouldBe Json.parse( s"""{"accessToken":"495b5b1725d590eb87d0f6b7dcea32a9","expireTime":14400}""")
+  "requesting the authorize service" should {
+
+    "return a 303 redirect with the URL to the API Gateway authorize service" in new SuccessRefreshCode {
+      val result = await(controller.authorize()(emptyRequest))
+
+      status(result) shouldBe 303
+      header("Location", result).get shouldBe "http://localhost:8236/oauth/authorize?client_id=client_id&redirect_uri=redirect_uri&scope=some-scopes&response_type=code"
     }
   }
 
-// TODO...ADD TEST FOR WHEN THE UEID DOES NOT MATCH!!!
-// TODO...THE REFRESH TOKEN IS UPDATED!!!
+  "requesting the tax-calc service" should {
 
-  "requesting a new access-token from a UEID token" should {
-
-    "successfully return access-token and UEID for a valid request " in new SuccessRefreshCode {
-      val result = await(controller.token()(jsonRequestRequestWithUeid))
+    "return a JSON response which contains the server-token" in new SuccessRefreshCode {
+      val result = await(controller.taxcalctoken()(emptyRequest))
 
       status(result) shouldBe 200
-      jsonBodyOf(result) shouldBe Json.parse(s"""{"accessToken":"495b5b1725d590eb87d0f6b7dcea32a9","ueid":"$ueid","expireTime":14400}""")
+      jsonBodyOf(result) shouldBe Json.parse("""{"token":"some-tax-calc-service-token"}""")
     }
-
-    "return NotFound when the deviceId cannot be resolved" in new NotFoundDeviceIdRefresh {
-      val result = await(controller.token()(jsonRequestRequestWithUeid))
-
-      status(result) shouldBe 404
-    }
-
-    "return 500 when finding the deviceId fails" in new FailToFindTokenForRefresh {
-      val result = await(controller.token()(jsonRequestRequestWithUeid))
-
-      status(result) shouldBe 500
-    }
-
-    "return access-token and no UEID when fail to save the updated refresh token" in new FailToSaveTokenForRefresh {
-      val result = await(controller.token()(jsonRequestRequestWithUeid))
-
-      status(result) shouldBe 200
-      jsonBodyOf(result) shouldBe Json.parse(s"""{"accessToken":"495b5b1725d590eb87d0f6b7dcea32a9","expireTime":14400}""")
-    }
-
   }
 
 }

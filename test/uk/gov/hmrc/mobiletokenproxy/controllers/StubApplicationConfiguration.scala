@@ -25,8 +25,9 @@ trait StubApplicationConfiguration {
     "client_secret" -> "some_client_secret",
     "redirect_uri" -> "urn:ietf:wg:oauth:2.0:oob:auto",
     "grant_type" -> "authorization_code",
-    "pathToAPIGateway" -> "http://localhost:8236/oauth/token",
-    "pathToTokenExchange" -> "http://localhost:3456/token/registration",
-    "ueid.secret" -> "some_secret"
+    "pathToAPIGatewayTokenService" -> "http://localhost:8236/oauth/token",
+    "pathToAPIGatewayAuthService" -> "http://localhost:8236/oauth/authorize",
+    "scope" -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session",
+    "response_type" -> "code"
   )
 }

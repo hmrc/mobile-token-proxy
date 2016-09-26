@@ -47,66 +47,50 @@ trait MobileTokenProxy extends FrontendController {
 
   implicit val ec: ExecutionContext
 
-  def buildTimestamp = System.currentTimeMillis
 
-  def buildResponse(deviceId:String, timestamp:Long, tokenAuthResponse:TokenOauthResponse, id:Option[String]) = {
-    val default:Option[String]=None
-    val ueid = id.fold(default){recordId => Some(UEID.generateHash(deviceId, recordId, timestamp, appConfig.secret))}
-    Json.toJson(TokenResponse(tokenAuthResponse.access_token, ueid, tokenAuthResponse.expires_in))
+  def authorize(journeyId: Option[String] = None) = Action.async { implicit request =>
+    val redirectUrl = s"""${appConfig.pathToAPIGatewayAuthService}?client_id=${appConfig.client_id}&redirect_uri=${appConfig.redirect_uri}&scope=${appConfig.scope}&response_type=${appConfig.response_type}"""
+    Future.successful(Redirect(redirectUrl))
   }
 
-  def token() = Action.async(BodyParsers.parse.json) { implicit request =>
+  def token(journeyId: Option[String] = None) = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body.validate[TokenRequest].fold(
       errors => {
         Logger.warn("Received error with service token: " + errors)
         Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(errors))))
       },
-      tokenRequest => {
-        (tokenRequest.ueid, tokenRequest.authorizationCode) match {
+      tokenRequest => { (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
-          case (Some(id: String), (Some(authcode: String))) => Future.successful(BadRequest("Only auth-code or ueid can be supplied! Not both!"))
+          case (Some(refreshToken: String), (Some(authcode: String))) =>
+            Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
-          case (None, Some(authCode: String)) => authCodeRequest(tokenRequest.deviceId, authCode)
+          case (None, Some(authCode: String)) =>
+            getToken(service.getTokenFromAccessCode(authCode, journeyId))
 
-          case (Some(ueid: String), None) => refreshRequest(tokenRequest.deviceId,ueid)
+          case (Some(refreshToken: String), None) =>
+            getToken(service.getTokenFromRefreshToken(refreshToken, journeyId))
 
-          case (None, None) => Future.successful(BadRequest)
           case _ =>
-            Logger.error(s"Unknown response from request $tokenRequest")
-            Future.successful(InternalServerError)
+            Future.successful(BadRequest)
         }
       })
   }
 
-  private def authCodeRequest(deviceId: String, authCode:String)(implicit hc: HeaderCarrier) = {
-    val timestamp = buildTimestamp
+  def taxcalctoken(journeyId: Option[String] = None) = Action.async { implicit request =>
+    Future.successful(Ok(s"""{"token":"${appConfig.tax_calc_token}"}"""))
+  }
 
-    service.getTokenFromAccessCode(authCode, deviceId, timestamp).map(res =>
-      Ok(buildResponse(deviceId, timestamp, res._2, Some(res._1)))
-    ).recover {
-      case e:InvalidAccessCode => Unauthorized
-
-      case e:FailToRetrieveToken => ServiceUnavailable
-
-      case FailToSaveToken(tokenResponse) => Ok(buildResponse(deviceId, timestamp, tokenResponse, None))
-
-      case _ =>
-        Logger.error(s"Failed to process the request for $deviceId and $authCode")
-        InternalServerError
+  private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier) = {
+    func.map { res => Ok(Json.toJson(res))
+    }.recover {
+      recoverError
     }
   }
 
-  private def refreshRequest(deviceId:String, ueid:String)(implicit hc: HeaderCarrier) = {
-    service.getTokenFromRefreshToken(deviceId, ueid).map {
-      case Some(found) => Ok(buildResponse(deviceId, found.timestamp, found.authToken, Some(found.recordId)))
-      case None => NotFound
-    }.recover {
-      case e:FailToRetrieveToken => ServiceUnavailable
-
-      case FailToSaveToken(tokenResponse) => Ok(buildResponse(deviceId, 0, tokenResponse, None))
-
-      case _ => InternalServerError
-    }
+  private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
+    case e: FailToRetrieveToken => ServiceUnavailable
+    case e: InvalidAccessCode => Unauthorized
+    case _ => ServiceUnavailable
   }
 
 }
