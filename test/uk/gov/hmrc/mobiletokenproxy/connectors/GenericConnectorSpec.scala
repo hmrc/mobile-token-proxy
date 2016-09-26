@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 
 class GenericTestConnector extends GenericConnector with ServicesConfig {
-  override def http: HttpGet with HttpPost = ???
+  override def http: HttpGet with HttpPost = throw new Exception("Not to be invoked!")
 }
 
 class GenericConnectorSpec

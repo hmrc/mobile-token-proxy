@@ -30,10 +30,6 @@ trait GenericConnector {
     http.GET(path)
   }
 
-  def doPostRefresh(path:String, json:JsValue)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-    http.POST(path, json)
-  }
-
   def doPost(path:String, json:JsValue)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
     http.POST(path, json)
   }
