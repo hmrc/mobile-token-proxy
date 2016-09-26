@@ -1,0 +1,3 @@
+GET         /oauth/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: Option[String])
+POST        /oauth/token                uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token(journeyId: Option[String])
+GET         /oauth/taxcalctoken         uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.taxcalctoken(journeyId: Option[String])
