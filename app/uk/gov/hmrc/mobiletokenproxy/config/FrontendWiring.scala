@@ -36,9 +36,9 @@ object ApplicationGlobal
   extends DefaultFrontendGlobal
   with RunMode {
 
-  override lazy val auditConnector = StubAuditConnector
-  override lazy val loggingFilter = StubLoggingFilter
-  override lazy val frontendAuditFilter = StubAuditFilter
+  override lazy val auditConnector = AuditConnector
+  override lazy val loggingFilter = LoggingFilter
+  override lazy val frontendAuditFilter = AuditFilter
 
   override def onStart(app: Application) {
     super.onStart(app)
@@ -47,7 +47,7 @@ object ApplicationGlobal
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]): Html =
     views.html.global_error(pageTitle, heading, message)
 
-  override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"$env.microservice.metrics")
+  override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"microservice.metrics")
 
 }
 
@@ -56,26 +56,28 @@ object ControllerConfiguration extends ControllerConfig {
 }
 
 
-object StubLoggingFilter extends FrontendLoggingFilter {
+object LoggingFilter extends FrontendLoggingFilter {
   override def controllerNeedsLogging(controllerName: String): Boolean = ControllerConfiguration.paramsForController(controllerName).needsLogging
 }
 
-object StubAuditFilter extends FrontendAuditFilter with RunMode with AppName {
+object AuditFilter extends FrontendAuditFilter with RunMode with AppName {
 
   override lazy val maskedFormFields = Seq.empty
 
   override lazy val applicationPort = None
 
-  override lazy val auditConnector = StubAuditConnector
+  override lazy val auditConnector = AuditConnector
 
   override def controllerNeedsAuditing(controllerName: String): Boolean= ControllerConfiguration.paramsForController(controllerName).needsAuditing
 }
 
 
-object StubAuditConnector extends Auditing with AppName with RunMode {
-  override lazy val auditingConfig = LoadAuditingConfig(s"$env.auditing")
+object AuditConnector extends Auditing with AppName with RunMode {
+  override lazy val auditingConfig = {
+    LoadAuditingConfig(s"auditing")
+  }
 }
 
-object StubWsHttp extends WSHttp {
+object WsHttp extends WSHttp {
   override val hooks: Seq[HttpHook] = NoneRequired
 }

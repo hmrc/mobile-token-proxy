@@ -17,7 +17,7 @@
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
 import play.api.libs.json._
-import uk.gov.hmrc.mobiletokenproxy.config.StubWsHttp
+import uk.gov.hmrc.mobiletokenproxy.config.WsHttp
 import uk.gov.hmrc.play.http.{HttpResponse, HttpGet, HeaderCarrier, HttpPost}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,5 +40,5 @@ trait GenericConnector {
 }
 
 object GenericConnector extends GenericConnector {
-  override def http = StubWsHttp
+  override def http = WsHttp
 }
