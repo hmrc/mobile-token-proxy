@@ -20,6 +20,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
 import play.api.test.Helpers._
+import uk.gov.hmrc.play.http.{UnauthorizedException, BadRequestException, InternalServerException}
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 
 class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with BeforeAndAfterEach {
@@ -55,21 +56,21 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
     }
 
     "return 503 response when API Gateway returns a non 200 response " in new FailToReturnApiToken {
-      override lazy val httpCode = 500
+      override lazy val ex = Some(new InternalServerException("Not Found"))
       val result = await(controller.token()(jsonRequestRequestWithAuthCode))
 
       status(result) shouldBe 503
     }
 
     "return 401 response when API Gateway returns a BadRequest response " in new FailToReturnApiToken {
-      override lazy val httpCode = 400
+      override lazy val ex = Some(new BadRequestException("bad request"))
       val result = await(controller.token()(jsonRequestRequestWithAuthCode))
 
       status(result) shouldBe 401
     }
 
     "return 401 response when API Gateway returns an Unauthorized response " in new FailToReturnApiToken {
-      override lazy val httpCode = 400
+      override lazy val ex = Some(new UnauthorizedException("unauthoried"))
       val result = await(controller.token()(jsonRequestRequestWithAuthCode))
 
       status(result) shouldBe 401
@@ -93,21 +94,21 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
     }
 
     "return 503 response when API Gateway returns a 500 response " in new FailToReturnApiToken {
-      override lazy val httpCode = 500
+      override lazy val ex = Some(new InternalServerException("Not Found"))
       val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
 
       status(result) shouldBe 503
     }
 
     "return 401 response when API Gateway returns a 400 response " in new FailToReturnApiToken {
-      override lazy val httpCode = 400
+      override lazy val ex = Some(new BadRequestException("bad request"))
       val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
 
       status(result) shouldBe 401
     }
 
     "return 401 response when API Gateway returns a 401 response " in new FailToReturnApiToken {
-      override lazy val httpCode = 401
+      override lazy val ex = Some(new UnauthorizedException("unauthoried"))
       val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
 
       status(result) shouldBe 401

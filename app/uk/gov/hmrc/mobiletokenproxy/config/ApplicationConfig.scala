@@ -27,7 +27,6 @@ trait ApplicationConfig {
     val pathToAPIGatewayAuthService:String
     val client_id:String
     val client_secret:String
-    val grant_type:String
     val redirect_uri:String
     val response_type:String
     val scope:String
@@ -48,7 +47,6 @@ object ApplicationConfig extends ApplicationConfig with ServicesConfig {
   override lazy val client_id: String = loadConfig("api-gateway.client_id")
   override lazy val redirect_uri: String = loadConfig("api-gateway.redirect_uri")
   override lazy val client_secret: String = loadConfig("api-gateway.client_secret")
-  override lazy val grant_type: String = loadConfig("api-gateway.grant_type")
   override lazy val tax_calc_token: String = loadConfig("api-gateway.tax_calc_server_token")
 
   final val message = "Missing required configuration entry for mobile-token-proxy: "

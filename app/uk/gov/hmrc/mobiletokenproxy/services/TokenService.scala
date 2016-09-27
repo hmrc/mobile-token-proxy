@@ -22,7 +22,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
-import uk.gov.hmrc.play.http.HeaderCarrier
+import uk.gov.hmrc.play.http.{UnauthorizedException, ServiceUnavailableException, BadRequestException, HeaderCarrier}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,24 +50,39 @@ trait LiveTokenService extends TokenService {
   def getConfig(key:String) = current.configuration.getString(key).getOrElse(throw new IllegalArgumentException(s"Failed to resolve $key"))
 
   def getTokenFromAccessCode(authCode:String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
-    getAPIGatewayToken("code", authCode)
+    getAPIGatewayToken("code", authCode, "authorization_code", journeyId)
   }
 
   def getTokenFromRefreshToken(refreshToken:String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse] = {
-    getAPIGatewayToken("refresh_token", refreshToken, journeyId)
+    getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId)
   }
 
-  def getAPIGatewayToken(key:String, code: String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
+  def getAPIGatewayToken(key:String, code: String, grantType:String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
 
     val form = Map(
       key -> Seq(code),
       "client_id" -> Seq(appConfig.client_id),
       "client_secret" -> Seq(appConfig.client_secret),
-      "grant_type" -> Seq(appConfig.grant_type),
+      "grant_type" -> Seq(grantType),
       "redirect_uri" -> Seq(appConfig.redirect_uri)
     )
 
     def error(message:String, failure:String) = Logger.error(s"Mobile-Token-Proxy - $journeyId - Failed to process request $message. Failure is $failure")
+
+    def unauthorized = {
+      error(s"Received Refresh Token failure : Status code 400/401", "Token refresh failure")
+      throw new InvalidAccessCode
+    }
+
+    def retryFailure = {
+      error(s"API Gateway failure : Status code 503. Client will be requested to retry", "Token refresh failure")
+      throw new FailToRetrieveToken
+    }
+
+    def generalFailure = {
+      error(s"General failure : Client will be requested to retry", "Token refresh failure")
+      throw new FailToRetrieveToken
+    }
 
     genericConnector.doPostForm(appConfig.pathToAPIGatewayTokenService, form).map(result => {
       result.status match {
@@ -82,19 +97,16 @@ trait LiveTokenService extends TokenService {
             throw new IllegalArgumentException(s"Failed to read the JSON result attributes from ${result.json}.")
           }
 
-        case 400 | 401 => // Force the user to login again! Token supplied has already been used (400) or invalid (401).
-          error(s"Received Refresh Token failure : Status code ${result.status}", "Token refresh failure")
-          throw new InvalidAccessCode
-
-        case 503 => // Indicates the API gateway failed to process the request and should be re-tried.
-          error(s"API Gateway failure : Status code ${result.status}. Client will be requested to retry", "Token refresh failure")
-          throw new FailToRetrieveToken
-
         case _ => // General failure indicates the API gateway failed to process the request and should be re-tried.
-          error(s"General failure : Status code ${result.status}. Client will be requested to retry", "Token refresh failure")
-          throw new FailToRetrieveToken
+          generalFailure
+
       }
-    })
+    }).recover {
+      case ex:BadRequestException => unauthorized
+      case ex:UnauthorizedException => unauthorized
+      case ex:ServiceUnavailableException => retryFailure
+      case _  => generalFailure
+    }
   }
 
 }

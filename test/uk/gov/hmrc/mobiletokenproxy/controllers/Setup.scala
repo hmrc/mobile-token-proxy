@@ -66,7 +66,6 @@ trait Setup {
     override val client_id: String = "client_id"
     override val redirect_uri: String = "redirect_uri"
     override val client_secret: String = "client_secret"
-    override val grant_type: String = "grant_type"
     override val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
     override val scope: String = "some-scopes"
     override val response_type: String = "code"
@@ -84,18 +83,6 @@ trait Setup {
 
   val emptyRequest = FakeRequest()
 
-  val defaultTokenMap = Map(
-    "client_id"  -> "client_id",
-    "client_secret"  -> "client_secret",
-    "grant_type"  -> "grant_type",
-    "redirect_uri"  -> "redirect_uri"
-  )
-
-  trait Recorder {
-    var recordPath : Option[String] = None
-    var recordHeaders : Seq[(String, String)] = Seq.empty
-  }
-
   class Response(jsonIn:JsValue, responseStatus:Int) extends HttpResponse {
     override def body = Json.stringify(jsonIn)
     override def json = jsonIn
@@ -103,31 +90,22 @@ trait Setup {
     override def status = responseStatus
   }
 
-  class GenericTestConnector(get:Option[JsValue], post:Option[JsValue], postForm:Option[JsValue],
-                             status:Int) //, exceptionDoPostForm:Boolean, exceptionDoPost:Boolean, exceptionGet:Int, exceptionRefresh:Boolean)
-    extends GenericConnector with Recorder {
-
-    def withRecord(path:String)(func:Future[HttpResponse]) = {
-      recordPath = Some(path)
-      func
-    }
+  class GenericTestConnector(response:Option[JsValue], exception:Option[Exception])
+    extends GenericConnector {
 
     override def doGet(path:String)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      withRecord(path) {
-        Future.successful(new Response(get.get, status))
-      }
+      if (exception.isDefined) Future.failed(exception.get)
+      else Future.successful(new Response(response.get, 200))
     }
 
     override def doPost(path:String, json:JsValue)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      withRecord(path) {
-        Future.successful(new Response(post.get, status))
-      }
+      if (exception.isDefined) Future.failed(exception.get)
+      else Future.successful(new Response(response.get, 200))
     }
 
     override def doPostForm(path:String, form:Map[String,Seq[String]])(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      withRecord(path) {
-        Future.successful(new Response(postForm.get, status))
-      }
+      if (exception.isDefined) Future.failed(exception.get)
+      else Future.successful(new Response(response.get, 200))
     }
 
     override def http: HttpPost with HttpGet = throw new Exception("Not implemented!")
@@ -139,7 +117,7 @@ trait SuccessAccessCode extends Setup {
 
   val controller = new MobileTokenProxy {
 
-    lazy val connector = new GenericTestConnector(None, None, Some(tokenResponseFromAuthorizationCode), 200)//, false, false, 0, false)
+    lazy val connector = new GenericTestConnector(Some(tokenResponseFromAuthorizationCode), None)
 
     override def genericConnector: GenericConnector = connector
 
@@ -153,11 +131,11 @@ trait SuccessAccessCode extends Setup {
 
 trait FailToReturnApiToken extends Setup {
 
-  val httpCode:Int
+  val ex:Option[Exception]
 
   val controller = new MobileTokenProxy {
 
-    lazy val connector = new GenericTestConnector(None, None, Some(tokenResponseFromAuthorizationCode), httpCode)//, false, false, 0, false)
+    lazy val connector = new GenericTestConnector(Some(tokenResponseFromAuthorizationCode), ex)
 
     override def genericConnector: GenericConnector = connector
 
@@ -174,7 +152,7 @@ trait BadResponseAPIGateway extends Setup {
 
   val controller = new MobileTokenProxy {
 
-    lazy val connector = new GenericTestConnector(None, None, Some(badTokenResponseFromAuthorizationCode), 200) //, false, false, 0, false)
+    lazy val connector = new GenericTestConnector(Some(badTokenResponseFromAuthorizationCode), None)
 
     override def genericConnector: GenericConnector = connector
 
@@ -195,7 +173,7 @@ trait SuccessRefreshCode extends Setup {
 
   val controller = new MobileTokenProxy {
 
-    lazy val connector = new GenericTestConnector(None, None, Some(tokenResponseFromAuthorizationCode), 200) //, false, false, 0, false)
+    lazy val connector = new GenericTestConnector(Some(tokenResponseFromAuthorizationCode), None)
 
     override def genericConnector: GenericConnector = connector
 
