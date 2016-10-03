@@ -22,7 +22,7 @@ import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
 import play.api.test.FakeApplication
 import play.api.test.Helpers._
-import uk.gov.hmrc.crypto.{PlainText, Crypted, CryptoWithKeysFromConfig, RSAEncryptDecrypt}
+import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.model.TokenResponse
 import uk.gov.hmrc.play.http.{UnauthorizedException, BadRequestException, InternalServerException}
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
@@ -143,7 +143,7 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
 
   "requesting the tax-calc service" should {
 
-    "return a JSON response which contains the RSA encrypted token" in new SuccessRefreshCode {
+    "return a JSON response which contains the AES encrypted token" in new SuccessRefreshCode {
       val result = await(controller.taxcalctoken()(emptyRequest))
 
       status(result) shouldBe 200
