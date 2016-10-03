@@ -18,6 +18,7 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 
 import play.api.Logger
 import play.api.libs.json.{JsError, Json}
+import uk.gov.hmrc.crypto.{Crypted, PlainText, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
@@ -27,7 +28,6 @@ import play.api.mvc._
 import uk.gov.hmrc.play.http.HeaderCarrier
 import scala.concurrent.{ExecutionContext, Future}
 
-
 object MobileTokenProxy extends MobileTokenProxy {
   override def genericConnector: GenericConnector = GenericConnector
 
@@ -36,6 +36,8 @@ object MobileTokenProxy extends MobileTokenProxy {
   override val service = LiveTokenService
 
   override implicit val ec: ExecutionContext = ExecutionContext.global
+
+  override val aes = CryptoWithKeysFromConfig("aes")
 }
 
 trait MobileTokenProxy extends FrontendController {
@@ -44,6 +46,8 @@ trait MobileTokenProxy extends FrontendController {
   def appConfig: ApplicationConfig
 
   val service: TokenService
+
+  val aes: CryptoWithKeysFromConfig
 
   implicit val ec: ExecutionContext
 
@@ -77,7 +81,8 @@ trait MobileTokenProxy extends FrontendController {
   }
 
   def taxcalctoken(journeyId: Option[String] = None) = Action.async { implicit request =>
-    Future.successful(Ok(s"""{"token":"${appConfig.tax_calc_token}"}"""))
+    val encrypted: Crypted = aes.encrypt(PlainText(appConfig.tax_calc_token))
+    Future.successful(Ok(Json.toJson(TokenResponse(encrypted.value))))
   }
 
   private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier) = {
@@ -88,8 +93,8 @@ trait MobileTokenProxy extends FrontendController {
   }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case e: FailToRetrieveToken => ServiceUnavailable
-    case e: InvalidAccessCode => Unauthorized
+    case e: FailToRetrieveToken => ServiceUnavailable // The client should re-try
+    case e: InvalidAccessCode => Unauthorized         // The client must request for authorization through web since token is invalid.
     case _ => ServiceUnavailable
   }
 

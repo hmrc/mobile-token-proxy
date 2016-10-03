@@ -1,6 +1,6 @@
 authorize
 ----
-  Request for the URL to be generated to request authorization through the API Gateway.
+  Request for the URL to be generated to request web authorization through the API Gateway.
   
 * **URL**
 
@@ -11,7 +11,7 @@ authorize
   `GET`
 
 
-The servie will return a 303 HTTP response and the Location will be to the API Gateway authorize service.
+The service will return a 303 HTTP response and the Location will be to the API Gateway authorize service.
 
 
 * **Success Response:**

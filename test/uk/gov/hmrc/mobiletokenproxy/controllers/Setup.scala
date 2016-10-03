@@ -19,6 +19,7 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 import play.api.libs.json.{Json, JsValue}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.crypto.CryptoWithKeysFromConfig
 import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenService, TokenService}
@@ -69,7 +70,7 @@ trait Setup {
     override val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
     override val scope: String = "some-scopes"
     override val response_type: String = "code"
-    override val tax_calc_token: String = "some-tax-calc-service-token"
+    override val tax_calc_token: String = "tax_calc_server_token"
   }
 
   def fakeRequest(body:JsValue) = FakeRequest(POST, "url").withBody(body)
@@ -93,19 +94,18 @@ trait Setup {
   class GenericTestConnector(response:Option[JsValue], exception:Option[Exception])
     extends GenericConnector {
 
+    def buildResponse = exception.fold(Future.successful(new Response(response.get, 200))) { ex => Future.failed(ex)}
+
     override def doGet(path:String)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      if (exception.isDefined) Future.failed(exception.get)
-      else Future.successful(new Response(response.get, 200))
+      buildResponse
     }
 
     override def doPost(path:String, json:JsValue)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      if (exception.isDefined) Future.failed(exception.get)
-      else Future.successful(new Response(response.get, 200))
+      buildResponse
     }
 
-    override def doPostForm(path:String, form:Map[String,Seq[String]])(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      if (exception.isDefined) Future.failed(exception.get)
-      else Future.successful(new Response(response.get, 200))
+    override def doPostForm(path: String, form: Map[String, Seq[String]])(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
+      buildResponse
     }
 
     override def http: HttpPost with HttpGet = throw new Exception("Not implemented!")
@@ -126,6 +126,8 @@ trait SuccessAccessCode extends Setup {
     override val service: TokenService = new TokenTestService(genericConnector, appConfig)
 
     override implicit val ec: ExecutionContext = ExecutionContext.global
+
+    override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
   }
 }
 
@@ -144,6 +146,8 @@ trait FailToReturnApiToken extends Setup {
     override val service: TokenService = new TokenTestService(genericConnector, appConfig)
 
     override implicit val ec: ExecutionContext = ExecutionContext.global
+
+    override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
   }
 
 }
@@ -161,6 +165,8 @@ trait BadResponseAPIGateway extends Setup {
     override val service: TokenService = new TokenTestService(genericConnector, appConfig)
 
     override implicit val ec: ExecutionContext = ExecutionContext.global
+
+    override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
   }
 }
 
@@ -169,7 +175,6 @@ trait SuccessRefreshCode extends Setup {
 
   val tokenRequestWithRefreshToken = Json.parse(s"""{"refreshToken":"some_refresh_token"}""")
   val jsonRequestRequestWithRefreshToken = fakeRequest(tokenRequestWithRefreshToken)
-
 
   val controller = new MobileTokenProxy {
 
@@ -182,5 +187,7 @@ trait SuccessRefreshCode extends Setup {
     override val service: TokenService = new TokenTestService(genericConnector, appConfig)
 
     override implicit val ec: ExecutionContext = ExecutionContext.global
+
+    override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
   }
 }

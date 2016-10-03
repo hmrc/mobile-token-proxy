@@ -16,14 +16,23 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
+import org.apache.commons.codec.binary.Base64
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
+import play.api.test.FakeApplication
 import play.api.test.Helpers._
+import uk.gov.hmrc.crypto.{PlainText, Crypted, CryptoWithKeysFromConfig, RSAEncryptDecrypt}
+import uk.gov.hmrc.mobiletokenproxy.model.TokenResponse
 import uk.gov.hmrc.play.http.{UnauthorizedException, BadRequestException, InternalServerException}
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 
-class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with BeforeAndAfterEach {
+class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with BeforeAndAfterEach with StubApplicationConfiguration {
+
+  val encryptionKey = Base64.encodeBase64String(Array[Byte](0, 1, 2, 3, 4, 5 ,6 ,7, 8 ,9, 10, 11, 12, 13, 14, 15))
+  val fakeApplicationWithCurrentKeyOnly = FakeApplication(additionalConfiguration = Map(
+    "aes.key" -> encryptionKey
+  ))
 
   "token request payloads" should {
 
@@ -114,7 +123,7 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
       status(result) shouldBe 401
     }
 
-    "return 500 response when response from API Gateway returns an incorrect response" in new BadResponseAPIGateway {
+    "return 503 response when response from API Gateway returns an incorrect response" in new BadResponseAPIGateway {
       val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
 
       status(result) shouldBe 503
@@ -134,12 +143,16 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
 
   "requesting the tax-calc service" should {
 
-    "return a JSON response which contains the server-token" in new SuccessRefreshCode {
+    "return a JSON response which contains the RSA encrypted token" in new SuccessRefreshCode {
       val result = await(controller.taxcalctoken()(emptyRequest))
 
       status(result) shouldBe 200
-      jsonBodyOf(result) shouldBe Json.parse("""{"token":"some-tax-calc-service-token"}""")
+
+      val response = jsonBodyOf(result).as[TokenResponse]
+      val aes = CryptoWithKeysFromConfig("aes")
+      aes.decrypt(Crypted(response.token)).value shouldBe controller.appConfig.tax_calc_token
     }
+
   }
 
 }

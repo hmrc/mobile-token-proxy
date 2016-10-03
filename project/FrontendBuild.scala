@@ -5,7 +5,6 @@ import uk.gov.hmrc.versioning.SbtGitVersioning
 
 
 object FrontendBuild extends Build with MicroService {
-  import scala.util.Properties.envOrElse
 
   override val appName = "mobile-token-proxy"
 
@@ -25,7 +24,8 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-health" % "1.1.0",
     "uk.gov.hmrc" %% "govuk-template" % "4.0.0",
     "uk.gov.hmrc" %% "play-ui" % "4.10.0",
-    "uk.gov.hmrc" %% "domain" % "3.5.0"
+    "uk.gov.hmrc" %% "domain" % "3.5.0",
+    "uk.gov.hmrc" %% "crypto" % "3.1.0"
   )
 
   trait TestDependencies {
