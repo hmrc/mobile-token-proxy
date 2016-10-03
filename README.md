@@ -8,16 +8,16 @@ The service acts as a proxy to the API Gateway /oauth/token service and is also 
 
 ## Endpoints
 
-| Path                  | Supported Methods | Description |
-| ----------------------| ------------------| ------------|
-|```/oauth/authorize``` | GET               | Request to build an authentication request to the API Gateway. [More...](docs/authorize.md) |
-|```/oauth/token```     | POST              | Request for an access-token to make API Gateway service calls. [More...](docs/token.md) |
-|```/oauth/taxcalc```   | POST              | Request for tax-calc server token to . [More...](docs/taxcalctoken.md) |
+| Path                     | Supported Methods | Description |
+| -------------------------| ------------------| ------------|
+|```/oauth/authorize```    | GET               | Request to build an authentication request to the API Gateway. [More...](docs/authorize.md) |
+|```/oauth/token```        | POST              | Request for an access-token to make API Gateway service calls. [More...](docs/token.md) |
+|```/oauth/taxcalctoken``` | GET               | Request for tax-calc token to make API Gateway service calls. [More...](docs/taxcalctoken.md) |
 
 
 ## Using the service locally.
 
-To test this service locally then below the services must be running. 
+To test the token service locally then below the services must be running.
 
 ```
 API_GATEWAY_PROXY, AUTH, AUTH_LOGIN_STUB, USER_DETAILS, MOBILE_TOKEN_PROXY.

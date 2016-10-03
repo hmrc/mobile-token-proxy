@@ -10,7 +10,7 @@ taxcalctoken
   
   `GET`
 
-A successful response to this service returns a server-token.
+A successful response to this service returns a base64 AES encrypted server-token.
 
 
 * **Success Response:**
@@ -25,10 +25,5 @@ A successful response to this service returns a server-token.
 
 * **Error Response:**
 
-  * **Code:** 503 SERVICEUNAVAILABLE<br />
-    Failed to communicate to the API Gateway - The call should be re-tried.
-
   * **Code:** 500 INTERNAL_SERVER_ERROR <br/>
-
-
 
