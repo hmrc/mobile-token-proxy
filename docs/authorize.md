@@ -17,6 +17,6 @@ The service will return a 303 HTTP response and the Location will be to the API 
 * **Success Response:**
 
   * **Code:** 303 <br />
-    **Content:** 
 
+  * **Code:** 500 INTERNAL_SERVER_ERROR <br/>
 

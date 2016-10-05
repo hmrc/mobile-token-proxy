@@ -22,6 +22,7 @@ A successful response to this service returns a base64 AES encrypted server-toke
 {
     "token": "some-server-token"
 }
+```
 
 * **Error Response:**
 

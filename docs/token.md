@@ -42,6 +42,7 @@ Once a successful response to this service returns a refresh-token attribute, th
     "refreshToken": "a4059838-c9d4-4a2f-9539-2c8b4fa60395",
     "expireTime": 14400
 }
+```
 
 * **Error Response:**
 
