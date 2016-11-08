@@ -1,3 +1,7 @@
+@import play.api.Play.current
+@import play.api.i18n.Messages.Implicits._
+
+
 @(title: String,
 headerNav: Option[views.helpers.HeaderNav] = None,
 sidebarLinks: Option[Html] = None,
@@ -25,7 +29,7 @@ gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit req
 @import layouts.govuk_template
 
 @head = {
-@playLayouts.head(appConfig.assetsPrefix, linkElement, headScripts)
+@playLayouts.head(linkElement, headScripts)
 }
 
 @insideHeader = {
@@ -75,7 +79,6 @@ gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit req
 @bodyEnd = {
 @playLayouts.footer(analyticsToken = Play.configuration.getString(s"govuk-tax.$env.google-analytics.token"),
     analyticsHost = Play.configuration.getString(s"govuk-tax.$env.google-analytics.host").getOrElse("service.gov.uk"),
-    assetsPrefix = appConfig.assetsPrefix,
     ssoUrl = Play.configuration.getString(s"govuk-tax.$env.portal.ssoUrl"),
     scriptElem = scriptElement,
     gaCalls = gaCalls)
