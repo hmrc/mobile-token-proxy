@@ -16,25 +16,29 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
+import akka.stream.Materializer
+import uk.gov.hmrc.play.filters.MicroserviceFilterSupport
 import uk.gov.hmrc.play.frontend.bootstrap.DefaultFrontendGlobal
 import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
 import play.api.mvc.Request
 import play.api.{Application, Configuration, Play}
 import play.twirl.api.Html
+import play.api.Play.current
 import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
 import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
 import uk.gov.hmrc.play.config.{AppName, ControllerConfig, RunMode}
 import uk.gov.hmrc.play.http.hooks.HttpHook
 import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
 
+import play.api.i18n.Messages.Implicits._
+
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector => Auditing}
 import uk.gov.hmrc.play.http.ws.WSHttp
 
 
 object ApplicationGlobal
-  extends DefaultFrontendGlobal
-  with RunMode {
+  extends DefaultFrontendGlobal {
 
   override lazy val auditConnector = AuditConnector
   override lazy val loggingFilter = LoggingFilter
@@ -48,7 +52,6 @@ object ApplicationGlobal
     views.html.global_error(pageTitle, heading, message)
 
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"microservice.metrics")
-
 }
 
 object ControllerConfiguration extends ControllerConfig {
@@ -56,9 +59,10 @@ object ControllerConfiguration extends ControllerConfig {
 }
 
 
-object LoggingFilter extends FrontendLoggingFilter {
-  override def controllerNeedsLogging(controllerName: String): Boolean = ControllerConfiguration.paramsForController(controllerName).needsLogging
+object LoggingFilter extends FrontendLoggingFilter with MicroserviceFilterSupport {
+  override def controllerNeedsLogging(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsLogging
 }
+
 
 object AuditFilter extends FrontendAuditFilter with RunMode with AppName {
 
@@ -69,6 +73,8 @@ object AuditFilter extends FrontendAuditFilter with RunMode with AppName {
   override lazy val auditConnector = AuditConnector
 
   override def controllerNeedsAuditing(controllerName: String): Boolean= ControllerConfiguration.paramsForController(controllerName).needsAuditing
+
+  override implicit def mat: Materializer = Play.materializer
 }
 
 

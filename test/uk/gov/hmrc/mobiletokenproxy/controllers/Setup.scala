@@ -60,7 +60,6 @@ trait Setup {
     """.stripMargin)
 
   val config = new ApplicationConfig {
-    override val assetsPrefix: String = "someprefix"
     override val analyticsHost: String = "somehost"
     override val analyticsToken: Option[String] = None
     override val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"

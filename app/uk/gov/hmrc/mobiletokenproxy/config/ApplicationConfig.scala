@@ -20,7 +20,6 @@ import play.api.Play._
 import uk.gov.hmrc.play.config.ServicesConfig
 
 trait ApplicationConfig {
-    val assetsPrefix: String
     val analyticsToken: Option[String]
     val analyticsHost: String
     val pathToAPIGatewayTokenService:String
@@ -36,7 +35,6 @@ trait ApplicationConfig {
 object ApplicationConfig extends ApplicationConfig with ServicesConfig {
   private def loadConfig(key: String) = configuration.getString(key).getOrElse(throw new RuntimeException(s"Missing key: $key"))
 
-  override lazy val assetsPrefix: String = loadConfig("assets.url") + loadConfig("assets.version")
   override lazy val analyticsToken =  Some(loadConfig("google-analytics.token"))
   override lazy val analyticsHost: String = loadConfig("google-analytics.host")
 

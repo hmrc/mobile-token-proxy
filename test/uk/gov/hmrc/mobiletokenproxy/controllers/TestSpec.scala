@@ -16,23 +16,22 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
-import org.apache.commons.codec.binary.Base64
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json
-import play.api.test.FakeApplication
 import play.api.test.Helpers._
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.model.TokenResponse
 import uk.gov.hmrc.play.http.{UnauthorizedException, BadRequestException, InternalServerException}
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 
-class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with BeforeAndAfterEach with StubApplicationConfiguration {
+class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with BeforeAndAfterEach {
 
-  val encryptionKey = Base64.encodeBase64String(Array[Byte](0, 1, 2, 3, 4, 5 ,6 ,7, 8 ,9, 10, 11, 12, 13, 14, 15))
-  val fakeApplicationWithCurrentKeyOnly = FakeApplication(additionalConfiguration = Map(
-    "aes.key" -> encryptionKey
-  ))
+  implicit val system = ActorSystem()
+  implicit val materializer = ActorMaterializer()
+
 
   "token request payloads" should {
 
