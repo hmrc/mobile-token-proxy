@@ -17,28 +17,33 @@
 package uk.gov.hmrc.mobiletokenproxy.config
 
 import akka.stream.Materializer
+import play.filters.csrf.CSRFFilter
+import uk.gov.hmrc.play.config.{ControllerConfig, AppName, RunMode}
 import uk.gov.hmrc.play.filters.MicroserviceFilterSupport
+import uk.gov.hmrc.play.filters.frontend.CSRFExceptionsFilter
 import uk.gov.hmrc.play.frontend.bootstrap.DefaultFrontendGlobal
 import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
-import play.api.mvc.Request
+import play.api.mvc.{EssentialFilter, Request}
 import play.api.{Application, Configuration, Play}
 import play.twirl.api.Html
 import play.api.Play.current
 import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
 import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
-import uk.gov.hmrc.play.config.{AppName, ControllerConfig, RunMode}
 import uk.gov.hmrc.play.http.hooks.HttpHook
 import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
-
-import play.api.i18n.Messages.Implicits._
-
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector => Auditing}
 import uk.gov.hmrc.play.http.ws.WSHttp
 
 
 object ApplicationGlobal
   extends DefaultFrontendGlobal {
+
+  override def frontendFilters: Seq[EssentialFilter] = {
+    defaultFrontendFilters.filterNot(
+      e => e.isInstanceOf[CSRFFilter] || e.isInstanceOf[CSRFExceptionsFilter.type]
+    )
+  }
 
   override lazy val auditConnector = AuditConnector
   override lazy val loggingFilter = LoggingFilter
