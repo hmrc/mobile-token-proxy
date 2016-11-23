@@ -15,12 +15,12 @@ private object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "frontend-bootstrap" % "7.7.0",
+    "uk.gov.hmrc" %% "frontend-bootstrap" % "7.10.0",
     "uk.gov.hmrc" %% "play-config" % "3.0.0",
     "uk.gov.hmrc" %% "play-json-logger" % "3.0.0",
     "uk.gov.hmrc" %% "play-health" % "2.0.0",
     "uk.gov.hmrc" %% "govuk-template" % "5.0.0",
-    "uk.gov.hmrc" %% "play-ui" % "5.2.0",
+    "uk.gov.hmrc" %% "play-ui" % "5.3.0",
     "uk.gov.hmrc" %% "domain" % "4.0.0",
     "uk.gov.hmrc" %% "play-json-logger" % "3.0.0"
 
@@ -35,10 +35,10 @@ private object AppDependencies {
     def apply() = new TestDependencies {
 
       override lazy val test = Seq(
-        "org.scalatest" %% "scalatest" % "3.0.0" % scope,
+        "org.scalatest" %% "scalatest" % "3.0.1" % scope,
         "org.pegdown" % "pegdown" % "1.6.0" % scope,
-        "org.jsoup" % "jsoup" % "1.7.3" % scope,
-        "uk.gov.hmrc" %% "hmrctest" % "2.0.0" % scope,
+        "org.jsoup" % "jsoup" % "1.10.1" % scope,
+        "uk.gov.hmrc" %% "hmrctest" % "2.2.0" % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
       )
     }.test
@@ -50,9 +50,9 @@ private object AppDependencies {
       override lazy val scope = "it"
 
       override lazy val test = Seq(
-        "org.scalatest" %% "scalatest" % "3.0.0" % scope,
+        "org.scalatest" %% "scalatest" % "3.0.1" % scope,
         "org.pegdown" % "pegdown" % "1.6.0" % scope,
-        "org.jsoup" % "jsoup" % "1.7.3" % scope,
+        "org.jsoup" % "jsoup" % "1.10.1" % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
       )
     }.test
