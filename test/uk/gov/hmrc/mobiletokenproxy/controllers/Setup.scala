@@ -59,6 +59,8 @@ trait Setup {
       |}
     """.stripMargin)
 
+  def buildMessage(code:String, message:String) = s"""{"code":"$code","message":"$message"}"""
+
   val config = new ApplicationConfig {
     override val analyticsHost: String = "somehost"
     override val analyticsToken: Option[String] = None
@@ -77,8 +79,8 @@ trait Setup {
 
   lazy val jsonRequestEmpty = fakeRequest(Json.parse("{}"))
   lazy val jsonRequestWithAuthCodeAndRefreshToken = fakeRequest(tokenRequestWithAuthCodeAndRefreshToken)
-  lazy val jsonRequestRequestWithAuthCode = fakeRequest(tokenRequestWithAuthCode)
-  lazy val jsonRequestRequestWithRefreshCode = fakeRequest(tokenRequestWithRefreshCode)
+  lazy val jsonRequestWithAuthCode = fakeRequest(tokenRequestWithAuthCode)
+  lazy val jsonRequestWithRefreshCode = fakeRequest(tokenRequestWithRefreshCode)
 
 
   val emptyRequest = FakeRequest()

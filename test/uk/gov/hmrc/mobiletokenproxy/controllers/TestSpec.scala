@@ -24,14 +24,13 @@ import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.model.TokenResponse
-import uk.gov.hmrc.play.http.{UnauthorizedException, BadRequestException, InternalServerException}
+import uk.gov.hmrc.play.http._
 import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
 
 class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with BeforeAndAfterEach {
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
-
 
   "token request payloads" should {
 
@@ -57,35 +56,62 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
   "requesting a new access-token/refresh-token from an access-code" should {
 
     "successfully return access-token and refresh token for a valid request " in new SuccessAccessCode {
-      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
+      val result = await(controller.token()(jsonRequestWithAuthCode))
 
       status(result) shouldBe 200
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
-    "return 503 response when API Gateway returns a non 200 response " in new FailToReturnApiToken {
-      override lazy val ex = Some(new InternalServerException("Not Found"))
-      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
+    "return 503 response when API Gateway returns a 5xx response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream5xxResponse("bad request", 500, 500))
+      val result = await(controller.token()(jsonRequestWithAuthCode))
 
       status(result) shouldBe 503
+      bodyOf(result) shouldBe ""
     }
 
-    "return 401 response when API Gateway returns a BadRequest response " in new FailToReturnApiToken {
-      override lazy val ex = Some(new BadRequestException("bad request"))
-      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
+    "return 401 response and no response body when API Gateway returns a BadRequest response" in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse("bad request", 400, 400))
+      val result = await(controller.token()(jsonRequestWithAuthCode))
 
       status(result) shouldBe 401
+      bodyOf(result) shouldBe ""
     }
 
-    "return 401 response when API Gateway returns an Unauthorized response " in new FailToReturnApiToken {
-      override lazy val ex = Some(new UnauthorizedException("unauthoried"))
-      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
+    "return 401 and response body when API Gateway returns a BadRequest response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse(buildMessage("unauthorized", "some message"), 401, 401))
+      val result = await(controller.token()(jsonRequestWithAuthCode))
 
       status(result) shouldBe 401
+      bodyOf(result) shouldEqual buildMessage("unauthorized", "some message")
+    }
+
+    "return 401 and no response body when API Gateway returns an Unauthorized response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse("unauthorized", 401, 401))
+      val result = await(controller.token()(jsonRequestWithAuthCode))
+
+      status(result) shouldBe 401
+      bodyOf(result) shouldBe ""
+    }
+
+    "return 401 and response body when API Gateway returns an Unauthorized response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse(buildMessage("unauthorized", "some message"), 401, 401))
+      val result = await(controller.token()(jsonRequestWithAuthCode))
+
+      status(result) shouldBe 401
+      bodyOf(result) shouldBe buildMessage("unauthorized", "some message")
+    }
+
+    "return 401 and no response body when API Gateway returns an Unauthorized response with invalid Json body" in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse("{some invalid json", 401, 401))
+      val result = await(controller.token()(jsonRequestWithAuthCode))
+
+      status(result) shouldBe 401
+      bodyOf(result) shouldBe ""
     }
 
     "return 503 response when API Gateway returns an incorrect response" in new BadResponseAPIGateway {
-      val result = await(controller.token()(jsonRequestRequestWithAuthCode))
+      val result = await(controller.token()(jsonRequestWithAuthCode))
 
       status(result) shouldBe 503
     }
@@ -101,31 +127,66 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
-    "return 503 response when API Gateway returns a 500 response " in new FailToReturnApiToken {
-      override lazy val ex = Some(new InternalServerException("Not Found"))
-      val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
+    "return 503 and no response body when API Gateway returns a 500 response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream5xxResponse("Server error", 500, 500))
+      val result = await(controller.token()(jsonRequestWithRefreshCode))
 
       status(result) shouldBe 503
     }
 
-    "return 401 response when API Gateway returns a 400 response " in new FailToReturnApiToken {
-      override lazy val ex = Some(new BadRequestException("bad request"))
-      val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
-
-      status(result) shouldBe 401
-    }
-
-    "return 401 response when API Gateway returns a 401 response " in new FailToReturnApiToken {
-      override lazy val ex = Some(new UnauthorizedException("unauthoried"))
-      val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
-
-      status(result) shouldBe 401
-    }
-
-    "return 503 response when response from API Gateway returns an incorrect response" in new BadResponseAPIGateway {
-      val result = await(controller.token()(jsonRequestRequestWithRefreshCode))
+    "return 503 and response body when API Gateway returns a 500 response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream5xxResponse(buildMessage("unauthorized", "some message"), 500, 500))
+      val result = await(controller.token()(jsonRequestWithRefreshCode))
 
       status(result) shouldBe 503
+      bodyOf(result) shouldBe buildMessage("unauthorized", "some message")
+    }
+
+    "return 401 and no response body when API Gateway returns a 400 response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse("bad request", 400, 400))
+      val result = await(controller.token()(jsonRequestWithRefreshCode))
+
+      status(result) shouldBe 401
+      bodyOf(result) shouldBe ""
+    }
+
+    "return 401 and response body when API Gateway returns a 400 response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse(buildMessage("unauthorized", "some message"), 400, 400))
+      val result = await(controller.token()(jsonRequestWithRefreshCode))
+
+      status(result) shouldBe 401
+      bodyOf(result) shouldBe buildMessage("unauthorized", "some message")
+    }
+
+    "return 401 and no response body when API Gateway returns a 401 response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse("unauthorized", 401, 401))
+      val result = await(controller.token()(jsonRequestWithRefreshCode))
+
+      status(result) shouldBe 401
+      bodyOf(result) shouldBe ""
+    }
+
+    "return 401 and response body when API Gateway returns a 401 response " in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse(buildMessage("unauthorized", "some message"), 401, 401))
+      val result = await(controller.token()(jsonRequestWithRefreshCode))
+
+      status(result) shouldBe 401
+      bodyOf(result) shouldBe buildMessage("unauthorized", "some message")
+    }
+
+    "return 401 and no response body when API Gateway returns a 401 response with invalid response body" in new FailToReturnApiToken {
+      override lazy val ex = Some(Upstream4xxResponse("""{this is incorrect json""", 401, 401))
+      val result = await(controller.token()(jsonRequestWithRefreshCode))
+
+      status(result) shouldBe 401
+      bodyOf(result) shouldBe ""
+    }
+
+    "return 503 and no response body when response from API Gateway returns an incorrect response" in new BadResponseAPIGateway {
+      val result = await(controller.token()(jsonRequestWithRefreshCode))
+
+      status(result) shouldBe 503
+      bodyOf(result) shouldBe ""
     }
 
   }
