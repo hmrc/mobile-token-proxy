@@ -93,8 +93,12 @@ trait MobileTokenProxy extends FrontendController {
   }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case e: FailToRetrieveToken => ServiceUnavailable // The client should re-try
-    case e: InvalidAccessCode => Unauthorized         // The client must request for authorization through web since token is invalid.
+    case ex: FailToRetrieveToken =>
+      ex.apiResponse.fold(ServiceUnavailable("")){ resp => ServiceUnavailable(Json.toJson(resp)) }
+
+    case ex: InvalidAccessCode =>
+      ex.apiResponse.fold(Unauthorized("")){ resp => Unauthorized(Json.toJson(resp)) }
+
     case _ => ServiceUnavailable
   }
 

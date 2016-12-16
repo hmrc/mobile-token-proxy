@@ -3,7 +3,7 @@
 
 [![Build Status](https://travis-ci.org/hmrc/mobile-token-proxy.svg?branch=master)](https://travis-ci.org/hmrc/mobile-token-proxy) [ ![Download](https://api.bintray.com/packages/hmrc/releases/mobile-token-proxy/images/download.svg) ](https://bintray.com/hmrc/releases/mobile-token-proxy/_latestVersion)
 
-The service acts as a proxy to the API Gateway /oauth/token service and is also responsible for generating the API Gateway authentication HTTP request and retrieving the server token for tax-calc services.
+The service acts as a proxy to the API Gateway /oauth/token service and is also responsible for generating the API Gateway authentication HTTP request.
 
 
 ## Endpoints

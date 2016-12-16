@@ -29,7 +29,7 @@ The first time a user logs into the system, the grant-page will return an author
 
 Once a successful response to this service returns a refresh-token attribute, then subsequent calls to this service must supply the refresh-token.
 
-
+The response body can contain a JSON response from the API Gateway which contains both 'code' and 'message' attributes.
 
 * **Success Response:**
 
