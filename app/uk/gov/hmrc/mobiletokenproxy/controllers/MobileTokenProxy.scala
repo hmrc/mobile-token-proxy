@@ -51,28 +51,35 @@ trait MobileTokenProxy extends FrontendController {
 
   implicit val ec: ExecutionContext
 
-
   def authorize(journeyId: Option[String] = None) = Action.async { implicit request =>
     val redirectUrl = s"""${appConfig.pathToAPIGatewayAuthService}?client_id=${appConfig.client_id}&redirect_uri=${appConfig.redirect_uri}&scope=${appConfig.scope}&response_type=${appConfig.response_type}"""
-    Future.successful(Redirect(redirectUrl))
+    Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq :_*))
+
   }
 
   def token(journeyId: Option[String] = None) = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body.validate[TokenRequest].fold(
       errors => {
         Logger.warn("Received error with service token: " + errors)
-        Future.successful(BadRequest(Json.obj("message" -> JsError.toFlatJson(errors))))
+        Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
       },
-      tokenRequest => { (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+      tokenRequest => {
+
+        def buildHeaderCarrier = {
+          val headers: scala.collection.immutable.Map[String, String] = request.headers.toSimpleMap
+          hc.withExtraHeaders(headers.toSeq: _*)
+        }
+
+        (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
           case (Some(refreshToken: String), (Some(authcode: String))) =>
             Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
           case (None, Some(authCode: String)) =>
-            getToken(service.getTokenFromAccessCode(authCode, journeyId))
+            getToken(service.getTokenFromAccessCode(authCode, journeyId)(buildHeaderCarrier, ec))
 
           case (Some(refreshToken: String), None) =>
-            getToken(service.getTokenFromRefreshToken(refreshToken, journeyId))
+            getToken(service.getTokenFromRefreshToken(refreshToken, journeyId)(buildHeaderCarrier, ec))
 
           case _ =>
             Future.successful(BadRequest)
@@ -93,13 +100,13 @@ trait MobileTokenProxy extends FrontendController {
   }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case ex: FailToRetrieveToken =>
-      ex.apiResponse.fold(ServiceUnavailable("")){ resp => ServiceUnavailable(Json.toJson(resp)) }
+    case ex: FailToRetrieveToken => buildFailureResponse(ServiceUnavailable, ex.apiResponse)
 
-    case ex: InvalidAccessCode =>
-      ex.apiResponse.fold(Unauthorized("")){ resp => Unauthorized(Json.toJson(resp)) }
+    case ex: InvalidAccessCode => buildFailureResponse(Unauthorized, ex.apiResponse)
 
     case _ => ServiceUnavailable
   }
 
+  private def buildFailureResponse(statusResponse:Status, apiResponse:Option[ApiFailureResponse]) =
+    apiResponse.fold(statusResponse("")){ resp => statusResponse(Json.toJson(resp)) }
 }

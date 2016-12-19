@@ -59,6 +59,10 @@ trait Setup {
       |}
     """.stripMargin)
 
+  val testHTTPHeaders = Seq("testa" -> "valuea", "testb" -> "valueb")
+
+  def addTestHeaders[T](fakeRequest:FakeRequest[T]) = fakeRequest.withHeaders(testHTTPHeaders :_*)
+
   def buildMessage(code:String, message:String) = s"""{"code":"$code","message":"$message"}"""
 
   val config = new ApplicationConfig {
@@ -94,19 +98,25 @@ trait Setup {
 
   class GenericTestConnector(response:Option[JsValue], exception:Option[Exception])
     extends GenericConnector {
+    var headers:Seq[(String, String)] = Seq.empty
+    var path = ""
 
-    def buildResponse = exception.fold(Future.successful(new Response(response.get, 200))) { ex => Future.failed(ex)}
+    def buildResponse(inPath:String)(implicit ec : ExecutionContext, hc : HeaderCarrier) = {
+      path = inPath
+      headers = hc.headers
+      exception.fold(Future.successful(new Response(response.get, 200))) { ex => Future.failed(ex) }
+    }
 
     override def doGet(path:String)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      buildResponse
+      buildResponse(path)
     }
 
     override def doPost(path:String, json:JsValue)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      buildResponse
+      buildResponse(path)
     }
 
     override def doPostForm(path: String, form: Map[String, Seq[String]])(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
-      buildResponse
+      buildResponse(path)
     }
 
     override def http: HttpPost with HttpGet = throw new Exception("Not implemented!")
