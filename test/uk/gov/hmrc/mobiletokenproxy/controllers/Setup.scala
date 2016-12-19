@@ -59,9 +59,14 @@ trait Setup {
       |}
     """.stripMargin)
 
-  val testHTTPHeaders = Seq("testa" -> "valuea", "testb" -> "valueb")
 
-  def addTestHeaders[T](fakeRequest:FakeRequest[T]) = fakeRequest.withHeaders(testHTTPHeaders :_*)
+  val vendorHeader = "X-Vendor-Instance-Id"
+  val deviceIdHeader = "X-Client-Device-ID"
+
+  val testHTTPHeaders = Seq(vendorHeader -> "header vendor", deviceIdHeader -> "header device Id")
+  val invalidHTTPHeaders = Seq("testa" -> "valuea", "testb" -> "valueb")
+
+  def addTestHeaders[T](fakeRequest:FakeRequest[T]) = fakeRequest.withHeaders((testHTTPHeaders ++ invalidHTTPHeaders) :_*)
 
   def buildMessage(code:String, message:String) = s"""{"code":"$code","message":"$message"}"""
 

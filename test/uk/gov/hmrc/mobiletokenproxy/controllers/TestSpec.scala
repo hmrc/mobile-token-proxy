@@ -202,8 +202,8 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
 
       status(result) shouldBe 303
       header("Location", result).get shouldBe "http://localhost:8236/oauth/authorize?client_id=client_id&redirect_uri=redirect_uri&scope=some-scopes&response_type=code"
-      header("testa", result).get shouldBe "valuea"
-      header("testb", result).get shouldBe "valueb"
+      header(vendorHeader, result).get shouldBe "header vendor"
+      header(deviceIdHeader, result).get shouldBe "header device Id"
     }
   }
 
