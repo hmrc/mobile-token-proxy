@@ -56,9 +56,11 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
   "requesting a new access-token/refresh-token from an access-code" should {
 
     "successfully return access-token and refresh token for a valid request " in new SuccessAccessCode {
-      val result = await(controller.token()(jsonRequestWithAuthCode))
+      val result = await(controller.token(Some("12345"))(addTestHeaders(jsonRequestWithAuthCode)))
 
       status(result) shouldBe 200
+      controller.connector.headers should contain allElementsOf testHTTPHeaders
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token?journeyId=12345"
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
@@ -121,9 +123,11 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
   "requesting a new access-token from a refresh-token" should {
 
     "successfully return access-token and refresh-token for a valid request " in new SuccessRefreshCode {
-      val result = await(controller.token()(jsonRequestRequestWithRefreshToken))
+      val result = await(controller.token(Some("56789"))(addTestHeaders(jsonRequestRequestWithRefreshToken)))
 
       status(result) shouldBe 200
+      controller.connector.headers should contain allElementsOf testHTTPHeaders
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token?journeyId=56789"
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
@@ -194,10 +198,12 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
   "requesting the authorize service" should {
 
     "return a 303 redirect with the URL to the API Gateway authorize service" in new SuccessRefreshCode {
-      val result = await(controller.authorize()(emptyRequest))
+      val result = await(controller.authorize()(addTestHeaders(emptyRequest)))
 
       status(result) shouldBe 303
       header("Location", result).get shouldBe "http://localhost:8236/oauth/authorize?client_id=client_id&redirect_uri=redirect_uri&scope=some-scopes&response_type=code"
+      header("testa", result).get shouldBe "valuea"
+      header("testb", result).get shouldBe "valueb"
     }
   }
 

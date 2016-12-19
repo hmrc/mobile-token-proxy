@@ -93,7 +93,6 @@ trait LiveTokenService extends TokenService {
     }
 
     def buildFailureResponse(message:String, generateFailure: Option[ApiFailureResponse] => Nothing) =  {
-      // Attempt to resolve the JSON response body.
       val index = message.indexOf("{")
       val indexEnd = message.indexOf("}")
       val body : Option[ApiFailureResponse] = if (index == -1 && indexEnd != -1 && indexEnd > 0)
@@ -110,7 +109,10 @@ trait LiveTokenService extends TokenService {
       generateFailure(body)
     }
 
-    genericConnector.doPostForm(appConfig.pathToAPIGatewayTokenService, form).map(result => {
+    val path = journeyId.fold(appConfig.pathToAPIGatewayTokenService)
+      { id => s"${appConfig.pathToAPIGatewayTokenService}?journeyId=$id" }
+
+    genericConnector.doPostForm(path, form).map(result => {
       result.status match {
         case 200 =>
           val accessToken = (result.json \ "access_token").asOpt[String]
@@ -123,8 +125,7 @@ trait LiveTokenService extends TokenService {
             throw new IllegalArgumentException(s"Failed to read the JSON result attributes from ${result.json}.")
           }
 
-        case _ => // General failure indicates the API gateway failed to process the request and should be re-tried.
-          generalFailure(None)
+        case _ => generalFailure(None)
       }
     }).recover {
       case ex: BadRequestException => unauthorized(None)
@@ -133,6 +134,7 @@ trait LiveTokenService extends TokenService {
 
       case ex: ServiceUnavailableException => retryFailure(None)
 
+      // 400 indicates invalid access-token, 401 indicates refresh-token expired.
       case Upstream4xxResponse(message, 400 | 401, _, _) => buildFailureResponse(message, unauthorized)
 
       case Upstream5xxResponse(message, _ , _) => buildFailureResponse(message, retryFailure)
