@@ -131,6 +131,17 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
+    "successfully return access-token and refresh-token for a valid request + pass lowercase TxM HTTP headers to backend services " in new SuccessRefreshCode {
+      override val testHTTPHeaders = Seq(vendorHeader.toLowerCase() -> "header vendor", deviceIdHeader.toLowerCase() -> "header device Id")
+
+      val result = await(controller.token(Some("56789"))(addTestHeaders(jsonRequestRequestWithRefreshToken)))
+
+      status(result) shouldBe 200
+      controller.connector.headers should contain allElementsOf testHTTPHeaders
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token?journeyId=56789"
+      jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
+    }
+
     "successfully return access-token and refresh-token for a valid request + no additional HTTP headers supplied to backend services" in new SuccessRefreshCode {
       val result = await(controller.token(Some("56789"))(jsonRequestRequestWithRefreshToken))
 

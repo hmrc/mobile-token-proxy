@@ -67,7 +67,7 @@ trait MobileTokenProxy extends FrontendController {
 
         def buildHeaderCarrier = {
           val headers: scala.collection.immutable.Map[String, String] = request.headers.toSimpleMap.filter {
-            a => appConfig.passthroughHttpHeaders.exists(b => b == a._1)
+            a => appConfig.passthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
           }
           hc.withExtraHeaders(headers.toSeq: _*)
         }
