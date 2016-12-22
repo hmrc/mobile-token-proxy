@@ -49,8 +49,6 @@ trait MobileTokenProxy extends FrontendController {
 
   val aes: CryptoWithKeysFromConfig
 
-  final val validHeaders = Seq("X-Vendor-Instance-Id","X-Client-Device-ID")
-
   implicit val ec: ExecutionContext
 
   def authorize(journeyId: Option[String] = None) = Action.async { implicit request =>
@@ -69,7 +67,7 @@ trait MobileTokenProxy extends FrontendController {
 
         def buildHeaderCarrier = {
           val headers: scala.collection.immutable.Map[String, String] = request.headers.toSimpleMap.filter {
-            a => validHeaders.exists(b => b == a._1)
+            a => appConfig.passthroughHttpHeaders.exists(b => b == a._1)
           }
           hc.withExtraHeaders(headers.toSeq: _*)
         }

@@ -30,10 +30,13 @@ trait ApplicationConfig {
     val response_type:String
     val scope:String
     val tax_calc_token:String
+    val passthroughHttpHeaders:Seq[String]
 }
 
 object ApplicationConfig extends ApplicationConfig with ServicesConfig {
   private def loadConfig(key: String) = configuration.getString(key).getOrElse(throw new RuntimeException(s"Missing key: $key"))
+
+  val passthroughHttpHeaderKey = "api-gateway.proxyPassthroughHttpHeaders"
 
   override lazy val analyticsToken =  Some(loadConfig("google-analytics.token"))
   override lazy val analyticsHost: String = loadConfig("google-analytics.host")
@@ -46,6 +49,7 @@ object ApplicationConfig extends ApplicationConfig with ServicesConfig {
   override lazy val redirect_uri: String = loadConfig("api-gateway.redirect_uri")
   override lazy val client_secret: String = loadConfig("api-gateway.client_secret")
   override lazy val tax_calc_token: String = loadConfig("api-gateway.tax_calc_server_token")
+  override lazy val passthroughHttpHeaders: Seq[String] = configuration.getStringSeq(passthroughHttpHeaderKey).getOrElse(Seq.empty)
 
   final val message = "Missing required configuration entry for mobile-token-proxy: "
 }
