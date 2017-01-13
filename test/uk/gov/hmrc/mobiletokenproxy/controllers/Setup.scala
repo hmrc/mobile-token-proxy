@@ -81,7 +81,8 @@ trait Setup {
     override val scope: String = "some-scopes"
     override val response_type: String = "code"
     override val tax_calc_token: String = "tax_calc_server_token"
-    override val passthroughHttpHeaders: Seq[String] = Seq("X-Vendor-Instance-Id", "X-Client-Device-ID")
+    // Note case is different in order to verify case is ignored.
+    override val passthroughHttpHeaders: Seq[String] = Seq("X-Vendor-Instance-id", "X-Client-Device-id")
   }
 
   def fakeRequest(body:JsValue) = FakeRequest(POST, "url").withBody(body)
