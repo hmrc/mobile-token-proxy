@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ trait Setup {
     """.stripMargin)
 
 
-  val vendorHeader = "X-Client-Software-Instance-ID"
+  val vendorHeader = "X-Vendor-Instance-Id"
   val deviceIdHeader = "X-Client-Device-ID"
 
   val testHTTPHeaders = Seq(vendorHeader -> "header vendor", deviceIdHeader -> "header device Id")
@@ -81,7 +81,7 @@ trait Setup {
     override val scope: String = "some-scopes"
     override val response_type: String = "code"
     override val tax_calc_token: String = "tax_calc_server_token"
-    override val passthroughHttpHeaders: Seq[String] = Seq("X-Client-Software-Instance-ID", "X-Client-Device-ID")
+    override val passthroughHttpHeaders: Seq[String] = Seq("X-Vendor-Instance-Id", "X-Client-Device-ID")
   }
 
   def fakeRequest(body:JsValue) = FakeRequest(POST, "url").withBody(body)
