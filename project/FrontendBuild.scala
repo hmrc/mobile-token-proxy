@@ -6,6 +6,7 @@ object FrontendBuild extends Build with MicroService {
 
   override val appName = "mobile-token-proxy"
 
+
   val appVersion = envOrElse("MOBILE_TOKEN_PROXY_VERSION", "999-SNAPSHOT")
   override lazy val appDependencies: Seq[ModuleID] = AppDependencies()
 }
@@ -15,13 +16,13 @@ private object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "frontend-bootstrap" % "7.10.0",
-    "uk.gov.hmrc" %% "play-config" % "3.0.0",
+    "uk.gov.hmrc" %% "frontend-bootstrap" % "7.19.0",
+    "uk.gov.hmrc" %% "play-config" % "4.3.0",
     "uk.gov.hmrc" %% "play-json-logger" % "3.0.0",
-    "uk.gov.hmrc" %% "play-health" % "2.0.0",
-    "uk.gov.hmrc" %% "govuk-template" % "5.0.0",
-    "uk.gov.hmrc" %% "play-ui" % "5.3.0",
-    "uk.gov.hmrc" %% "domain" % "4.0.0",
+    "uk.gov.hmrc" %% "play-health" % "2.1.0",
+    "uk.gov.hmrc" %% "govuk-template" % "5.2.0",
+    "uk.gov.hmrc" %% "play-ui" % "7.2.0",
+    "uk.gov.hmrc" %% "domain" % "4.1.0",
     "uk.gov.hmrc" %% "play-json-logger" % "3.0.0"
 
   )
@@ -38,7 +39,7 @@ private object AppDependencies {
         "org.scalatest" %% "scalatest" % "3.0.1" % scope,
         "org.pegdown" % "pegdown" % "1.6.0" % scope,
         "org.jsoup" % "jsoup" % "1.10.1" % scope,
-        "uk.gov.hmrc" %% "hmrctest" % "2.2.0" % scope,
+        "uk.gov.hmrc" %% "hmrctest" % "2.3.0" % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
       )
     }.test
