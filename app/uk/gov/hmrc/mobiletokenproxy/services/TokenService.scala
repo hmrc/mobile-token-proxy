@@ -109,10 +109,7 @@ trait LiveTokenService extends TokenService {
       generateFailure(body)
     }
 
-    val path = journeyId.fold(appConfig.pathToAPIGatewayTokenService)
-      { id => s"${appConfig.pathToAPIGatewayTokenService}?journeyId=$id" }
-
-    genericConnector.doPostForm(path, form).map(result => {
+    genericConnector.doPostForm(appConfig.pathToAPIGatewayTokenService, form).map(result => {
       result.status match {
         case 200 =>
           val accessToken = (result.json \ "access_token").asOpt[String]
