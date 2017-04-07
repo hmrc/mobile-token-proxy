@@ -60,7 +60,7 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
 
       status(result) shouldBe 200
       controller.connector.headers should contain allElementsOf testHTTPHeaders
-      controller.connector.path shouldBe "http://localhost:8236/oauth/token?journeyId=12345"
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token"
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
@@ -127,7 +127,7 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
 
       status(result) shouldBe 200
       controller.connector.headers should contain allElementsOf testHTTPHeaders
-      controller.connector.path shouldBe "http://localhost:8236/oauth/token?journeyId=56789"
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token"
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
@@ -138,7 +138,7 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
 
       status(result) shouldBe 200
       controller.connector.headers should contain allElementsOf testHTTPHeaders
-      controller.connector.path shouldBe "http://localhost:8236/oauth/token?journeyId=56789"
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token"
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
@@ -148,7 +148,7 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
       status(result) shouldBe 200
       controller.connector.headers.size shouldBe 1
       controller.connector.headers.exists(item => item._1 == "X-Request-Chain") shouldBe true
-      controller.connector.path shouldBe "http://localhost:8236/oauth/token?journeyId=56789"
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token"
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
