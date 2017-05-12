@@ -40,7 +40,7 @@ The response body can contain a JSON response from the API Gateway which contain
 {
     "accessToken": "a4059838-c9d4-4a2f-9539-2c8b4fa60395",
     "refreshToken": "a4059838-c9d4-4a2f-9539-2c8b4fa60395",
-    "expireTime": 14400
+    "expires_in": 14400
 }
 ```
 
