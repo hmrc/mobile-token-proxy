@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.mobiletokenproxy.services
 
-import play.api.Logger
+import play.api.{Logger, Play}
 import play.api.Play._
 import play.api.libs.json._
 import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
@@ -117,7 +117,9 @@ trait LiveTokenService extends TokenService {
           val expiresIn = (result.json \ "expires_in").asOpt[Long]
 
           if (accessToken.isDefined && refreshToken.isDefined && expiresIn.isDefined) {
-            TokenOauthResponse(accessToken.get, refreshToken.get, expiresIn.get)
+
+            TokenOauthResponse(accessToken.get, refreshToken.get, appyDecrementConfig(expiresIn.get))
+
           } else {
             throw new IllegalArgumentException(s"Failed to read the JSON result attributes from ${result.json}.")
           }
@@ -138,6 +140,14 @@ trait LiveTokenService extends TokenService {
 
       case _ => generalFailure(None)
     }
+  }
+
+  private def appyDecrementConfig(expiresIn: Long): Long = {
+    val expiryDecrementConfig = appConfig.expiryDecrement.getOrElse(0L)
+    if(expiryDecrementConfig > expiresIn){
+      Logger.error(s"Config error expiry_decrement $expiryDecrementConfig can't be greater than the token expiry ${expiresIn}")
+      expiresIn
+    } else expiresIn - expiryDecrementConfig
   }
 
 }

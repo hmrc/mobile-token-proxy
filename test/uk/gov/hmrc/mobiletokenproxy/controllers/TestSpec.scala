@@ -142,7 +142,27 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
       jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
     }
 
-    "successfully return access-token and refresh-token for a valid request + no additional HTTP headers supplied to backend services" in new SuccessRefreshCode {
+    "successfully return access-token and refresh-token for a valid request + no additional HTTP headers supplied to backend services" in new SuccessRefreshCode  {
+      val result = await(controller.token(Some("56789"))(jsonRequestRequestWithRefreshToken))
+
+      status(result) shouldBe 200
+      controller.connector.headers.size shouldBe 1
+      controller.connector.headers.exists(item => item._1 == "X-Request-Chain") shouldBe true
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token"
+      jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14400}""")
+    }
+
+    "successfully return access-token and refresh-token for a valid request with expires_in value decremented by config amount of 400" in new SuccessExpiryDecrement(400L) {
+      val result = await(controller.token(Some("56789"))(jsonRequestRequestWithRefreshToken))
+
+      status(result) shouldBe 200
+      controller.connector.headers.size shouldBe 1
+      controller.connector.headers.exists(item => item._1 == "X-Request-Chain") shouldBe true
+      controller.connector.path shouldBe "http://localhost:8236/oauth/token"
+      jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14000}""")
+    }
+
+    "successfully return access-token and refresh-token for a valid request with expires_in value not decremented by config amount if config amount > expires_in value" in new SuccessExpiryDecrement(14401L) {
       val result = await(controller.token(Some("56789"))(jsonRequestRequestWithRefreshToken))
 
       status(result) shouldBe 200
