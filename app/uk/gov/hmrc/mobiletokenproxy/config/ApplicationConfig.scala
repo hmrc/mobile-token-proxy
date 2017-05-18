@@ -31,10 +31,12 @@ trait ApplicationConfig {
     val scope:String
     val tax_calc_token:String
     val passthroughHttpHeaders:Seq[String]
+    val expiryDecrement:Option[Long]
 }
 
 object ApplicationConfig extends ApplicationConfig with ServicesConfig {
   private def loadConfig(key: String) = configuration.getString(key).getOrElse(throw new RuntimeException(s"Missing key: $key"))
+  private def loadConfigLong(key: String) = configuration.getLong(key)
 
   val passthroughHttpHeaderKey = "api-gateway.proxyPassthroughHttpHeaders"
 
@@ -51,5 +53,6 @@ object ApplicationConfig extends ApplicationConfig with ServicesConfig {
   override lazy val tax_calc_token: String = loadConfig("api-gateway.tax_calc_server_token")
   override lazy val passthroughHttpHeaders: Seq[String] = configuration.getStringSeq(passthroughHttpHeaderKey).getOrElse(Seq.empty)
 
+  override val expiryDecrement: Option[Long] = loadConfigLong("api-gateway.expiry_decrement")
   final val message = "Missing required configuration entry for mobile-token-proxy: "
 }

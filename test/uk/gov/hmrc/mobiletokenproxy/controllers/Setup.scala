@@ -83,6 +83,7 @@ trait Setup {
     override val tax_calc_token: String = "tax_calc_server_token"
     // Note case is different in order to verify case is ignored.
     override val passthroughHttpHeaders: Seq[String] = Seq("X-Vendor-Instance-id", "X-Client-Device-id")
+    override val expiryDecrement: Option[Long] = None
   }
 
   def fakeRequest(body:JsValue) = FakeRequest(POST, "url").withBody(body)
@@ -193,6 +194,43 @@ trait SuccessRefreshCode extends Setup {
 
   val tokenRequestWithRefreshToken = Json.parse(s"""{"refreshToken":"some_refresh_token"}""")
   val jsonRequestRequestWithRefreshToken = fakeRequest(tokenRequestWithRefreshToken)
+
+  val controller = new MobileTokenProxy {
+
+    lazy val connector = new GenericTestConnector(Some(tokenResponseFromAuthorizationCode), None)
+
+    override def genericConnector: GenericConnector = connector
+
+    override def appConfig: ApplicationConfig = config
+
+    override val service: TokenService = new TokenTestService(genericConnector, appConfig)
+
+    override implicit val ec: ExecutionContext = ExecutionContext.global
+
+    override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
+  }
+}
+
+class SuccessExpiryDecrement(expiryDecrementConfig: Long) extends Setup {
+
+  val tokenRequestWithRefreshToken = Json.parse(s"""{"refreshToken":"some_refresh_token"}""")
+  val jsonRequestRequestWithRefreshToken = fakeRequest(tokenRequestWithRefreshToken)
+
+  override val config = new ApplicationConfig {
+    override val analyticsHost: String = "somehost"
+    override val analyticsToken: Option[String] = None
+    override val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
+    override val client_id: String = "client_id"
+    override val redirect_uri: String = "redirect_uri"
+    override val client_secret: String = "client_secret"
+    override val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
+    override val scope: String = "some-scopes"
+    override val response_type: String = "code"
+    override val tax_calc_token: String = "tax_calc_server_token"
+    // Note case is different in order to verify case is ignored.
+    override val passthroughHttpHeaders: Seq[String] = Seq("X-Vendor-Instance-id", "X-Client-Device-id")
+    override val expiryDecrement: Option[Long] = Option(expiryDecrementConfig)
+  }
 
   val controller = new MobileTokenProxy {
 
