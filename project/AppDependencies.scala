@@ -1,18 +1,7 @@
 import sbt._
 import play.sbt.PlayImport._
 
-object FrontendBuild extends Build with MicroService {
-  import scala.util.Properties.envOrElse
-
-  override val appName = "mobile-token-proxy"
-
-
-  val appVersion = envOrElse("MOBILE_TOKEN_PROXY_VERSION", "999-SNAPSHOT")
-  override lazy val appDependencies: Seq[ModuleID] = AppDependencies()
-}
-
-private object AppDependencies {
-  import play.sbt.PlayImport._
+object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
