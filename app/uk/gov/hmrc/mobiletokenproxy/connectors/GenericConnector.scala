@@ -17,14 +17,14 @@
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
 import play.api.libs.json._
-import uk.gov.hmrc.mobiletokenproxy.config.WsHttp
-import uk.gov.hmrc.play.http.{HttpResponse, HttpGet, HeaderCarrier, HttpPost}
+import uk.gov.hmrc.http.{CoreGet, CorePost, HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.mobiletokenproxy.config.WSHttp
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait GenericConnector {
 
-  def http: HttpPost with HttpGet
+  def http: CorePost with CoreGet
 
   def doGet(path:String)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
     http.GET(path)
@@ -40,5 +40,5 @@ trait GenericConnector {
 }
 
 object GenericConnector extends GenericConnector {
-  override def http = WsHttp
+  override def http = WSHttp
 }

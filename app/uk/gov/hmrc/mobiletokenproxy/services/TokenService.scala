@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.mobiletokenproxy.services
 
-import play.api.{Logger, Play}
+import play.api.Logger
 import play.api.Play._
 import play.api.libs.json._
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
-import uk.gov.hmrc.play.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 

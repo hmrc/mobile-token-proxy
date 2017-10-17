@@ -1,19 +1,11 @@
 import sbt._
-import play.sbt.PlayImport._
 
 object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "frontend-bootstrap" % "7.23.0",
-    "uk.gov.hmrc" %% "play-config" % "4.3.0",
-    "uk.gov.hmrc" %% "play-json-logger" % "3.0.0",
-    "uk.gov.hmrc" %% "play-health" % "2.1.0",
-    "uk.gov.hmrc" %% "govuk-template" % "5.2.0",
-    "uk.gov.hmrc" %% "play-ui" % "7.2.0",
-    "uk.gov.hmrc" %% "domain" % "4.1.0",
-    "uk.gov.hmrc" %% "play-json-logger" % "3.0.0"
-
+    "uk.gov.hmrc" %% "frontend-bootstrap" % "8.8.0",
+    "uk.gov.hmrc" %% "domain" % "5.0.0"
   )
 
   trait TestDependencies {
@@ -25,10 +17,8 @@ object AppDependencies {
     def apply() = new TestDependencies {
 
       override lazy val test = Seq(
-        "org.scalatest" %% "scalatest" % "3.0.1" % scope,
-        "org.pegdown" % "pegdown" % "1.6.0" % scope,
+        "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
         "org.jsoup" % "jsoup" % "1.10.1" % scope,
-        "uk.gov.hmrc" %% "hmrctest" % "2.3.0" % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
       )
     }.test
