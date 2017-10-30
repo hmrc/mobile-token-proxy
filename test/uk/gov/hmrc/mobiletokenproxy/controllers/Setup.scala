@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
-import play.api.libs.json.{Json, JsValue}
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.crypto.CryptoWithKeysFromConfig
+import uk.gov.hmrc.http.{CoreGet, CorePost, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenService, TokenService}
-import uk.gov.hmrc.play.http._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -127,7 +127,7 @@ trait Setup {
       buildResponse(path)
     }
 
-    override def http: HttpPost with HttpGet = throw new Exception("Not implemented!")
+    override def http: CorePost with CoreGet = throw new Exception("Not implemented!")
   }
 
 }

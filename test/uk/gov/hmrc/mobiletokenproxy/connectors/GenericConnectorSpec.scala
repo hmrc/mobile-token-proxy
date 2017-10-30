@@ -17,20 +17,22 @@
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
 
-import play.api.test.FakeApplication
+import com.typesafe.config.Config
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.{Json, Writes}
+import play.api.test.FakeApplication
+import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.hooks.HttpHook
+import uk.gov.hmrc.mobiletokenproxy.controllers.StubApplicationConfiguration
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.test._
-import uk.gov.hmrc.mobiletokenproxy.controllers.StubApplicationConfiguration
-import scala.concurrent.Future
-import uk.gov.hmrc.play.http.hooks.HttpHook
-import uk.gov.hmrc.play.http._
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 
 class GenericTestConnector extends GenericConnector with ServicesConfig {
-  override def http: HttpGet with HttpPost = throw new Exception("Not to be invoked!")
+  override def http: CoreGet with CorePost = throw new Exception("Not to be invoked!")
 }
 
 class GenericConnectorSpec
@@ -50,18 +52,21 @@ class GenericConnectorSpec
 
     val connector = new GenericTestConnector {
 
-      override lazy val http: HttpPost with HttpGet = new HttpGet with HttpPost {
+      override lazy val http: CorePost with CoreGet = new CoreGet with HttpGet with CorePost with HttpPost {
 
         override val hooks: Seq[HttpHook] = NoneRequired
-        override protected def doGet(url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
 
-        override protected def doPost[A](url: String, body: A, headers: Seq[(String, String)])(implicit wts: Writes[A], hc: HeaderCarrier): Future[HttpResponse] = response
+        override def configuration: Option[Config] = None
 
-        override protected def doPostString(url: String, body: String, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
+        override def doGet(url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
 
-        override protected def doFormPost(url: String, body: Map[String, Seq[String]])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
+        override def doPost[A](url: String, body: A, headers: Seq[(String, String)])(implicit wts: Writes[A], hc: HeaderCarrier): Future[HttpResponse] = response
 
-        override protected def doEmptyPost[A](url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
+        override def doPostString(url: String, body: String, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
+
+        override def doFormPost(url: String, body: Map[String, Seq[String]])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
+
+        override def doEmptyPost[A](url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
       }
     }
   }

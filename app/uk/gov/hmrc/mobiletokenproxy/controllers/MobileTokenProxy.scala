@@ -18,14 +18,15 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 
 import play.api.Logger
 import play.api.libs.json.{JsError, Json}
-import uk.gov.hmrc.crypto.{Crypted, PlainText, CryptoWithKeysFromConfig}
+import play.api.mvc._
+import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
 import uk.gov.hmrc.play.frontend.controller.FrontendController
-import play.api.mvc._
-import uk.gov.hmrc.play.http.HeaderCarrier
+
 import scala.concurrent.{ExecutionContext, Future}
 
 object MobileTokenProxy extends MobileTokenProxy {

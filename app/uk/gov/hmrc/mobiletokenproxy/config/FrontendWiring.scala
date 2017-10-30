@@ -17,23 +17,21 @@
 package uk.gov.hmrc.mobiletokenproxy.config
 
 import akka.stream.Materializer
-import play.filters.csrf.CSRFFilter
-import uk.gov.hmrc.play.config.{ControllerConfig, AppName, RunMode}
-import uk.gov.hmrc.play.filters.MicroserviceFilterSupport
-import uk.gov.hmrc.play.filters.frontend.CSRFExceptionsFilter
-import uk.gov.hmrc.play.frontend.bootstrap.DefaultFrontendGlobal
 import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
+import play.api.Play.current
 import play.api.mvc.{EssentialFilter, Request}
 import play.api.{Application, Configuration, Play}
+import play.filters.csrf.CSRFFilter
 import play.twirl.api.Html
-import play.api.Play.current
-import uk.gov.hmrc.play.audit.filters.FrontendAuditFilter
-import uk.gov.hmrc.play.audit.http.config.LoadAuditingConfig
-import uk.gov.hmrc.play.http.hooks.HttpHook
-import uk.gov.hmrc.play.http.logging.filters.FrontendLoggingFilter
+import uk.gov.hmrc.http.hooks.{HttpHook, HttpHooks}
+import uk.gov.hmrc.http.{HttpDelete, HttpGet, HttpPost, HttpPut}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector => Auditing}
-import uk.gov.hmrc.play.http.ws.WSHttp
+import uk.gov.hmrc.play.config.{AppName, ControllerConfig, RunMode}
+import uk.gov.hmrc.play.frontend.bootstrap.DefaultFrontendGlobal
+import uk.gov.hmrc.play.frontend.config.LoadAuditingConfig
+import uk.gov.hmrc.play.frontend.filters.{CSRFExceptionsFilter, FrontendAuditFilter, FrontendLoggingFilter, MicroserviceFilterSupport}
+import uk.gov.hmrc.play.http.ws._
 
 
 object ApplicationGlobal
@@ -89,6 +87,9 @@ object AuditConnector extends Auditing with AppName with RunMode {
   }
 }
 
-object WsHttp extends WSHttp {
+trait Hooks extends HttpHooks {
   override val hooks: Seq[HttpHook] = NoneRequired
 }
+
+trait WSHttp extends HttpGet with WSGet with HttpPut with WSPut with HttpPost with WSPost with HttpDelete with WSDelete with Hooks with AppName
+object WSHttp extends WSHttp
