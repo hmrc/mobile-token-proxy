@@ -17,24 +17,20 @@
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
 
-import com.typesafe.config.Config
 import org.scalatest.concurrent.ScalaFutures
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.Json.parse
+import play.api.libs.json.{JsValue, Writes}
 import play.api.test.FakeApplication
-import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.hooks.HttpHook
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpResponse, Upstream5xxResponse}
+import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
 import uk.gov.hmrc.mobiletokenproxy.controllers.StubApplicationConfiguration
-import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.test._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-
-class GenericTestConnector extends GenericConnector with ServicesConfig {
-  override def http: CoreGet with CorePost = throw new Exception("Not to be invoked!")
-}
-
+// NGC-3236 review
 class GenericConnectorSpec
   extends UnitSpec with WithFakeApplication with ScalaFutures with StubApplicationConfiguration {
 
@@ -42,37 +38,31 @@ class GenericConnectorSpec
 
   private trait Setup {
 
-    implicit lazy val hc = HeaderCarrier()
+    implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
-    val someJson = Json.parse("""{"test":1234}""")
-    lazy val http500Response = Future.failed(new Upstream5xxResponse("Error", 500, 500))
-    lazy val http400Response = Future.failed(new BadRequestException("bad request"))
-    lazy val http200Response = Future.successful(HttpResponse(200, Some(someJson)))
+    val someJson: JsValue = parse("""{"test":1234}""")
+    lazy val http500Response: Future[Nothing] = Future.failed(Upstream5xxResponse("Error", 500, 500))
+    lazy val http400Response: Future[Nothing] = Future.failed(new BadRequestException("bad request"))
+    lazy val http200Response: Future[AnyRef with HttpResponse] = Future.successful(HttpResponse(200, Some(someJson)))
     lazy val response: Future[HttpResponse] = http400Response
 
-    val connector = new GenericTestConnector {
+    val http: HttpVerbs = new HttpVerbs {
+      override val hooks: Seq[HttpHook] = NoneRequired
+      override def doGet(url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
 
-      override lazy val http: CorePost with CoreGet = new CoreGet with HttpGet with CorePost with HttpPost {
+      override def doPost[A](url: String, body: A, headers: Seq[(String, String)])(implicit wts: Writes[A], hc: HeaderCarrier): Future[HttpResponse] = response
 
-        override val hooks: Seq[HttpHook] = NoneRequired
+      override def doPostString(url: String, body: String, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
 
-        override def configuration: Option[Config] = None
+      override def doFormPost(url: String, body: Map[String, Seq[String]])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
 
-        override def doGet(url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
-
-        override def doPost[A](url: String, body: A, headers: Seq[(String, String)])(implicit wts: Writes[A], hc: HeaderCarrier): Future[HttpResponse] = response
-
-        override def doPostString(url: String, body: String, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
-
-        override def doFormPost(url: String, body: Map[String, Seq[String]])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
-
-        override def doEmptyPost[A](url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
-      }
+      override def doEmptyPost[A](url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
     }
+
+    val connector = new GenericConnector(http)
   }
 
   "genericConnector get" should {
-
     "throw BadRequestException on 400 response" in new Setup {
 
       intercept[BadRequestException] {
@@ -93,11 +83,9 @@ class GenericConnectorSpec
 
       await(connector.doGet("somepath")).json shouldBe someJson
     }
-
   }
 
   "genericConnector post" should {
-
     "throw BadRequestException on 400 response" in new Setup {
 
       intercept[BadRequestException] {
@@ -118,7 +106,5 @@ class GenericConnectorSpec
 
       await(connector.doPost("somepath", someJson)).json shouldBe someJson
     }
-
   }
-
 }

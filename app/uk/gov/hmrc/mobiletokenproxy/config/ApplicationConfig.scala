@@ -16,43 +16,38 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
+import javax.inject.Singleton
+import play.api.Configuration
+import play.api.Mode.Mode
 import play.api.Play._
 import uk.gov.hmrc.play.config.ServicesConfig
 
-trait ApplicationConfig {
-    val analyticsToken: Option[String]
-    val analyticsHost: String
-    val pathToAPIGatewayTokenService:String
-    val pathToAPIGatewayAuthService:String
-    val client_id:String
-    val client_secret:String
-    val redirect_uri:String
-    val response_type:String
-    val scope:String
-    val tax_calc_token:String
-    val passthroughHttpHeaders:Seq[String]
-    val expiryDecrement:Option[Long]
-}
-
-object ApplicationConfig extends ApplicationConfig with ServicesConfig {
-  private def loadConfig(key: String) = configuration.getString(key).getOrElse(throw new RuntimeException(s"Missing key: $key"))
-  private def loadConfigLong(key: String) = configuration.getLong(key)
+@Singleton
+class ApplicationConfig extends ServicesConfig {
+  // NGC-3236 review
+  private def loadConfig(key: String): String = configuration.getString(key).getOrElse(throw new RuntimeException(s"Missing key: $key"))
+  private def loadConfigLong(key: String): Option[Long] = configuration.getLong(key)
 
   val passthroughHttpHeaderKey = "api-gateway.proxyPassthroughHttpHeaders"
 
-  override lazy val analyticsToken =  Some(loadConfig("google-analytics.token"))
-  override lazy val analyticsHost: String = loadConfig("google-analytics.host")
+   lazy val analyticsToken: Option[String] =  Some(loadConfig("google-analytics.token"))
+   lazy val analyticsHost: String = loadConfig("google-analytics.host")
 
-  override lazy val pathToAPIGatewayTokenService = loadConfig("api-gateway.pathToAPIGatewayTokenService")
-  override lazy val pathToAPIGatewayAuthService = loadConfig("api-gateway.pathToAPIGatewayAuthService")
-  override lazy val scope = loadConfig("api-gateway.scope")
-  override lazy val response_type = loadConfig("api-gateway.response_type")
-  override lazy val client_id: String = loadConfig("api-gateway.client_id")
-  override lazy val redirect_uri: String = loadConfig("api-gateway.redirect_uri")
-  override lazy val client_secret: String = loadConfig("api-gateway.client_secret")
-  override lazy val tax_calc_token: String = loadConfig("api-gateway.tax_calc_server_token")
-  override lazy val passthroughHttpHeaders: Seq[String] = configuration.getStringSeq(passthroughHttpHeaderKey).getOrElse(Seq.empty)
+   lazy val pathToAPIGatewayTokenService: String = loadConfig("api-gateway.pathToAPIGatewayTokenService")
+   lazy val pathToAPIGatewayAuthService: String = loadConfig("api-gateway.pathToAPIGatewayAuthService")
+   lazy val scope: String = loadConfig("api-gateway.scope")
+   lazy val response_type: String = loadConfig("api-gateway.response_type")
+   lazy val client_id: String = loadConfig("api-gateway.client_id")
+   lazy val redirect_uri: String = loadConfig("api-gateway.redirect_uri")
+   lazy val client_secret: String = loadConfig("api-gateway.client_secret")
+   lazy val tax_calc_token: String = loadConfig("api-gateway.tax_calc_server_token")
+   lazy val passthroughHttpHeaders: Seq[String] = configuration.getStringSeq(passthroughHttpHeaderKey).getOrElse(Seq.empty)
 
-  override val expiryDecrement: Option[Long] = loadConfigLong("api-gateway.expiry_decrement")
-  final val message = "Missing required configuration entry for mobile-token-proxy: "
+   val expiryDecrement: Option[Long] = loadConfigLong("api-gateway.expiry_decrement")
+   final val message: String = "Missing required configuration entry for mobile-token-proxy: "
+
+   lazy val ssoUrl: Option[String] = configuration.getString(s"govuk-tax.$env.portal.ssoUrl")
+
+   override def mode: Mode = current.mode
+   override def runModeConfiguration: Configuration = current.configuration
 }

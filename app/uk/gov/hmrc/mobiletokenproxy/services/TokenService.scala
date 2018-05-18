@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.mobiletokenproxy.services
 
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.Play._
 import play.api.libs.json._
@@ -32,17 +33,17 @@ abstract class LocalException extends Exception {
 }
 
 class InvalidAccessCode(response:Option[ApiFailureResponse]) extends LocalException {
-  val apiResponse=response
+  val apiResponse: Option[ApiFailureResponse] = response
 }
 
 class FailToRetrieveToken(response:Option[ApiFailureResponse]) extends LocalException {
-  val apiResponse=response
+  val apiResponse: Option[ApiFailureResponse] = response
 }
 
 case class ApiFailureResponse(code:String, message:String)
 
 object ApiFailureResponse {
-  implicit val format = Json.format[ApiFailureResponse]
+  implicit val format: OFormat[ApiFailureResponse] = Json.format[ApiFailureResponse]
 }
 
 trait TokenService {
@@ -52,10 +53,10 @@ trait TokenService {
 }
 
 trait LiveTokenService extends TokenService {
-  def genericConnector: GenericConnector
-  def appConfig: ApplicationConfig
+  val genericConnector: GenericConnector
+  val appConfig: ApplicationConfig
 
-  def getConfig(key:String) = current.configuration.getString(key).getOrElse(throw new IllegalArgumentException(s"Failed to resolve $key"))
+  def getConfig(key:String): String = current.configuration.getString(key).getOrElse(throw new IllegalArgumentException(s"Failed to resolve $key"))
 
   def getTokenFromAccessCode(authCode:String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
     getAPIGatewayToken("code", authCode, "authorization_code", journeyId)
@@ -75,7 +76,7 @@ trait LiveTokenService extends TokenService {
       "redirect_uri" -> Seq(appConfig.redirect_uri)
     )
 
-    def error(message:String, failure:String) = Logger.error(s"Mobile-Token-Proxy - $journeyId - Failed to process request $message. Failure is $failure")
+    def error(message:String, failure:String): Unit = Logger.error(s"Mobile-Token-Proxy - $journeyId - Failed to process request $message. Failure is $failure")
 
     def unauthorized(message:Option[ApiFailureResponse]) = {
       error(s"Received Refresh Token failure : Status code 400/401", "Token refresh failure")
@@ -152,7 +153,7 @@ trait LiveTokenService extends TokenService {
 
 }
 
-object LiveTokenService extends LiveTokenService {
-  override def genericConnector: GenericConnector = GenericConnector
-  override def appConfig = ApplicationConfig
+@Singleton
+class LiveTokenServiceImpl @Inject()(override val genericConnector: GenericConnector, override val appConfig: ApplicationConfig)
+  extends LiveTokenService {
 }

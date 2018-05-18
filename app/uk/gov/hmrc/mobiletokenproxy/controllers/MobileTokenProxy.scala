@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
+import javax.inject.{Inject, Singleton}
 import play.api.Logger
-import play.api.libs.json.{JsError, Json}
+import play.api.libs.json.Json.toJson
+import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -25,40 +27,28 @@ import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object MobileTokenProxy extends MobileTokenProxy {
-  override def genericConnector: GenericConnector = GenericConnector
+@Singleton
+class MobileTokenProxy @Inject()(genericConnector: GenericConnector, appConfig: ApplicationConfig, service: TokenService)
+  extends FrontendController {
+  def config: ApplicationConfig = appConfig
 
-  override def appConfig = ApplicationConfig
+  implicit val ec: ExecutionContext = ExecutionContext.global
 
-  override val service = LiveTokenService
+  // NGC-3236 review
+  val aes = CryptoWithKeysFromConfig("aes")
 
-  override implicit val ec: ExecutionContext = ExecutionContext.global
 
-  override val aes = CryptoWithKeysFromConfig("aes")
-}
-
-trait MobileTokenProxy extends FrontendController {
-  def genericConnector: GenericConnector
-
-  def appConfig: ApplicationConfig
-
-  val service: TokenService
-
-  val aes: CryptoWithKeysFromConfig
-
-  implicit val ec: ExecutionContext
-
-  def authorize(journeyId: Option[String] = None) = Action.async { implicit request =>
+  def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     val redirectUrl = s"""${appConfig.pathToAPIGatewayAuthService}?client_id=${appConfig.client_id}&redirect_uri=${appConfig.redirect_uri}&scope=${appConfig.scope}&response_type=${appConfig.response_type}"""
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq :_*))
 
   }
 
-  def token(journeyId: Option[String] = None) = Action.async(BodyParsers.parse.json) { implicit request =>
+  def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body.validate[TokenRequest].fold(
       errors => {
         Logger.warn("Received error with service token: " + errors)
@@ -90,13 +80,13 @@ trait MobileTokenProxy extends FrontendController {
       })
   }
 
-  def taxcalctoken(journeyId: Option[String] = None) = Action.async { implicit request =>
+  def taxcalctoken(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     val encrypted: Crypted = aes.encrypt(PlainText(appConfig.tax_calc_token))
-    Future.successful(Ok(Json.toJson(TokenResponse(encrypted.value))))
+    Future.successful(Ok(toJson(TokenResponse(encrypted.value))))
   }
 
-  private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier) = {
-    func.map { res => Ok(Json.toJson(res))
+  private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier): Future[Result] = {
+    func.map { res => Ok(toJson(res))
     }.recover {
       recoverError
     }
@@ -111,5 +101,5 @@ trait MobileTokenProxy extends FrontendController {
   }
 
   private def buildFailureResponse(statusResponse:Status, apiResponse:Option[ApiFailureResponse]) =
-    apiResponse.fold(statusResponse("")){ resp => statusResponse(Json.toJson(resp)) }
+    apiResponse.fold(statusResponse("")){ resp => statusResponse(toJson(resp)) }
 }

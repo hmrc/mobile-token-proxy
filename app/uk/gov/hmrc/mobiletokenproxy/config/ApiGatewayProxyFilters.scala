@@ -16,15 +16,14 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import play.twirl.api.Html
-import uk.gov.hmrc.mobiletokenproxy.config.HtmlConst.empty
+import javax.inject.{Inject, Singleton}
+import play.api.http.HttpFilters
+import play.api.mvc.EssentialFilter
+import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
 
-// NGC-3236 review
-case class MainConfig(maybeMainClass: Option[String] = None, maybeMainDataAttributes: Option[Html] = None) {
-
-  def mainClass: Html = maybeMainClass.map(asClassAttr).getOrElse(empty)
-
-  def mainDataAttributes: Html = maybeMainDataAttributes.getOrElse(empty)
-
-  private def asClassAttr(clazz: String): Html = Html(s"""class="$clazz"""")
+@Singleton
+class ApiGatewayProxyFilters @Inject()(frontendFilters: FrontendFilters) extends HttpFilters{
+  //CSRFFilter stops the POST working
+  override def filters: Seq[EssentialFilter] = frontendFilters.filters.filterNot(_.getClass.getSimpleName == "CSRFFilter")
 }
+

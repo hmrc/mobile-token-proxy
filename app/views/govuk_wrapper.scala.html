@@ -14,7 +14,9 @@
  * limitations under the License.
  *@
 
-@(appConfig: uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig,
+@import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
+
+@(config: ApplicationConfig,
   title: String,
   mainClass: Option[String] = None,
   mainDataAttributes: Option[Html] = None,
@@ -46,8 +48,8 @@
 
 @bodyEnd = {
     @uiLayouts.footer(
-      analyticsToken = uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig.analyticsToken,
-      analyticsHost = uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig.analyticsHost,
+      analyticsToken = config.analyticsToken,
+      analyticsHost = config.analyticsHost,
       ssoUrl = None,
       scriptElem = None,
       gaCalls = None)
@@ -79,4 +81,4 @@
       sidebar = sidebar)
 }
 
-@hmrcGovUkTemplate(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiLayouts.footer_links()), true)(content)
+@hmrcGovUkTemplate(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiLayouts.footer_links()), nav = true)(content)
