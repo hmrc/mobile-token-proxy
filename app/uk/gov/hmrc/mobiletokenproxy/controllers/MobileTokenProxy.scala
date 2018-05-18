@@ -38,7 +38,6 @@ class MobileTokenProxy @Inject()(genericConnector: GenericConnector, appConfig: 
 
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  // NGC-3236 review
   val aes = CryptoWithKeysFromConfig("aes")
 
 

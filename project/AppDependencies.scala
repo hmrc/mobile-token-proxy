@@ -20,7 +20,8 @@ object AppDependencies {
 
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
-        "com.typesafe.play" %% "play-test" % PlayVersion.current % scope
+        "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
+        "org.scalamock" %% "scalamock" % "4.0.0" % "test"
       )
     }.test
   }

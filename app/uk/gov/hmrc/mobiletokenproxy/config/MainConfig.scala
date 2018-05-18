@@ -19,7 +19,6 @@ package uk.gov.hmrc.mobiletokenproxy.config
 import play.twirl.api.Html
 import uk.gov.hmrc.mobiletokenproxy.config.HtmlConst.empty
 
-// NGC-3236 review
 case class MainConfig(maybeMainClass: Option[String] = None, maybeMainDataAttributes: Option[Html] = None) {
 
   def mainClass: Html = maybeMainClass.map(asClassAttr).getOrElse(empty)
