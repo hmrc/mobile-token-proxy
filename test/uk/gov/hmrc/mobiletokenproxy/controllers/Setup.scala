@@ -25,15 +25,21 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.crypto.CryptoWithKeysFromConfig
 import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.mobiletokenproxy.config.{ApplicationConfig, HttpVerbs}
+import uk.gov.hmrc.mobiletokenproxy.config.{GoogleAnalyticsConfig, HttpVerbs, ProxyPassthroughHttpHeaders}
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
-import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenService, TokenService}
+import uk.gov.hmrc.mobiletokenproxy.services.LiveTokenService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TokenTestService(connector:GenericConnector, config:ApplicationConfig) extends LiveTokenService {
-  override val genericConnector: GenericConnector = connector
-  override val appConfig: ApplicationConfig = config
+class TokenTestService(
+                        override val genericConnector: GenericConnector,
+                        override val appConfig: GoogleAnalyticsConfig,
+                        override val pathToAPIGatewayAuthService: String,
+                        override val clientId: String,
+                        override val redirectUri: String,
+                        override val clientSecret: String,
+                        override val pathToAPIGatewayTokenService: String,
+                        override val expiryDecrement: Long ) extends LiveTokenService {
 }
 
 
@@ -74,21 +80,23 @@ trait Setup {
 
   def buildMessage(code:String, message:String) = s"""{"code":"$code","message":"$message"}"""
 
+  val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
+  val clientId: String = "client_id"
+  val redirectUri: String = "redirect_uri"
+  val clientSecret: String = "client_secret"
+  val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
+  val scope: String = "some-scopes"
+  val responseType: String = "code"
+  val taxCalcToken: String = "tax_calc_server_token"
+  val taxCalcServerToken: String = "tax_calc_server_token"
+  val expiryDecrement: Long = 0
+  val passthroughHttpHeaders: ProxyPassthroughHttpHeaders =
+    new ProxyPassthroughHttpHeaders(Seq("X-Vendor-Instance-id", "X-Client-Device-id"))
+
   // NGC-3236 review
-  val config = new ApplicationConfig {
+  val config = new GoogleAnalyticsConfig {
     override lazy val analyticsHost: String = "somehost"
     override lazy val analyticsToken: Some[String] = Some("123")
-    override lazy val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
-    override lazy val client_id: String = "client_id"
-    override lazy val redirect_uri: String = "redirect_uri"
-    override lazy val client_secret: String = "client_secret"
-    override lazy val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
-    override lazy val scope: String = "some-scopes"
-    override lazy val response_type: String = "code"
-    override lazy val tax_calc_token: String = "tax_calc_server_token"
-    // Note case is different in order to verify case is ignored.
-    override lazy val passthroughHttpHeaders: Seq[String] = Seq("X-Vendor-Instance-id", "X-Client-Device-id")
-    override val expiryDecrement: Option[Long] = None
   }
 
   def fakeRequest(body:JsValue) = FakeRequest(POST, "url").withBody(body)
@@ -154,7 +162,25 @@ trait Setup {
 trait SuccessAccessCode extends Setup {
   def connector() = new GenericTestConnector(Some(tokenResponseFromAuthorizationCode), None)
 
-  val controller = new MobileTokenProxy(connector(), config,  new TokenTestService(connector(), config): TokenService) {
+  val controller =
+    new MobileTokenProxy(
+      connector(),
+      new TokenTestService(
+        connector(),
+        config,
+        pathToAPIGatewayAuthService,
+        clientId,
+        redirectUri,
+        clientSecret,
+        pathToAPIGatewayTokenService,
+        expiryDecrement ),
+      passthroughHttpHeaders,
+      pathToAPIGatewayAuthService: String,
+      clientId: String,
+      redirectUri: String,
+      scope: String,
+      responseType: String,
+      taxCalcServerToken: String) {
     override implicit val ec: ExecutionContext = ExecutionContext.global
 
     override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
@@ -166,7 +192,25 @@ trait FailToReturnApiToken extends Setup {
   val ex:Option[Exception]
   val connector = new GenericTestConnector(Some(tokenResponseFromAuthorizationCode), ex)
 
-  val controller = new MobileTokenProxy(connector, config,  new TokenTestService(connector, config): TokenService) {
+  val controller =
+    new MobileTokenProxy(
+      connector,
+      new TokenTestService(
+        connector,
+        config,
+        pathToAPIGatewayAuthService,
+        clientId,
+        redirectUri,
+        clientSecret,
+        pathToAPIGatewayTokenService,
+        expiryDecrement ),
+      passthroughHttpHeaders,
+      pathToAPIGatewayAuthService: String,
+      clientId: String,
+      redirectUri: String,
+      scope: String,
+      responseType: String,
+      taxCalcServerToken: String) {
     override implicit val ec: ExecutionContext = ExecutionContext.global
 
     override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
@@ -176,7 +220,25 @@ trait FailToReturnApiToken extends Setup {
 trait BadResponseAPIGateway extends Setup {
   val connector = new GenericTestConnector(Some(badTokenResponseFromAuthorizationCode), None)
 
-  val controller = new MobileTokenProxy(connector, config,  new TokenTestService(connector, config): TokenService) {
+  val controller =
+    new MobileTokenProxy(
+      connector,
+      new TokenTestService(
+        connector,
+        config,
+        pathToAPIGatewayAuthService,
+        clientId,
+        redirectUri,
+        clientSecret,
+        pathToAPIGatewayTokenService,
+        expiryDecrement ),
+      passthroughHttpHeaders,
+      pathToAPIGatewayAuthService: String,
+      clientId: String,
+      redirectUri: String,
+      scope: String,
+      responseType: String,
+      taxCalcServerToken: String) {
     override implicit val ec: ExecutionContext = ExecutionContext.global
 
     override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
@@ -190,38 +252,63 @@ trait SuccessRefreshCode extends Setup {
   val jsonRequestRequestWithRefreshToken: FakeRequest[JsValue] = fakeRequest(tokenRequestWithRefreshToken)
   val connector = new GenericTestConnector(Some(tokenResponseFromAuthorizationCode), None)
 
-  val controller = new MobileTokenProxy(connector, config,  new TokenTestService(connector, config): TokenService) {
+  val controller =
+    new MobileTokenProxy(
+      connector,
+      new TokenTestService(
+        connector,
+        config,
+        pathToAPIGatewayAuthService,
+        clientId,
+        redirectUri,
+        clientSecret,
+        pathToAPIGatewayTokenService,
+        expiryDecrement ),
+      passthroughHttpHeaders,
+      pathToAPIGatewayAuthService: String,
+      clientId: String,
+      redirectUri: String,
+      scope: String,
+      responseType: String,
+      taxCalcServerToken: String) {
     override implicit val ec: ExecutionContext = ExecutionContext.global
 
     override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
   }
 }
 
-class SuccessExpiryDecrement(expiryDecrementConfig: Long) extends Setup {
+class SuccessExpiryDecrement(override val expiryDecrement: Long) extends Setup {
 
   val tokenRequestWithRefreshToken: JsValue = parse(s"""{"refreshToken":"some_refresh_token"}""")
   val jsonRequestRequestWithRefreshToken: FakeRequest[JsValue] = fakeRequest(tokenRequestWithRefreshToken)
 
   // NGC-3236 review
-  override val config = new ApplicationConfig {
+  override val config = new GoogleAnalyticsConfig {
     override lazy val analyticsHost: String = "somehost"
     override lazy val analyticsToken: Some[String] = Some("123")
-    override lazy val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
-    override lazy val client_id: String = "client_id"
-    override lazy val redirect_uri: String = "redirect_uri"
-    override lazy val client_secret: String = "client_secret"
-    override lazy val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
-    override lazy val scope: String = "some-scopes"
-    override lazy val response_type: String = "code"
-    override lazy val tax_calc_token: String = "tax_calc_server_token"
-    // Note case is different in order to verify case is ignored.
-    override lazy val passthroughHttpHeaders: Seq[String] = Seq("X-Vendor-Instance-id", "X-Client-Device-id")
-    override val expiryDecrement: Option[Long] = Option(expiryDecrementConfig)
   }
 
   val connector = new GenericTestConnector(Some(tokenResponseFromAuthorizationCode), None)
 
-  val controller = new MobileTokenProxy(connector, config, new TokenTestService(connector, config)) {
+  val controller =
+    new MobileTokenProxy(
+      connector,
+      new TokenTestService(
+        connector,
+        config,
+        pathToAPIGatewayAuthService,
+        clientId,
+        redirectUri,
+        clientSecret,
+        pathToAPIGatewayTokenService,
+        expiryDecrement ),
+      passthroughHttpHeaders,
+      pathToAPIGatewayAuthService: String,
+      clientId: String,
+      redirectUri: String,
+      scope: String,
+      responseType: String,
+      taxCalcServerToken: String) {
     override implicit val ec: ExecutionContext = ExecutionContext.global
 
     override val aes: CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")

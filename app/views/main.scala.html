@@ -16,9 +16,9 @@
 
 @import play.api.Play.current
 @import play.api.i18n.Messages.Implicits._
-@import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
+@import uk.gov.hmrc.mobiletokenproxy.config.GoogleAnalyticsConfig
 
-@(config: ApplicationConfig,
+@(config: GoogleAnalyticsConfig,
 title: String,
 headerNav: Option[views.helpers.HeaderNav] = None,
 sidebarLinks: Option[Html] = None,
@@ -92,7 +92,7 @@ gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit req
 @bodyEnd = {
 @playLayouts.footer(analyticsToken = config.analyticsToken,
     analyticsHost = config.analyticsHost,
-    ssoUrl = config.ssoUrl,
+    ssoUrl = None,
     scriptElem = scriptElement,
     gaCalls = gaCalls)
 }

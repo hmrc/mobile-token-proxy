@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.http.{Upstream4xxResponse, Upstream5xxResponse}
@@ -164,7 +164,8 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
 //      controller.connector.headers.size shouldBe 1
 //      controller.connector.headers.exists(item => item._1 == "X-Request-Chain") shouldBe true
 //      controller.connector.path shouldBe "http://localhost:8236/oauth/token"
-      jsonBodyOf(result) shouldBe Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14000}""")
+      private val expected: JsValue = Json.parse("""{"access_token":"495b5b1725d590eb87d0f6b7dcea32a9","refresh_token":"b75f2ed960898b4cd38f23934c6befb2","expires_in":14000}""")
+      jsonBodyOf(result).toString() shouldBe expected.toString()
     }
 
     "successfully return access-token and refresh-token for a valid request with expires_in value not decremented by config amount if config amount > expires_in value" in new SuccessExpiryDecrement(14401L) {
@@ -263,7 +264,7 @@ class TestSpec extends UnitSpec with WithFakeApplication with ScalaFutures with 
 
       val response = jsonBodyOf(result).as[TokenResponse]
       val aes = CryptoWithKeysFromConfig("aes")
-      aes.decrypt(Crypted(response.token)).value shouldBe controller.config.tax_calc_token
+      aes.decrypt(Crypted(response.token)).value shouldBe taxCalcServerToken
     }
 
   }

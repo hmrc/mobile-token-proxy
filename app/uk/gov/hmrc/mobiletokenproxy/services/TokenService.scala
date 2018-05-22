@@ -16,12 +16,11 @@
 
 package uk.gov.hmrc.mobiletokenproxy.services
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 import play.api.Logger
-import play.api.Play._
 import play.api.libs.json._
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
+import uk.gov.hmrc.mobiletokenproxy.config.GoogleAnalyticsConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 
@@ -54,9 +53,13 @@ trait TokenService {
 
 trait LiveTokenService extends TokenService {
   val genericConnector: GenericConnector
-  val appConfig: ApplicationConfig
-
-  def getConfig(key:String): String = current.configuration.getString(key).getOrElse(throw new IllegalArgumentException(s"Failed to resolve $key"))
+  val appConfig: GoogleAnalyticsConfig
+  val pathToAPIGatewayAuthService: String
+  val clientId: String
+  val redirectUri: String
+  val clientSecret: String
+  val pathToAPIGatewayTokenService: String
+  val expiryDecrement: Long
 
   def getTokenFromAccessCode(authCode:String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
     getAPIGatewayToken("code", authCode, "authorization_code", journeyId)
@@ -70,10 +73,10 @@ trait LiveTokenService extends TokenService {
 
     val form = Map(
       key -> Seq(code),
-      "client_id" -> Seq(appConfig.client_id),
-      "client_secret" -> Seq(appConfig.client_secret),
+      "client_id" -> Seq(clientId),
+      "client_secret" -> Seq(clientSecret),
       "grant_type" -> Seq(grantType),
-      "redirect_uri" -> Seq(appConfig.redirect_uri)
+      "redirect_uri" -> Seq(redirectUri)
     )
 
     def error(message:String, failure:String): Unit = Logger.error(s"Mobile-Token-Proxy - $journeyId - Failed to process request $message. Failure is $failure")
@@ -110,7 +113,7 @@ trait LiveTokenService extends TokenService {
       generateFailure(body)
     }
 
-    genericConnector.doPostForm(appConfig.pathToAPIGatewayTokenService, form).map(result => {
+    genericConnector.doPostForm(pathToAPIGatewayTokenService, form).map(result => {
       result.status match {
         case 200 =>
           val accessToken = (result.json \ "access_token").asOpt[String]
@@ -144,7 +147,7 @@ trait LiveTokenService extends TokenService {
   }
 
   private def appyDecrementConfig(expiresIn: Long): Long = {
-    val expiryDecrementConfig = appConfig.expiryDecrement.getOrElse(0L)
+    val expiryDecrementConfig = expiryDecrement
     if(expiryDecrementConfig > expiresIn){
       Logger.error(s"Config error expiry_decrement $expiryDecrementConfig can't be greater than the token expiry ${expiresIn}")
       expiresIn
@@ -154,6 +157,14 @@ trait LiveTokenService extends TokenService {
 }
 
 @Singleton
-class LiveTokenServiceImpl @Inject()(override val genericConnector: GenericConnector, override val appConfig: ApplicationConfig)
+class LiveTokenServiceImpl @Inject()(
+                                      override val genericConnector: GenericConnector,
+                                      override val appConfig: GoogleAnalyticsConfig,
+                                      @Named("api-gateway.pathToAPIGatewayAuthService") override val pathToAPIGatewayAuthService: String,
+                                      @Named("api-gateway.client_id") override val clientId: String,
+                                      @Named("api-gateway.redirect_uri") override val redirectUri: String,
+                                      @Named("api-gateway.client_secret") override val clientSecret: String,
+                                      @Named("api-gateway.pathToAPIGatewayTokenService")  override val pathToAPIGatewayTokenService: String,
+                                      @Named("api-gateway.expiry_decrement") override val expiryDecrement: Long )
   extends LiveTokenService {
 }

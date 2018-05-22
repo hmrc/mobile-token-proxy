@@ -8,14 +8,21 @@ import stubs.APIGatewayAuthServiceStub._
 import uk.gov.hmrc.play.test.UnitSpec
 import utils.{WireMockSupport, WsScalaTestClient}
 
-class ApiGatewayProxyISpec extends UnitSpec
+class MobileTokenProxyISpec extends UnitSpec
   with OneServerPerSuite with WsScalaTestClient with WireMockSupport{
   override implicit lazy val app: Application = appBuilder.build()
 
   def appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder().configure(
       "api-gateway.pathToAPIGatewayAuthService" -> s"http://localhost:$wireMockPort/oauth/authorize",
-      "api-gateway.pathToAPIGatewayTokenService" -> s"http://localhost:$wireMockPort/oauth/token"
+      "api-gateway.pathToAPIGatewayTokenService" -> s"http://localhost:$wireMockPort/oauth/token",
+      "api-gateway.scope" -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration",
+      "api-gateway.response_type" -> "code",
+      "api-gateway.client_id" -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
+      "api-gateway.redirect_uri" -> "urn:ietf:wg:oauth:2.0:oob:auto",
+      "api-gateway.client_secret" -> "client_secret",
+      "api-gateway.tax_calc_server_token" -> "tax_calc_server_token",
+      "api-gateway.expiry_decrement"  -> 0
     )
 
   implicit lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]

@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
 import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
+import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassthroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
@@ -32,19 +32,25 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class MobileTokenProxy @Inject()(genericConnector: GenericConnector, appConfig: ApplicationConfig, service: TokenService)
+class MobileTokenProxy @Inject()(
+  genericConnector: GenericConnector,
+  service: TokenService,
+  proxyPassthroughHttpHeaders: ProxyPassthroughHttpHeaders,
+  @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
+  @Named("api-gateway.client_id") clientId: String,
+  @Named("api-gateway.redirect_uri") redirectUri: String,
+  @Named("api-gateway.scope") scope: String,
+  @Named("api-gateway.response_type") responseType: String,
+  @Named("api-gateway.tax_calc_server_token") taxCalcServerToken: String)
   extends FrontendController {
-  def config: ApplicationConfig = appConfig
-
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   val aes = CryptoWithKeysFromConfig("aes")
 
 
   def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    val redirectUrl = s"""${appConfig.pathToAPIGatewayAuthService}?client_id=${appConfig.client_id}&redirect_uri=${appConfig.redirect_uri}&scope=${appConfig.scope}&response_type=${appConfig.response_type}"""
+    val redirectUrl = s"$pathToAPIGatewayAuthService?client_id=$clientId&redirect_uri=$redirectUri&scope=$scope&response_type=$responseType"
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq :_*))
-
   }
 
   def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
@@ -57,7 +63,7 @@ class MobileTokenProxy @Inject()(genericConnector: GenericConnector, appConfig: 
 
         def buildHeaderCarrier = {
           val headers: scala.collection.immutable.Map[String, String] = request.headers.toSimpleMap.filter {
-            a => appConfig.passthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+            a => proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
           }
           hc.withExtraHeaders(headers.toSeq: _*)
         }
@@ -80,7 +86,7 @@ class MobileTokenProxy @Inject()(genericConnector: GenericConnector, appConfig: 
   }
 
   def taxcalctoken(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    val encrypted: Crypted = aes.encrypt(PlainText(appConfig.tax_calc_token))
+    val encrypted: Crypted = aes.encrypt(PlainText(taxCalcServerToken))
     Future.successful(Ok(toJson(TokenResponse(encrypted.value))))
   }
 
