@@ -20,7 +20,6 @@ import javax.inject.{Inject, Named, Singleton}
 import play.api.Logger
 import play.api.libs.json._
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.mobiletokenproxy.config.GoogleAnalyticsConfig
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 
@@ -53,7 +52,6 @@ trait TokenService {
 
 trait LiveTokenService extends TokenService {
   val genericConnector: GenericConnector
-  val appConfig: GoogleAnalyticsConfig
   val pathToAPIGatewayAuthService: String
   val clientId: String
   val redirectUri: String
@@ -158,13 +156,11 @@ trait LiveTokenService extends TokenService {
 
 @Singleton
 class LiveTokenServiceImpl @Inject()(
-                                      override val genericConnector: GenericConnector,
-                                      override val appConfig: GoogleAnalyticsConfig,
-                                      @Named("api-gateway.pathToAPIGatewayAuthService") override val pathToAPIGatewayAuthService: String,
-                                      @Named("api-gateway.client_id") override val clientId: String,
-                                      @Named("api-gateway.redirect_uri") override val redirectUri: String,
-                                      @Named("api-gateway.client_secret") override val clientSecret: String,
-                                      @Named("api-gateway.pathToAPIGatewayTokenService")  override val pathToAPIGatewayTokenService: String,
-                                      @Named("api-gateway.expiry_decrement") override val expiryDecrement: Long )
-  extends LiveTokenService {
+  override val genericConnector: GenericConnector,
+  @Named("api-gateway.pathToAPIGatewayAuthService") override val pathToAPIGatewayAuthService: String,
+  @Named("api-gateway.client_id") override val clientId: String,
+  @Named("api-gateway.redirect_uri") override val redirectUri: String,
+  @Named("api-gateway.client_secret") override val clientSecret: String,
+  @Named("api-gateway.pathToAPIGatewayTokenService")  override val pathToAPIGatewayTokenService: String,
+  @Named("api-gateway.expiry_decrement") override val expiryDecrement: Long ) extends LiveTokenService {
 }

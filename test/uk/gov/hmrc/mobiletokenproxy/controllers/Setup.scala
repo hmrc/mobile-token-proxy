@@ -27,21 +27,9 @@ import uk.gov.hmrc.http.hooks.HttpHook
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.{GoogleAnalyticsConfig, HttpVerbs, ProxyPassthroughHttpHeaders}
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
-import uk.gov.hmrc.mobiletokenproxy.services.LiveTokenService
+import uk.gov.hmrc.mobiletokenproxy.services.LiveTokenServiceImpl
 
 import scala.concurrent.{ExecutionContext, Future}
-
-class TokenTestService(
-                        override val genericConnector: GenericConnector,
-                        override val appConfig: GoogleAnalyticsConfig,
-                        override val pathToAPIGatewayAuthService: String,
-                        override val clientId: String,
-                        override val redirectUri: String,
-                        override val clientSecret: String,
-                        override val pathToAPIGatewayTokenService: String,
-                        override val expiryDecrement: Long ) extends LiveTokenService {
-}
-
 
 trait Setup {
   val timestamp: Long = currentTimeMillis()
@@ -165,9 +153,8 @@ trait SuccessAccessCode extends Setup {
   val controller =
     new MobileTokenProxy(
       connector(),
-      new TokenTestService(
+      new LiveTokenServiceImpl(
         connector(),
-        config,
         pathToAPIGatewayAuthService,
         clientId,
         redirectUri,
@@ -195,9 +182,8 @@ trait FailToReturnApiToken extends Setup {
   val controller =
     new MobileTokenProxy(
       connector,
-      new TokenTestService(
+      new LiveTokenServiceImpl(
         connector,
-        config,
         pathToAPIGatewayAuthService,
         clientId,
         redirectUri,
@@ -223,9 +209,8 @@ trait BadResponseAPIGateway extends Setup {
   val controller =
     new MobileTokenProxy(
       connector,
-      new TokenTestService(
+      new LiveTokenServiceImpl(
         connector,
-        config,
         pathToAPIGatewayAuthService,
         clientId,
         redirectUri,
@@ -255,9 +240,8 @@ trait SuccessRefreshCode extends Setup {
   val controller =
     new MobileTokenProxy(
       connector,
-      new TokenTestService(
+      new LiveTokenServiceImpl(
         connector,
-        config,
         pathToAPIGatewayAuthService,
         clientId,
         redirectUri,
@@ -293,9 +277,8 @@ class SuccessExpiryDecrement(override val expiryDecrement: Long) extends Setup {
   val controller =
     new MobileTokenProxy(
       connector,
-      new TokenTestService(
+      new LiveTokenServiceImpl(
         connector,
-        config,
         pathToAPIGatewayAuthService,
         clientId,
         redirectUri,
