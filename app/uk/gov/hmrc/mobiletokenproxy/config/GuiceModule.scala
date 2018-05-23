@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import com.google.inject.AbstractModule
+import com.google.inject.{AbstractModule, Provider}
 import com.google.inject.name.Names.named
 import play.api.Mode.Mode
 import play.api.{Configuration, Environment}
+import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenServiceImpl, TokenService}
 import uk.gov.hmrc.play.config.ServicesConfig
 
@@ -44,9 +45,13 @@ class GuiceModule (environment: Environment, configuration: Configuration) exten
     bind(classOf[HttpVerbs]).to(classOf[WSHttp])
     bind(classOf[TokenService]).to(classOf[LiveTokenServiceImpl])
 
-    bind(classOf[ProxyPassthroughHttpHeaders]).toInstance(
-      new ProxyPassthroughHttpHeaders(configuration.getStringSeq(
+    bind(classOf[ProxyPassThroughHttpHeaders]).toInstance(
+      new ProxyPassThroughHttpHeaders(configuration.getStringSeq(
         "api-gateway.proxyPassthroughHttpHeaders").getOrElse(Seq.empty)))
+
+    bind(classOf[CompositeSymmetricCrypto]).toProvider( new Provider[CryptoWithKeysFromConfig] {
+      override def get(): CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
+    })
   }
 
   private def bindConfigLongDefaultToZero(path: String): Unit = {

@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
+import com.google.inject.Provider
 import javax.inject.{Inject, Named, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
-import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
+import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, Crypted, PlainText}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassthroughHttpHeaders
+import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
@@ -35,7 +36,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class MobileTokenProxy @Inject()(
   genericConnector: GenericConnector,
   service: TokenService,
-  proxyPassthroughHttpHeaders: ProxyPassthroughHttpHeaders,
+  cryptoProvider: Provider[CompositeSymmetricCrypto],
+  proxyPassthroughHttpHeaders: ProxyPassThroughHttpHeaders,
   @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
   @Named("api-gateway.client_id") clientId: String,
   @Named("api-gateway.redirect_uri") redirectUri: String,
@@ -45,7 +47,7 @@ class MobileTokenProxy @Inject()(
   extends FrontendController {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  val aes = CryptoWithKeysFromConfig("aes")
+  lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
 
 
   def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
@@ -62,7 +64,7 @@ class MobileTokenProxy @Inject()(
       tokenRequest => {
 
         def buildHeaderCarrier = {
-          val headers: scala.collection.immutable.Map[String, String] = request.headers.toSimpleMap.filter {
+          val headers: Map[String, String] = request.headers.toSimpleMap.filter {
             a => proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
           }
           hc.withExtraHeaders(headers.toSeq: _*)
@@ -86,7 +88,7 @@ class MobileTokenProxy @Inject()(
   }
 
   def taxcalctoken(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    val encrypted: Crypted = aes.encrypt(PlainText(taxCalcServerToken))
+    val encrypted: Crypted = aesCryptographer.encrypt(PlainText(taxCalcServerToken))
     Future.successful(Ok(toJson(TokenResponse(encrypted.value))))
   }
 
