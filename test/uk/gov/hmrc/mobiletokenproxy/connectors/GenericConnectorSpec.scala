@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,108 +17,93 @@
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
 
-import com.typesafe.config.Config
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.Json.parse
+import play.api.libs.json.{JsValue, Writes}
 import play.api.test.FakeApplication
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.hooks.HttpHook
+import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
 import uk.gov.hmrc.mobiletokenproxy.controllers.StubApplicationConfiguration
-import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.test._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-
-class GenericTestConnector extends GenericConnector with ServicesConfig {
-  override def http: CoreGet with CorePost = throw new Exception("Not to be invoked!")
-}
-
-class GenericConnectorSpec
-  extends UnitSpec with WithFakeApplication with ScalaFutures with StubApplicationConfiguration {
+class GenericConnectorSpec extends UnitSpec
+  with WithFakeApplication with ScalaFutures with StubApplicationConfiguration with MockFactory with Matchers{
 
   override lazy val fakeApplication = FakeApplication(additionalConfiguration = config)
 
-  private trait Setup {
+  implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
-    implicit lazy val hc = HeaderCarrier()
+  val mockHttp: HttpVerbs = mock[HttpVerbs]
+  val connector: GenericConnector = new GenericConnector(mockHttp)
 
-    val someJson = Json.parse("""{"test":1234}""")
-    lazy val http500Response = Future.failed(new Upstream5xxResponse("Error", 500, 500))
-    lazy val http400Response = Future.failed(new BadRequestException("bad request"))
-    lazy val http200Response = Future.successful(HttpResponse(200, Some(someJson)))
-    lazy val response: Future[HttpResponse] = http400Response
+  val url = "somepath"
+  val someJson: JsValue = parse("""{"test":1234}""")
 
-    val connector = new GenericTestConnector {
-
-      override lazy val http: CorePost with CoreGet = new CoreGet with HttpGet with CorePost with HttpPost {
-
-        override val hooks: Seq[HttpHook] = NoneRequired
-
-        override def configuration: Option[Config] = None
-
-        override def doGet(url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
-
-        override def doPost[A](url: String, body: A, headers: Seq[(String, String)])(implicit wts: Writes[A], hc: HeaderCarrier): Future[HttpResponse] = response
-
-        override def doPostString(url: String, body: String, headers: Seq[(String, String)])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
-
-        override def doFormPost(url: String, body: Map[String, Seq[String]])(implicit hc: HeaderCarrier): Future[HttpResponse] = response
-
-        override def doEmptyPost[A](url: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = response
-      }
-    }
-  }
+  val http500Response: Future[HttpResponse] = Future.failed(Upstream5xxResponse("Error", 500, 500))
+  val http400Response: Future[HttpResponse] = Future.failed(new BadRequestException("bad request"))
+  val http200Response: Future[HttpResponse] = Future.successful(HttpResponse(200, Some(someJson)))
 
   "genericConnector get" should {
+    def getReturning(response: Future[HttpResponse]) = {
+      (mockHttp.GET(_: String)(_: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext)).expects(
+        url, *, *, *).returning(response)
+    }
 
-    "throw BadRequestException on 400 response" in new Setup {
+    "throw BadRequestException on 400 response" in {
+      getReturning(http400Response)
 
       intercept[BadRequestException] {
-        await(connector.doGet("somepath"))
+        await(connector.doGet(url))
       }
     }
 
-    "throw Upstream5xxResponse on 500 response" in new Setup {
-      override lazy val response: Future[HttpResponse] = http500Response
+    "throw Upstream5xxResponse on 500 response" in {
+      getReturning(http500Response)
 
       intercept[Upstream5xxResponse] {
-        await(connector.doGet("somepath"))
+        await(connector.doGet(url))
       }
     }
 
-    "return JSON response on 200 success" in new Setup {
-      override lazy val response: Future[HttpResponse] = http200Response
+    "return JSON response on 200 success" in {
+      getReturning(http200Response)
 
-      await(connector.doGet("somepath")).json shouldBe someJson
+      await(connector.doGet(url)).json shouldBe someJson
     }
-
   }
 
   "genericConnector post" should {
+    def postReturning(response: Future[HttpResponse]) = {
+      (mockHttp.POST(_: String, _:JsValue, _: Seq[(String, String)])
+        (_: Writes[JsValue], _: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext)).expects(
+          url, someJson, *, *, *, *, *).returning(response)
+    }
 
-    "throw BadRequestException on 400 response" in new Setup {
+    "throw BadRequestException on 400 response" in {
+      postReturning(http400Response)
 
       intercept[BadRequestException] {
-        await(connector.doPost("somepath", someJson))
+        await(connector.doPost(url, someJson))
       }
     }
 
-    "throw Upstream5xxResponse on 500 response" in new Setup {
-      override lazy val response: Future[HttpResponse] = http500Response
+    "throw Upstream5xxResponse on 500 response" in {
+      postReturning(http500Response)
 
       intercept[Upstream5xxResponse] {
-        await(connector.doPost("somepath", someJson))
+        await(connector.doPost(url, someJson))
       }
     }
 
-    "return JSON response on 200 success" in new Setup {
-      override lazy val response: Future[HttpResponse] = http200Response
+    "return JSON response on 200 success" in {
+      postReturning(http200Response)
 
-      await(connector.doPost("somepath", someJson)).json shouldBe someJson
+      await(connector.doPost(url, someJson)).json shouldBe someJson
     }
-
   }
-
 }

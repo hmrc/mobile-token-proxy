@@ -16,8 +16,21 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import play.twirl.api.Html
+import javax.inject.Singleton
+import play.api.Configuration
+import play.api.Mode.Mode
+import uk.gov.hmrc.play.config.ServicesConfig
 
-private object HtmlConst {
-  val empty = Html("")
+import scala.util.Try
+
+@Singleton
+class GoogleAnalyticsConfig extends ServicesConfig {
+  private def loadConfig(key: String): Option[String] = Try(getString(key)).toOption
+
+  lazy val analyticsToken: Option[String] = loadConfig("google-analytics.token")
+  lazy val analyticsHost: String =
+    loadConfig("google-analytics.host").getOrElse(throw new RuntimeException(s"google-analytics.host"))
+
+  override def mode: Mode = mode
+  override def runModeConfiguration: Configuration = runModeConfiguration
 }

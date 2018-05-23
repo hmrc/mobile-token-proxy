@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import play.twirl.api.Html
+class ProxyPassThroughHttpHeaders(headers: Seq[String] ) extends Seq[String] {
+  override def length: Int = headers.length
 
-private object HtmlConst {
-  val empty = Html("")
+  override def apply(idx: Int): String = headers.apply(idx)
+
+  override def iterator: Iterator[String] = headers.iterator
 }

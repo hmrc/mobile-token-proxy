@@ -1,5 +1,5 @@
 @*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 @import play.api.Play.current
 @import play.api.i18n.Messages.Implicits._
+@import uk.gov.hmrc.mobiletokenproxy.config.GoogleAnalyticsConfig
 
-
-@(title: String,
+@(config: GoogleAnalyticsConfig,
+title: String,
 headerNav: Option[views.helpers.HeaderNav] = None,
 sidebarLinks: Option[Html] = None,
 sidebarClass: Option[String] = None,
@@ -37,12 +38,8 @@ articleClasses: Option[String] = None,
 includeGridWrapper: Boolean = false,
 gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit request : Request[_])
 
-@import uk.gov.hmrc.mobiletokenproxy.config.{ApplicationConfig => appConfig}
-@import play.api.Play.current
-@import play.api.Play
-@import uk.gov.hmrc.play.config.RunMode._
-@import uk.gov.hmrc.play.views.html.{layouts => playLayouts}
 @import layouts.govuk_template
+@import uk.gov.hmrc.play.views.html.{layouts => playLayouts}
 
 @head = {
 @playLayouts.head(linkElement, headScripts)
@@ -93,9 +90,9 @@ gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit req
 }
 
 @bodyEnd = {
-@playLayouts.footer(analyticsToken = Play.configuration.getString(s"govuk-tax.$env.google-analytics.token"),
-    analyticsHost = Play.configuration.getString(s"govuk-tax.$env.google-analytics.host").getOrElse("service.gov.uk"),
-    ssoUrl = Play.configuration.getString(s"govuk-tax.$env.portal.ssoUrl"),
+@playLayouts.footer(analyticsToken = config.analyticsToken,
+    analyticsHost = config.analyticsHost,
+    ssoUrl = None,
     scriptElem = scriptElement,
     gaCalls = gaCalls)
 }

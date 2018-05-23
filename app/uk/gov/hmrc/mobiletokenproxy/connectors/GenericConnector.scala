@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
+import com.google.inject.{Inject, Singleton}
 import play.api.libs.json._
-import uk.gov.hmrc.http.{CoreGet, CorePost, HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.mobiletokenproxy.config.WSHttp
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait GenericConnector {
-
-  def http: CorePost with CoreGet
-
+@Singleton
+class  GenericConnector @Inject()(val http: HttpVerbs) {
   def doGet(path:String)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
     http.GET(path)
   }
@@ -37,8 +36,4 @@ trait GenericConnector {
   def doPostForm(path:String, form:Map[String,Seq[String]])(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
     http.POSTForm(path, form)
   }
-}
-
-object GenericConnector extends GenericConnector {
-  override def http = WSHttp
 }

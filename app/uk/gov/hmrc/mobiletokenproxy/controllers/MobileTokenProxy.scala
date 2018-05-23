@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,49 +16,46 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
+import com.google.inject.Provider
+import javax.inject.{Inject, Named, Singleton}
 import play.api.Logger
-import play.api.libs.json.{JsError, Json}
+import play.api.libs.json.Json.toJson
+import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
-import uk.gov.hmrc.crypto.{Crypted, CryptoWithKeysFromConfig, PlainText}
+import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, Crypted, PlainText}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.mobiletokenproxy.config.ApplicationConfig
+import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object MobileTokenProxy extends MobileTokenProxy {
-  override def genericConnector: GenericConnector = GenericConnector
+@Singleton
+class MobileTokenProxy @Inject()(
+  genericConnector: GenericConnector,
+  service: TokenService,
+  cryptoProvider: Provider[CompositeSymmetricCrypto],
+  proxyPassthroughHttpHeaders: ProxyPassThroughHttpHeaders,
+  @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
+  @Named("api-gateway.client_id") clientId: String,
+  @Named("api-gateway.redirect_uri") redirectUri: String,
+  @Named("api-gateway.scope") scope: String,
+  @Named("api-gateway.response_type") responseType: String,
+  @Named("api-gateway.tax_calc_server_token") taxCalcServerToken: String)
+  extends FrontendController {
+  implicit val ec: ExecutionContext = ExecutionContext.global
 
-  override def appConfig = ApplicationConfig
+  lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
 
-  override val service = LiveTokenService
 
-  override implicit val ec: ExecutionContext = ExecutionContext.global
-
-  override val aes = CryptoWithKeysFromConfig("aes")
-}
-
-trait MobileTokenProxy extends FrontendController {
-  def genericConnector: GenericConnector
-
-  def appConfig: ApplicationConfig
-
-  val service: TokenService
-
-  val aes: CryptoWithKeysFromConfig
-
-  implicit val ec: ExecutionContext
-
-  def authorize(journeyId: Option[String] = None) = Action.async { implicit request =>
-    val redirectUrl = s"""${appConfig.pathToAPIGatewayAuthService}?client_id=${appConfig.client_id}&redirect_uri=${appConfig.redirect_uri}&scope=${appConfig.scope}&response_type=${appConfig.response_type}"""
+  def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+    val redirectUrl = s"$pathToAPIGatewayAuthService?client_id=$clientId&redirect_uri=$redirectUri&scope=$scope&response_type=$responseType"
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq :_*))
-
   }
 
-  def token(journeyId: Option[String] = None) = Action.async(BodyParsers.parse.json) { implicit request =>
+  def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body.validate[TokenRequest].fold(
       errors => {
         Logger.warn("Received error with service token: " + errors)
@@ -67,8 +64,8 @@ trait MobileTokenProxy extends FrontendController {
       tokenRequest => {
 
         def buildHeaderCarrier = {
-          val headers: scala.collection.immutable.Map[String, String] = request.headers.toSimpleMap.filter {
-            a => appConfig.passthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+          val headers: Map[String, String] = request.headers.toSimpleMap.filter {
+            a => proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
           }
           hc.withExtraHeaders(headers.toSeq: _*)
         }
@@ -90,13 +87,13 @@ trait MobileTokenProxy extends FrontendController {
       })
   }
 
-  def taxcalctoken(journeyId: Option[String] = None) = Action.async { implicit request =>
-    val encrypted: Crypted = aes.encrypt(PlainText(appConfig.tax_calc_token))
-    Future.successful(Ok(Json.toJson(TokenResponse(encrypted.value))))
+  def taxcalctoken(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+    val encrypted: Crypted = aesCryptographer.encrypt(PlainText(taxCalcServerToken))
+    Future.successful(Ok(toJson(TokenResponse(encrypted.value))))
   }
 
-  private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier) = {
-    func.map { res => Ok(Json.toJson(res))
+  private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier): Future[Result] = {
+    func.map { res => Ok(toJson(res))
     }.recover {
       recoverError
     }
@@ -111,5 +108,5 @@ trait MobileTokenProxy extends FrontendController {
   }
 
   private def buildFailureResponse(statusResponse:Status, apiResponse:Option[ApiFailureResponse]) =
-    apiResponse.fold(statusResponse("")){ resp => statusResponse(Json.toJson(resp)) }
+    apiResponse.fold(statusResponse("")){ resp => statusResponse(toJson(resp)) }
 }

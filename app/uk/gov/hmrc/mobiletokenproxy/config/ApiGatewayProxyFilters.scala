@@ -16,8 +16,14 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import play.twirl.api.Html
+import javax.inject.{Inject, Singleton}
+import play.api.http.HttpFilters
+import play.api.mvc.EssentialFilter
+import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
 
-private object HtmlConst {
-  val empty = Html("")
+@Singleton
+class ApiGatewayProxyFilters @Inject()(frontendFilters: FrontendFilters) extends HttpFilters{
+  //CSRFFilter stops the POST working
+  override def filters: Seq[EssentialFilter] = frontendFilters.filters.filterNot(_.getClass.getSimpleName == "CSRFFilter")
 }
+
