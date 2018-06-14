@@ -16,7 +16,7 @@ class MobileTokenProxyISpec extends UnitSpec
     new GuiceApplicationBuilder().configure(
       "api-gateway.pathToAPIGatewayAuthService" -> s"http://localhost:$wireMockPort/oauth/authorize",
       "api-gateway.pathToAPIGatewayTokenService" -> s"http://localhost:$wireMockPort/oauth/token",
-      "api-gateway.scope" -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration",
+      "api-gateway.scope" -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary",
       "api-gateway.response_type" -> "code",
       "api-gateway.client_id" -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
       "api-gateway.redirect_uri" -> "urn:ietf:wg:oauth:2.0:oob:auto",
