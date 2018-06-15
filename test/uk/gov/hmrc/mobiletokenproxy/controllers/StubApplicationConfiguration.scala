@@ -27,7 +27,7 @@ trait StubApplicationConfiguration {
     "grant_type" -> "authorization_code",
     "pathToAPIGatewayTokenService" -> "http://localhost:8236/oauth/token",
     "pathToAPIGatewayAuthService" -> "http://localhost:8236/oauth/authorize",
-    "scope" -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session",
+    "scope" -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary",
     "response_type" -> "code"
   )
 }
