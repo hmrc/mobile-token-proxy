@@ -21,7 +21,7 @@ trait StubApplicationConfiguration {
   val config = Map[String, Any](
     "auditing.enabled" -> false,
     "appName" -> "api-gateway-proxy",
-    "client_id" -> "some_client_id",
+    "clientId" -> "some_client_id",
     "client_secret" -> "some_client_secret",
     "redirect_uri" -> "urn:ietf:wg:oauth:2.0:oob:auto",
     "grant_type" -> "authorization_code",

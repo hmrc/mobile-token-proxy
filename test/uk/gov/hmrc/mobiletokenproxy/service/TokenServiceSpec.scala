@@ -33,7 +33,7 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
   val connector = mock[GenericConnector]
 
   val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
-  val clientId: String = "client_id"
+  val clientId: String = "clientId"
   val redirectUri: String = "redirect_uri"
   val clientSecret: String = "client_secret"
   val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
@@ -52,7 +52,7 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
 
     val form = Map(
       "code" -> Seq(authCode),
-      "client_id" -> Seq(clientId),
+      "clientId" -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
       "grant_type" -> Seq("authorization_code"),
       "redirect_uri" -> Seq(redirectUri)
@@ -129,7 +129,7 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
 
     val form = Map(
       refreshToken -> Seq(refreshToken),
-      "client_id" -> Seq(clientId),
+      "clientId" -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
       "grant_type" -> Seq(refreshToken),
       "redirect_uri" -> Seq(redirectUri)

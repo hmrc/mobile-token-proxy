@@ -37,7 +37,7 @@ class GuiceModule (environment: Environment, configuration: Configuration) exten
     bindConfigString("api-gateway.pathToAPIGatewayAuthService")
     bindConfigString("api-gateway.scope")
     bindConfigString("api-gateway.response_type")
-    bindConfigString("api-gateway.client_id")
+    bindConfigString("api-gateway.clientId")
     bindConfigString("api-gateway.redirect_uri")
     bindConfigString("api-gateway.client_secret")
     bindConfigString("api-gateway.tax_calc_server_token")

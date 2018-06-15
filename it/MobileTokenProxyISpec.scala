@@ -18,7 +18,7 @@ class MobileTokenProxyISpec extends UnitSpec
       "api-gateway.pathToAPIGatewayTokenService" -> s"http://localhost:$wireMockPort/oauth/token",
       "api-gateway.scope" -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary",
       "api-gateway.response_type" -> "code",
-      "api-gateway.client_id" -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
+      "api-gateway.clientId" -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
       "api-gateway.redirect_uri" -> "urn:ietf:wg:oauth:2.0:oob:auto",
       "api-gateway.client_secret" -> "client_secret",
       "api-gateway.tax_calc_server_token" -> "tax_calc_server_token",

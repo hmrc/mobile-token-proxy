@@ -39,7 +39,7 @@ class MobileTokenProxy @Inject()(
   cryptoProvider: Provider[CompositeSymmetricCrypto],
   proxyPassthroughHttpHeaders: ProxyPassThroughHttpHeaders,
   @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
-  @Named("api-gateway.client_id") clientId: String,
+  @Named("api-gateway.clientId") clientId: String,
   @Named("api-gateway.redirect_uri") redirectUri: String,
   @Named("api-gateway.scope") scope: String,
   @Named("api-gateway.response_type") responseType: String,
@@ -51,7 +51,7 @@ class MobileTokenProxy @Inject()(
 
 
   def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    val redirectUrl = s"$pathToAPIGatewayAuthService?client_id=$clientId&redirect_uri=$redirectUri&scope=$scope&response_type=$responseType"
+    val redirectUrl = s"$pathToAPIGatewayAuthService?clientId=$clientId&redirect_uri=$redirectUri&scope=$scope&response_type=$responseType"
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq :_*))
   }
 
