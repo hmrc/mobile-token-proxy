@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 object APIGatewayAuthServiceStub {
   def oauthRedirectSuccess(): Unit = {
     val redirectUrl =
-      "/oauth/authorize?client_id=i_whTXqBWq9xj0BqdtJ4b_YaxV8a&" +
+      "/oauth/authorize?clientId=i_whTXqBWq9xj0BqdtJ4b_YaxV8a&" +
         "redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&" +
         "scope=read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary&" +
         "response_type=code"

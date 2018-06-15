@@ -71,7 +71,7 @@ trait LiveTokenService extends TokenService {
 
     val form = Map(
       key -> Seq(code),
-      "client_id" -> Seq(clientId),
+      "clientId" -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
       "grant_type" -> Seq(grantType),
       "redirect_uri" -> Seq(redirectUri)
@@ -158,7 +158,7 @@ trait LiveTokenService extends TokenService {
 class LiveTokenServiceImpl @Inject()(
   override val genericConnector: GenericConnector,
   @Named("api-gateway.pathToAPIGatewayAuthService") override val pathToAPIGatewayAuthService: String,
-  @Named("api-gateway.client_id") override val clientId: String,
+  @Named("api-gateway.clientId") override val clientId: String,
   @Named("api-gateway.redirect_uri") override val redirectUri: String,
   @Named("api-gateway.client_secret") override val clientSecret: String,
   @Named("api-gateway.pathToAPIGatewayTokenService")  override val pathToAPIGatewayTokenService: String,

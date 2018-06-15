@@ -67,7 +67,7 @@ class MobileTokenProxySpec extends UnitSpec with MockFactory with Matchers {
       new Provider[CompositeSymmetricCrypto]() {override def get(): CompositeSymmetricCrypto = cryptographer},
       new ProxyPassThroughHttpHeaders(Seq(vendorHeader, deviceIdHeader)),
       "http://localhost:8236/oauth/authorize",
-      "client_id",
+      "clientId",
       "redirect_uri",
       "some-scopes",
       "code",
@@ -169,7 +169,7 @@ class MobileTokenProxySpec extends UnitSpec with MockFactory with Matchers {
 
       status(result) shouldBe 303
       header("Location", result).get shouldBe
-        "http://localhost:8236/oauth/authorize?client_id=client_id&redirect_uri=redirect_uri&scope=some-scopes&response_type=code"
+        "http://localhost:8236/oauth/authorize?clientId=clientId&redirect_uri=redirect_uri&scope=some-scopes&response_type=code"
       header(vendorHeader, result).get shouldBe "header vendor"
       header(deviceIdHeader, result).get shouldBe "header device Id"
     }
