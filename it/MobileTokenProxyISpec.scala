@@ -59,9 +59,19 @@ class MobileTokenProxyISpec extends UnitSpec
       await(wsUrl(s"/mobile-token-proxy/oauth/token").withHeaders(jsonHeader).post(parse(form)))
     }
 
+    def verifyPostOAuthTokenFailureStatusCode(form: String, upstreamResponseCode:Int, responseCodeToReport: Int): Unit = {
+      oauthTokenExchangeFailure(upstreamResponseCode)
+
+      val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
+      val response = await(wsUrl(s"/mobile-token-proxy/oauth/token").withHeaders(jsonHeader).post(parse(form)))
+      response.status shouldBe responseCodeToReport
+    }
+
+    val formWithAuthCode: String = """{ "authorizationCode":"123"}"""
+
     "get token from authorizationCode" in {
       oauthTokenExchangeSuccess()
-      val response = await(postOAuthToken("""{ "authorizationCode":"123"}"""))
+      val response = await(postOAuthToken(formWithAuthCode))
       response.status shouldBe 200
     }
 
@@ -79,6 +89,14 @@ class MobileTokenProxyISpec extends UnitSpec
     "return bad request if neither token is supplied" in {
       val response = await(postOAuthToken("{}"))
       response.status shouldBe 400
+    }
+
+    "propagate error codes" in {
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 401, 401)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 403, 403)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 404, 500)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 500, 500)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 503, 500)
     }
   }
 }

@@ -23,14 +23,14 @@ import play.api.libs.json.Json.parse
 import uk.gov.hmrc.http.{BadRequestException, _}
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
-import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenServiceImpl, LocalException}
+import uk.gov.hmrc.mobiletokenproxy.services.LiveTokenServiceImpl
 import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
-  val connector = mock[GenericConnector]
+  val connector: GenericConnector = mock[GenericConnector]
 
   val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
   val clientId: String = "client_id"
@@ -73,32 +73,32 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
       tokenResponse.expires_in shouldBe expiresIn
     }
 
-    "throw FailToRetrieveToken if access_token is not returned" in {
+    "throw an exception if access_token is not returned" in {
       handleInvalidResponseJson(parse(s"""{ "refresh_token": "$refreshToken", "expires_in": $expiresIn }"""))
     }
 
-    "throw FailToRetrieveToken if refresh_token is not returned" in {
+    "throw an exception if refresh_token is not returned" in {
       handleInvalidResponseJson(parse(s"""{ "access_token": "$accessToken", "expires_in": $expiresIn }"""))
     }
 
-    "throw FailToRetrieveToken if expires_in is not returned" in {
+    "throw an exception if expires_in is not returned" in {
       handleInvalidResponseJson(parse(s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken" }"""))
     }
 
-    "handle exceptions" in {
-      handleException(new BadRequestException("I don't understand!"))
-      handleException(new UnauthorizedException("Denied!"))
-      handleException(new ServiceUnavailableException("Sorry we cannot take your call right now!"))
-      handleException(Upstream4xxResponse("4xx", 400, 400))
-      handleException(Upstream5xxResponse("5xx", 500, 500))
-      handleException(new Exception())
+    "not swallow exceptions" in {
+      propagateException(new BadRequestException("I don't understand!"))
+      propagateException(new UnauthorizedException("Denied!"))
+      propagateException(new ServiceUnavailableException("Sorry we cannot take your call right now!"))
+      propagateException(Upstream4xxResponse("4xx", 400, 400))
+      propagateException(Upstream5xxResponse("5xx", 500, 500))
+      propagateException(new Exception())
     }
 
     "handle the exception when APIGatewayTokenService returns a code other than 200" in {
       (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
         pathToAPIGatewayTokenService, form, *, * ).returning(HttpResponse(201))
 
-      intercept[LocalException] {
+      intercept[RuntimeException] {
         await(service.getTokenFromAccessCode(authCode))
       }
     }
@@ -109,16 +109,16 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
       (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
         pathToAPIGatewayTokenService, form, *, * ).returning(response)
 
-      intercept[LocalException] {
+      intercept[RuntimeException] {
         await(service.getTokenFromAccessCode(authCode))
       }
     }
 
-    def handleException(exception: Exception) = {
+    def propagateException(exception: Exception) = {
       (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
         pathToAPIGatewayTokenService, form, *, * ).returning( Future.failed(exception))
 
-      intercept[LocalException] {
+      exception shouldBe intercept[Exception] {
         await(service.getTokenFromAccessCode(authCode))
       }
     }
@@ -162,20 +162,20 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
       handleInvalidResponseJson(parse(s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken" }"""))
     }
 
-    "handle exceptions" in {
-      handleException(new BadRequestException("I should be in detention"))
-      handleException(new UnauthorizedException("Oh no you don't"))
-      handleException(new ServiceUnavailableException("Sorry we cannot take your call right now"))
-      handleException(Upstream4xxResponse("4xx", 400, 400))
-      handleException(Upstream5xxResponse("5xx", 500, 500))
-      handleException(new Exception())
+    "not swallow exceptions" in {
+      propagateException(new BadRequestException("I should be in detention"))
+      propagateException(new UnauthorizedException("Oh no you don't"))
+      propagateException(new ServiceUnavailableException("Sorry we cannot take your call right now"))
+      propagateException(Upstream4xxResponse("4xx", 400, 400))
+      propagateException(Upstream5xxResponse("5xx", 500, 500))
+      propagateException(new Exception())
     }
 
     "handle the exception when APIGatewayTokenService returns a code other than 200" in {
       (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
         pathToAPIGatewayTokenService, form, *, * ).returning(HttpResponse(201))
 
-      intercept[LocalException] {
+      intercept[RuntimeException] {
         await(service.getTokenFromRefreshToken(refreshToken))
       }
     }
@@ -186,16 +186,16 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
       (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
         pathToAPIGatewayTokenService, form, *, * ).returning(response)
 
-      intercept[LocalException] {
+      intercept[RuntimeException] {
         await(service.getTokenFromRefreshToken(refreshToken))
       }
     }
 
-    def handleException(exception: Exception) = {
+    def propagateException(exception: Exception) = {
       (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
         pathToAPIGatewayTokenService, form, *, * ).returning( Future.failed(exception))
 
-      intercept[LocalException] {
+      exception shouldBe intercept[Exception] {
         await(service.getTokenFromRefreshToken(refreshToken))
       }
     }
