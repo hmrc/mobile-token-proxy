@@ -19,4 +19,8 @@ object APIGatewayAuthServiceStub {
     stubFor(post(urlPathEqualTo("/oauth/token"))
       .willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody(response)))
   }
+
+  def oauthTokenExchangeFailure(statusCode:Int): Unit = {
+    stubFor(post(urlPathEqualTo("/oauth/token")).willReturn(aResponse().withStatus(statusCode)))
+  }
 }

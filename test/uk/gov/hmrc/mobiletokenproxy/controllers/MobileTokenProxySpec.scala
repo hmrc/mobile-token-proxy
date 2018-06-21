@@ -35,8 +35,8 @@ import uk.gov.hmrc.mobiletokenproxy.model.{TokenOauthResponse, TokenResponse}
 import uk.gov.hmrc.mobiletokenproxy.services.TokenService
 import uk.gov.hmrc.play.test.UnitSpec
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ExecutionContext, Future}
 
 class MobileTokenProxySpec extends UnitSpec with MockFactory with Matchers {
   implicit val system: ActorSystem = ActorSystem()
@@ -123,16 +123,6 @@ class MobileTokenProxySpec extends UnitSpec with MockFactory with Matchers {
       status(result) shouldBe 200
       jsonBodyOf(result) shouldBe parse(tokenResponseJson)
     }
-
-    "return 503 response when the service throws an exception" in {
-      (service.getTokenFromAccessCode(_: String, _:Option[String])(_ : HeaderCarrier, _: ExecutionContext)).expects(
-        authCode, None, *, * ).returning(Future.failed(new RuntimeException()))
-
-      val result = await(controller.token()(jsonRequestWithAuthCode))
-
-      status(result) shouldBe 503
-      bodyOf(result) shouldBe ""
-    }
   }
 
   "requesting a new access-token from a refresh-token" should {
@@ -148,16 +138,6 @@ class MobileTokenProxySpec extends UnitSpec with MockFactory with Matchers {
 
       status(result) shouldBe 200
       jsonBodyOf(result) shouldBe parse(tokenResponseJson)
-    }
-
-    "return 503 response when the service throws an exception" in {
-      (service.getTokenFromRefreshToken(_: String, _:Option[String])(_ : HeaderCarrier, _: ExecutionContext)).expects(
-        refreshToken, None, *, * ).returning(Future.failed(new RuntimeException()))
-
-      val result = await(controller.token()(jsonRequestRequestWithRefreshToken))
-
-      status(result) shouldBe 503
-      bodyOf(result) shouldBe ""
     }
   }
 
