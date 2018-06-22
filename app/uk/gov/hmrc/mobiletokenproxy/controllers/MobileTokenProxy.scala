@@ -23,7 +23,7 @@ import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
 import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, Crypted, PlainText}
-import uk.gov.hmrc.http.{HeaderCarrier, Upstream4xxResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
@@ -100,6 +100,7 @@ class MobileTokenProxy @Inject()(
   }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
+    case ex: BadRequestException => Unauthorized
     case Upstream4xxResponse(_, 401, _, _) => Unauthorized
     case Upstream4xxResponse(_, 403, _, _) => Forbidden
     case _ => InternalServerError

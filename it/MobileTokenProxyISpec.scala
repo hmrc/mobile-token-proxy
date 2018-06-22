@@ -92,6 +92,8 @@ class MobileTokenProxyISpec extends UnitSpec
     }
 
     "propagate error codes" in {
+      // 400 is returned by oauth-frontend in certain circumstances -  treat as 401
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 400, 401)
       verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 401, 401)
       verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 403, 403)
       verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 404, 500)
