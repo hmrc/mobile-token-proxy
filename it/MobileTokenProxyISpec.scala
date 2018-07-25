@@ -27,7 +27,7 @@ class MobileTokenProxyISpec extends UnitSpec
 
   implicit lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  val ws = AhcWSClient()(app.materializer)
+  val ws: AhcWSClient = AhcWSClient()(app.materializer)
   val authUserId = "/userId"
 
   "GET /ping/ping" should {

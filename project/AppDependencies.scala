@@ -4,10 +4,10 @@ object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "bootstrap-play-25" % "1.5.0",
-    "uk.gov.hmrc" %% "govuk-template" % "5.20.0",
-    "uk.gov.hmrc" %% "play-ui" % "7.14.0",
-    "uk.gov.hmrc" %% "domain" % "5.1.0"
+    "uk.gov.hmrc" %% "bootstrap-play-25" % "1.7.0",
+    "uk.gov.hmrc" %% "govuk-template" % "5.22.0",
+    "uk.gov.hmrc" %% "play-ui" % "7.18.0",
+    "uk.gov.hmrc" %% "domain" % "5.2.0"
   )
 
   trait TestDependencies {
@@ -16,7 +16,7 @@ object AppDependencies {
   }
 
   object Test {
-    def apply() = new TestDependencies {
+    def apply(): Seq[ModuleID] = new TestDependencies {
 
       override lazy val test = Seq(
         "uk.gov.hmrc" %% "hmrctest" % "3.0.0" % scope,
@@ -27,7 +27,7 @@ object AppDependencies {
   }
 
   object IntegrationTest {
-    def apply() = new TestDependencies {
+    def apply(): Seq[ModuleID] = new TestDependencies {
 
       override lazy val scope = "it"
 
@@ -40,5 +40,5 @@ object AppDependencies {
     }.test
   }
 
-  def apply() = compile ++ Test() ++ IntegrationTest()
+  def apply(): Seq[ModuleID] = compile ++ Test() ++ IntegrationTest()
 }

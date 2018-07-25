@@ -72,7 +72,7 @@ class MobileTokenProxy @Inject()(
 
         (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
-          case (Some(refreshToken: String), (Some(authcode: String))) =>
+          case (Some(_: String), Some(authcode: String)) =>
             Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
           case (None, Some(authCode: String)) =>
@@ -100,7 +100,7 @@ class MobileTokenProxy @Inject()(
   }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case ex: BadRequestException => Unauthorized
+    case _: BadRequestException => Unauthorized
     case Upstream4xxResponse(_, 401, _, _) => Unauthorized
     case Upstream4xxResponse(_, 403, _, _) => Forbidden
     case _ => InternalServerError
