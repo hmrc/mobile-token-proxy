@@ -18,7 +18,7 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 
 trait StubApplicationConfiguration {
 
-  val config = Map[String, Any](
+  val config: Map[String, Any] = Map[String, Any](
     "auditing.enabled" -> false,
     "appName" -> "api-gateway-proxy",
     "client_id" -> "some_client_id",

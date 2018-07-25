@@ -57,8 +57,6 @@ trait LiveTokenService extends TokenService {
       "redirect_uri" -> Seq(redirectUri)
     )
 
-    def error(message:String, failure:String): Unit = Logger.error(s"Mobile-Token-Proxy - $journeyId - Failed to process request $message. Failure is $failure")
-
     genericConnector.doPostForm(pathToAPIGatewayTokenService, form).map(result => {
       result.status match {
         case 200 =>
@@ -83,7 +81,7 @@ trait LiveTokenService extends TokenService {
   private def appyDecrementConfig(expiresIn: Long): Long = {
     val expiryDecrementConfig = expiryDecrement
     if(expiryDecrementConfig > expiresIn){
-      Logger.error(s"Config error expiry_decrement $expiryDecrementConfig can't be greater than the token expiry ${expiresIn}")
+      Logger.error(s"Config error expiry_decrement $expiryDecrementConfig can't be greater than the token expiry $expiresIn")
       expiresIn
     } else expiresIn - expiryDecrementConfig
   }

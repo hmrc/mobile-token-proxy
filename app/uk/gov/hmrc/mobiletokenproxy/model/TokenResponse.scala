@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.mobiletokenproxy.model
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class TokenResponse(token:String)
 
 object TokenResponse {
-  implicit val format = Json.format[TokenResponse]
+  implicit val format: OFormat[TokenResponse] = Json.format[TokenResponse]
 }
