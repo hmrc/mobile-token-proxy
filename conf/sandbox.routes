@@ -1,0 +1,3 @@
+# microservice specific routes
+
+POST       /mobile-token-proxy/oauth/token    @uk.gov.hmrc.mobiletokenproxy.controllers.SandboxMobileTokenProxy.token(journeyId: Option[String])
