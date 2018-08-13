@@ -1,8 +1,8 @@
 # microservice specific routes
-
-->          /                           app.Routes
+->         /sandbox              sandbox.Routes
+->         /                     app.Routes
 # Admin pages
-->          /                           health.Routes
-->          /template                   template.Routes
+->         /                     health.Routes
+->         /template             template.Routes
 
-GET         /admin/metrics              @com.kenshoo.play.metrics.MetricsController.metrics
+GET        /admin/metrics        @com.kenshoo.play.metrics.MetricsController.metrics
