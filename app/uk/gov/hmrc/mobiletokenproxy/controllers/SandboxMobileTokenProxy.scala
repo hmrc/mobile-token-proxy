@@ -18,6 +18,7 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 
 import java.util.UUID
 
+import com.google.inject.name.Named
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.{JsError, JsValue, Json}
@@ -28,7 +29,7 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SandboxMobileTokenProxy @Inject()() extends FrontendController {
+class SandboxMobileTokenProxy @Inject()(@Named("mobile-auth-stub") mobileAuthStubUrl: String) extends FrontendController {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
@@ -52,5 +53,9 @@ class SandboxMobileTokenProxy @Inject()() extends FrontendController {
             Future successful BadRequest
         }
       })
+  }
+
+  def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+    Future successful Redirect(s"$mobileAuthStubUrl/gg/sign-in")
   }
 }
