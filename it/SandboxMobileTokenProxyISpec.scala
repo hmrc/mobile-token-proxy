@@ -6,21 +6,25 @@ import play.api.libs.ws.ahc.AhcWSClient
 import play.api.libs.ws.{WSClient, WSResponse}
 import uk.gov.hmrc.play.test.UnitSpec
 import utils.{WireMockSupport, WsScalaTestClient}
+import stubs.MobileAuthStub.ggSignInSuccess
 
 class SandboxMobileTokenProxyISpec extends UnitSpec
   with OneServerPerSuite with WsScalaTestClient with WireMockSupport {
   override implicit lazy val app: Application = appBuilder.build()
 
-  def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder().configure()
+  def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder().configure(
+    Map("microservice.services.mobile-auth-stub.port" -> wireMockPort)
+  )
 
   implicit lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   val ws: AhcWSClient = AhcWSClient()(app.materializer)
 
+  val mobileUserId: (String, String) = "X-MOBILE-USER-ID" -> "167927702220"
+
   "POST /mobile-token-proxy/oauth/token" should {
     def postOAuthToken(form: String): WSResponse = {
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      val mobileUserId: (String, String) = "X-MOBILE-USER-ID" -> "167927702220"
       await(wsUrl(s"/mobile-token-proxy/oauth/token").withHeaders(jsonHeader, mobileUserId).post(parse(form)))
     }
 
@@ -42,5 +46,14 @@ class SandboxMobileTokenProxyISpec extends UnitSpec
       await(postOAuthToken("{}")).status shouldBe 400
     }
 
+  }
+
+  "GET /mobile-token-proxy/oauth/authorize" should {
+    "redirect to /gg/sign-in and receive a response" in {
+      ggSignInSuccess()
+      val call = await(wsUrl(s"/mobile-token-proxy/oauth/authorize").withHeaders(mobileUserId).get())
+      call.status shouldBe 200
+      call.body should include("Success code=sandboxSuccess")
+    }
   }
 }

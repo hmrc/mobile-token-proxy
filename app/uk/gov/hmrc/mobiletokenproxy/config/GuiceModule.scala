@@ -44,6 +44,7 @@ class GuiceModule (environment: Environment, configuration: Configuration) exten
     bindConfigLongDefaultToZero("api-gateway.expiry_decrement")
     bind(classOf[HttpVerbs]).to(classOf[WSHttp])
     bind(classOf[TokenService]).to(classOf[LiveTokenServiceImpl])
+    bind(classOf[String]).annotatedWith(named("mobile-auth-stub")).toInstance(baseUrl("mobile-auth-stub"))
 
     bind(classOf[ProxyPassThroughHttpHeaders]).toInstance(
       new ProxyPassThroughHttpHeaders(configuration.getStringSeq(
