@@ -21,7 +21,6 @@ class MobileTokenProxyISpec extends UnitSpec
       "api-gateway.client_id" -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
       "api-gateway.redirect_uri" -> "urn:ietf:wg:oauth:2.0:oob:auto",
       "api-gateway.client_secret" -> "client_secret",
-      "api-gateway.tax_calc_server_token" -> "tax_calc_server_token",
       "api-gateway.expiry_decrement"  -> 0
     )
 
@@ -42,14 +41,6 @@ class MobileTokenProxyISpec extends UnitSpec
       oauthRedirectSuccess()
       val response = await(wsUrl("/mobile-token-proxy/oauth/authorize").get())
       response.status shouldBe 200
-    }
-  }
-
-  "GET /mobile-token-proxy/oauth/taxcalctoken" should {
-    "return a token" in {
-      val response = await(wsUrl("/mobile-token-proxy/oauth/taxcalctoken").get())
-      response.status shouldBe 200
-      response.json.toString shouldBe """{"token":"lRyIT7HZxuAJL66JeCgrFlL+tpMGdBYpa8G9plvRHG4="}"""
     }
   }
 

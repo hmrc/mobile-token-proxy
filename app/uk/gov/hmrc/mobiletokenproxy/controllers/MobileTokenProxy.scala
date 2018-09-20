@@ -22,7 +22,7 @@ import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
-import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, Crypted, PlainText}
+import uk.gov.hmrc.crypto.CompositeSymmetricCrypto
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors._
@@ -42,8 +42,7 @@ class MobileTokenProxy @Inject()(
   @Named("api-gateway.client_id") clientId: String,
   @Named("api-gateway.redirect_uri") redirectUri: String,
   @Named("api-gateway.scope") scope: String,
-  @Named("api-gateway.response_type") responseType: String,
-  @Named("api-gateway.tax_calc_server_token") taxCalcServerToken: String)
+  @Named("api-gateway.response_type") responseType: String)
   extends FrontendController {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
@@ -85,11 +84,6 @@ class MobileTokenProxy @Inject()(
             Future.successful(BadRequest)
         }
       })
-  }
-
-  def taxcalctoken(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
-    val encrypted: Crypted = aesCryptographer.encrypt(PlainText(taxCalcServerToken))
-    Future.successful(Ok(toJson(TokenResponse(encrypted.value))))
   }
 
   private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier): Future[Result] = {
