@@ -12,7 +12,6 @@ The service acts as a proxy to the API Gateway /oauth/token service and is also 
 | -------------------------| ------------------| ------------|
 |```/oauth/authorize```    | GET               | Request to build an authentication request to the API Gateway. [More...](docs/authorize.md) |
 |```/oauth/token```        | POST              | Request for an access-token to make API Gateway service calls. [More...](docs/token.md) |
-|```/oauth/taxcalctoken``` | GET               | Request for tax-calc token to make API Gateway service calls. [More...](docs/taxcalctoken.md) |
 
 
 ## Using the service locally.

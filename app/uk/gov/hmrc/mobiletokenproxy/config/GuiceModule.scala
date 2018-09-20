@@ -40,7 +40,6 @@ class GuiceModule (environment: Environment, configuration: Configuration) exten
     bindConfigString("api-gateway.client_id")
     bindConfigString("api-gateway.redirect_uri")
     bindConfigString("api-gateway.client_secret")
-    bindConfigString("api-gateway.tax_calc_server_token")
     bindConfigLongDefaultToZero("api-gateway.expiry_decrement")
     bind(classOf[HttpVerbs]).to(classOf[WSHttp])
     bind(classOf[TokenService]).to(classOf[LiveTokenServiceImpl])

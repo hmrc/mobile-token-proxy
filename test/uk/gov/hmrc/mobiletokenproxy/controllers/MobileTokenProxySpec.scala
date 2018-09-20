@@ -27,11 +27,11 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json.parse
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{POST, header}
-import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, Crypted, PlainContent, PlainText}
+import uk.gov.hmrc.crypto.CompositeSymmetricCrypto
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
-import uk.gov.hmrc.mobiletokenproxy.model.{TokenOauthResponse, TokenResponse}
+import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.TokenService
 import uk.gov.hmrc.play.test.UnitSpec
 
@@ -45,7 +45,6 @@ class MobileTokenProxySpec extends UnitSpec with MockFactory with Matchers {
   private val service = mock[TokenService]
   private val cryptographer = mock[CompositeSymmetricCrypto]
 
-  private val taxCalcServerToken = "tax_calc_server_token"
   private val vendorHeader = "X-Vendor-Instance-Id"
   private val deviceIdHeader = "X-Client-Device-ID"
   private val journeyId = Some("journeyId")
@@ -70,8 +69,7 @@ class MobileTokenProxySpec extends UnitSpec with MockFactory with Matchers {
       "client_id",
       "redirect_uri",
       "some-scopes",
-      "code",
-      taxCalcServerToken)
+      "code")
 
   def headerCarrierWith(headers: Seq[(String, String)]): MatcherBase = {
     argThat((hc: HeaderCarrier) => {
@@ -152,19 +150,6 @@ class MobileTokenProxySpec extends UnitSpec with MockFactory with Matchers {
         "http://localhost:8236/oauth/authorize?client_id=client_id&redirect_uri=redirect_uri&scope=some-scopes&response_type=code"
       header(vendorHeader, result).get shouldBe "header vendor"
       header(deviceIdHeader, result).get shouldBe "header device Id"
-    }
-  }
-
-  "requesting the tax-calc service" should {
-    "return a JSON response which contains the AES encrypted token" in {
-      (cryptographer.encrypt(_: PlainContent)).expects(PlainText(taxCalcServerToken) ).returning(Crypted("encruypted"))
-
-      val result = await(controller.taxcalctoken()(FakeRequest()))
-
-      status(result) shouldBe 200
-
-      val response = jsonBodyOf(result).as[TokenResponse]
-      response.token shouldBe "encruypted"
     }
   }
 }
