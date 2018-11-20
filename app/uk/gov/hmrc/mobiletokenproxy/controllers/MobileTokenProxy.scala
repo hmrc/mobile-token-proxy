@@ -94,8 +94,12 @@ class MobileTokenProxy @Inject()(
   }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case _: BadRequestException => Unauthorized
-    case Upstream4xxResponse(_, 401, _, _) => Unauthorized
+    case e: BadRequestException =>
+      Logger.warn(s"${e.responseCode}: ${e.getMessage}")
+      Unauthorized
+    case Upstream4xxResponse(message, 401, _, _) =>
+      Logger.warn(s"401: ${message}")
+      Unauthorized
     case Upstream4xxResponse(_, 403, _, _) => Forbidden
     case _ => InternalServerError
   }
