@@ -34,15 +34,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MobileTokenProxy @Inject()(
-                                  genericConnector: GenericConnector,
-                                  service: TokenService,
-                                  cryptoProvider: Provider[CompositeSymmetricCrypto],
-                                  proxyPassthroughHttpHeaders: ProxyPassThroughHttpHeaders,
-                                  @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
-                                  @Named("api-gateway.client_id") clientId: String,
-                                  @Named("api-gateway.redirect_uri") redirectUri: String,
-                                  @Named("api-gateway.scope") scope: String,
-                                  @Named("api-gateway.response_type") responseType: String)
+  genericConnector: GenericConnector,
+  service: TokenService,
+  cryptoProvider: Provider[CompositeSymmetricCrypto],
+  proxyPassthroughHttpHeaders: ProxyPassThroughHttpHeaders,
+  @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
+  @Named("api-gateway.client_id") clientId: String,
+  @Named("api-gateway.redirect_uri") redirectUri: String,
+  @Named("api-gateway.scope") scope: String,
+  @Named("api-gateway.response_type") responseType: String)
   extends FrontendController {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
@@ -51,7 +51,7 @@ class MobileTokenProxy @Inject()(
 
   def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     val redirectUrl = s"$pathToAPIGatewayAuthService?client_id=$clientId&redirect_uri=$redirectUri&scope=$scope&response_type=$responseType"
-    Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
+    Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq :_*))
   }
 
   def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
