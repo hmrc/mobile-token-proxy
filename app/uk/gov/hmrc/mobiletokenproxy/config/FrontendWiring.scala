@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
+import akka.actor.ActorSystem
 import com.google.inject.Singleton
+import com.typesafe.config.Config
 import javax.inject.Inject
-import play.api.Configuration
+import play.api.{Configuration, Play}
 import play.api.i18n.MessagesApi
 import play.api.mvc.Request
 import play.twirl.api.Html
@@ -35,6 +37,9 @@ class ErrorHandler @Inject()(val messagesApi: MessagesApi, val configuration: Co
 
 trait HttpVerbs extends HttpGet with WSGet with HttpPost with WSPost with HttpHooks {
   override val hooks: Seq[HttpHook] = NoneRequired
+  override protected def actorSystem: ActorSystem = Play.current.actorSystem
+
+  override protected def configuration: Option[Config] = Some(Play.current.configuration.underlying)
 }
 
 @Singleton
