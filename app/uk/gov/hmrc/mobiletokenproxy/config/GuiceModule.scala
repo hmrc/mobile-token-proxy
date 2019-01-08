@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ class GuiceModule (environment: Environment, configuration: Configuration) exten
         "api-gateway.proxyPassthroughHttpHeaders").getOrElse(Seq.empty)))
 
     bind(classOf[CompositeSymmetricCrypto]).toProvider( new Provider[CryptoWithKeysFromConfig] {
-      override def get(): CryptoWithKeysFromConfig = CryptoWithKeysFromConfig("aes")
+      override def get(): CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig("aes", configuration.underlying)
     })
   }
 
