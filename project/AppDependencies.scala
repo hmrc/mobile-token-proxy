@@ -4,9 +4,9 @@ object AppDependencies {
   import play.core.PlayVersion
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "bootstrap-play-25" % "4.6.0",
-    "uk.gov.hmrc" %% "govuk-template" % "5.22.0",
-    "uk.gov.hmrc" %% "play-ui" % "7.27.0-play-25",
+    "uk.gov.hmrc" %% "bootstrap-play-26" % "0.34.0",
+    "uk.gov.hmrc" %% "govuk-template" % "5.27.0-play-26",
+    "uk.gov.hmrc" %% "play-ui" % "7.27.0-play-26",
     "uk.gov.hmrc" %% "domain" % "5.3.0"
   )
 
@@ -19,7 +19,7 @@ object AppDependencies {
     def apply(): Seq[ModuleID] = new TestDependencies {
 
       override lazy val test = Seq(
-        "uk.gov.hmrc" %% "hmrctest" % "3.3.0" % scope,
+        "uk.gov.hmrc" %% "hmrctest" % "3.4.0-play-26" % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
         "org.scalamock" %% "scalamock" % "4.0.0" % "test"
       )

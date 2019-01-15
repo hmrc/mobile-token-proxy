@@ -25,7 +25,7 @@ class SandboxMobileTokenProxyISpec extends UnitSpec
   "POST /mobile-token-proxy/oauth/token" should {
     def postOAuthToken(form: String): WSResponse = {
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      await(wsUrl(s"/mobile-token-proxy/oauth/token").withHeaders(jsonHeader, mobileUserId).post(parse(form)))
+      await(wsUrl(s"/mobile-token-proxy/oauth/token").addHttpHeaders(jsonHeader, mobileUserId).post(parse(form)))
     }
 
     val formWithAuthCode: String = """{ "authorizationCode":"123"}"""
@@ -51,7 +51,7 @@ class SandboxMobileTokenProxyISpec extends UnitSpec
   "GET /mobile-token-proxy/oauth/authorize" should {
     "redirect to /gg/sign-in and receive a response" in {
       ggSignInSuccess()
-      val call = await(wsUrl(s"/mobile-token-proxy/oauth/authorize").withHeaders(mobileUserId).get())
+      val call = await(wsUrl(s"/mobile-token-proxy/oauth/authorize").addHttpHeaders(mobileUserId).get())
       call.status shouldBe 200
       call.body should include("Success code=sandboxSuccess")
     }

@@ -22,7 +22,6 @@ import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 import play.api.libs.json.Json.parse
 import play.api.libs.json.{JsValue, Writes}
-import play.api.test.FakeApplication
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
 import uk.gov.hmrc.mobiletokenproxy.controllers.StubApplicationConfiguration
@@ -32,16 +31,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class GenericConnectorSpec extends UnitSpec
-  with WithFakeApplication with ScalaFutures with StubApplicationConfiguration with MockFactory with Matchers{
-
-  override lazy val fakeApplication = FakeApplication(additionalConfiguration = config)
+  with ScalaFutures with StubApplicationConfiguration with MockFactory with Matchers {
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
-  val mockHttp: HttpVerbs = mock[HttpVerbs]
+  val mockHttp : HttpVerbs        = mock[HttpVerbs]
   val connector: GenericConnector = new GenericConnector(mockHttp)
 
-  val url = "somepath"
+  val url               = "somepath"
   val someJson: JsValue = parse("""{"test":1234}""")
 
   val http500Response: Future[HttpResponse] = Future.failed(Upstream5xxResponse("Error", 500, 500))
@@ -79,9 +76,9 @@ class GenericConnectorSpec extends UnitSpec
 
   "genericConnector post" should {
     def postReturning(response: Future[HttpResponse]) = {
-      (mockHttp.POST(_: String, _:JsValue, _: Seq[(String, String)])
-        (_: Writes[JsValue], _: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext)).expects(
-          url, someJson, *, *, *, *, *).returning(response)
+      (mockHttp.POST(_: String, _: JsValue, _: Seq[(String, String)])
+      (_: Writes[JsValue], _: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext)).expects(
+        url, someJson, *, *, *, *, *).returning(response)
     }
 
     "throw BadRequestException on 400 response" in {

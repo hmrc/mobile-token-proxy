@@ -9,7 +9,7 @@ import uk.gov.hmrc.play.test.UnitSpec
 import utils.{WireMockSupport, WsScalaTestClient}
 
 class MobileTokenProxyISpec extends UnitSpec
-  with OneServerPerSuite with WsScalaTestClient with WireMockSupport{
+  with OneServerPerSuite with WsScalaTestClient with WireMockSupport {
   override implicit lazy val app: Application = appBuilder.build()
 
   def appBuilder: GuiceApplicationBuilder =
@@ -21,13 +21,13 @@ class MobileTokenProxyISpec extends UnitSpec
       "api-gateway.client_id" -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
       "api-gateway.redirect_uri" -> "urn:ietf:wg:oauth:2.0:oob:auto",
       "api-gateway.client_secret" -> "client_secret",
-      "api-gateway.expiry_decrement"  -> 0
+      "api-gateway.expiry_decrement" -> 0
     )
 
   implicit lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   val ws: AhcWSClient = AhcWSClient()(app.materializer)
-  val authUserId = "/userId"
+  val authUserId      = "/userId"
 
   "GET /ping/ping" should {
     "be healthy" in {
@@ -47,14 +47,14 @@ class MobileTokenProxyISpec extends UnitSpec
   "POST /mobile-token-proxy/oauth/token" should {
     def postOAuthToken(form: String): WSResponse = {
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      await(wsUrl(s"/mobile-token-proxy/oauth/token").withHeaders(jsonHeader).post(parse(form)))
+      await(wsUrl(s"/mobile-token-proxy/oauth/token").addHttpHeaders(jsonHeader).post(parse(form)))
     }
 
-    def verifyPostOAuthTokenFailureStatusCode(form: String, upstreamResponseCode:Int, responseCodeToReport: Int): Unit = {
+    def verifyPostOAuthTokenFailureStatusCode(form: String, upstreamResponseCode: Int, responseCodeToReport: Int): Unit = {
       oauthTokenExchangeFailure(upstreamResponseCode)
 
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      val response = await(wsUrl(s"/mobile-token-proxy/oauth/token").withHeaders(jsonHeader).post(parse(form)))
+      val response = await(wsUrl(s"/mobile-token-proxy/oauth/token").addHttpHeaders(jsonHeader).post(parse(form)))
       response.status shouldBe responseCodeToReport
     }
 

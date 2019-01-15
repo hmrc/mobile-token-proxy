@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-class ProxyPassThroughHttpHeaders(headers: Seq[String] ) extends Seq[String] {
+class ProxyPassThroughHttpHeaders(headers: Seq[String]) extends Seq[String] {
   override def length: Int = headers.length
 
   override def apply(idx: Int): String = headers.apply(idx)

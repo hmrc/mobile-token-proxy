@@ -16,19 +16,16 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import com.google.inject.{AbstractModule, Provider}
 import com.google.inject.name.Names.named
-import play.api.Mode.Mode
+import com.google.inject.{AbstractModule, Provider}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenServiceImpl, TokenService}
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.util.Try
 
-class GuiceModule (environment: Environment, configuration: Configuration) extends AbstractModule with ServicesConfig{
-  override protected lazy val mode: Mode = environment.mode
-  override protected lazy val runModeConfiguration: Configuration = configuration
+class GuiceModule (environment: Environment, configuration: Configuration, servicesConfig: ServicesConfig) extends AbstractModule {
 
   override def configure(): Unit = {
     bindConfigString("google-analytics.token")
@@ -43,15 +40,17 @@ class GuiceModule (environment: Environment, configuration: Configuration) exten
     bindConfigLongDefaultToZero("api-gateway.expiry_decrement")
     bind(classOf[HttpVerbs]).to(classOf[WSHttp])
     bind(classOf[TokenService]).to(classOf[LiveTokenServiceImpl])
-    bind(classOf[String]).annotatedWith(named("mobile-auth-stub")).toInstance(baseUrl("mobile-auth-stub"))
+    bind(classOf[String]).annotatedWith(named("mobile-auth-stub")).toInstance(servicesConfig.baseUrl("mobile-auth-stub"))
 
     bind(classOf[ProxyPassThroughHttpHeaders]).toInstance(
-      new ProxyPassThroughHttpHeaders(configuration.getStringSeq(
-        "api-gateway.proxyPassthroughHttpHeaders").getOrElse(Seq.empty)))
+      new ProxyPassThroughHttpHeaders(
+        configuration.getStringSeq(
+          "api-gateway.proxyPassthroughHttpHeaders").getOrElse(Seq.empty)))
 
-    bind(classOf[CompositeSymmetricCrypto]).toProvider( new Provider[CryptoWithKeysFromConfig] {
-      override def get(): CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig("aes", configuration.underlying)
-    })
+    bind(classOf[CompositeSymmetricCrypto]).toProvider(
+      new Provider[CryptoWithKeysFromConfig] {
+        override def get(): CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig("aes", configuration.underlying)
+      })
   }
 
   private def bindConfigLongDefaultToZero(path: String): Unit = {

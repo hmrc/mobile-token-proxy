@@ -16,39 +16,14 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import java.security.cert.X509Certificate
-
-import io.netty.handler.codec.http.HttpHeaders.Names.{ACCEPT, CONTENT_TYPE, HOST}
 import play.api.http.ContentTypes
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{Headers, RequestHeader}
+import play.api.mvc.Headers
+import play.api.test.FakeRequest
+import play.shaded.ahc.io.netty.handler.codec.http.HttpHeaders.Names._
 import uk.gov.hmrc.play.test.UnitSpec
 
 class RouterHttpRequestHandlerSpec extends UnitSpec {
-
-  class FakeRequestHeader(fakeHeaders: Headers, methodType: String) extends RequestHeader {
-    override def id: Long = Math.random().toLong
-
-    override def tags: Map[String, String] = Map.empty
-
-    override def uri: String = "/context/some-path"
-
-    override def path: String = "/context/some-path"
-
-    override def method: String = methodType
-
-    override def version: String = "HTTP/1.1"
-
-    override def queryString: Map[String, Seq[String]] = Map.empty
-
-    override def headers: Headers = fakeHeaders
-
-    override def remoteAddress: String = null
-
-    override def secure: Boolean = true
-
-    override def clientCertificateChain: Option[Seq[X509Certificate]] = None
-  }
 
   "RouterHttpRequestHandler" should {
     "route to standard controller when no X-MOBILE-USER-ID header is supplied" in {
@@ -60,8 +35,8 @@ class RouterHttpRequestHandlerSpec extends UnitSpec {
         .build()
 
       val routingHttpRequestHandler = application.injector.instanceOf[RoutingHttpRequestHandler]
-
-      val requestHeader = new FakeRequestHeader(new Headers(Seq((HOST,"localhost:8236"), (ACCEPT, "application/vnd.hmrc.1.0+json"), (CONTENT_TYPE, ContentTypes.JSON))), "POST")
+      val headers = new Headers(Seq((HOST, "localhost:8236"), (ACCEPT, "application/vnd.hmrc.1.0+json"), (CONTENT_TYPE, ContentTypes.JSON)))
+      val requestHeader = FakeRequest().withHeaders(headers).withMethod("POST")
       val overriddenRequest = routingHttpRequestHandler.overrideRouting(requestHeader)
       overriddenRequest.path shouldBe "/context/some-path"
       application.stop()
@@ -77,7 +52,8 @@ class RouterHttpRequestHandlerSpec extends UnitSpec {
 
       val routingHttpRequestHandler = application.injector.instanceOf[RoutingHttpRequestHandler]
 
-      val requestHeader = new FakeRequestHeader(new Headers(Seq((HOST,"localhost:8236"), (ACCEPT, "application/vnd.hmrc.1.0+json"), (CONTENT_TYPE, ContentTypes.JSON))), "POST")
+      val headers = new Headers(Seq((HOST, "localhost:8236"), (ACCEPT, "application/vnd.hmrc.1.0+json"), (CONTENT_TYPE, ContentTypes.JSON)))
+      val requestHeader = FakeRequest().withHeaders(headers).withMethod("POST")
       val overriddenRequest = routingHttpRequestHandler.overrideRouting(requestHeader)
       overriddenRequest.path shouldBe "/context/some-path"
       application.stop()
@@ -92,7 +68,8 @@ class RouterHttpRequestHandlerSpec extends UnitSpec {
 
       val routingHttpRequestHandler = application.injector.instanceOf[RoutingHttpRequestHandler]
 
-      val requestHeader = new FakeRequestHeader(new Headers(Seq((HOST,"localhost:8236"), (ACCEPT, "application/vnd.hmrc.1.0+json"), (CONTENT_TYPE, ContentTypes.JSON))), "POST")
+      val headers = new Headers(Seq((HOST, "localhost:8236"), (ACCEPT, "application/vnd.hmrc.1.0+json"), (CONTENT_TYPE, ContentTypes.JSON)))
+      val requestHeader = FakeRequest().withHeaders(headers).withMethod("POST")
       val overriddenRequest = routingHttpRequestHandler.overrideRouting(requestHeader)
       overriddenRequest.path shouldBe "/context/some-path"
       application.stop()
@@ -107,7 +84,8 @@ class RouterHttpRequestHandlerSpec extends UnitSpec {
 
       val routingHttpRequestHandler = application.injector.instanceOf[RoutingHttpRequestHandler]
 
-      val requestHeader = new FakeRequestHeader(new Headers(Seq(("X-MOBILE-USER-ID", "208606423740"),(HOST,"localhost:8236"), (ACCEPT, "application/vnd.hmrc.1.0+json"), (CONTENT_TYPE, ContentTypes.JSON))), "POST")
+      val headers = new Headers(Seq(("X-MOBILE-USER-ID", "208606423740"), (HOST, "localhost:8236"), (ACCEPT, "application/vnd.hmrc.1.0+json"), (CONTENT_TYPE, ContentTypes.JSON)))
+      val requestHeader = FakeRequest().withHeaders(headers).withMethod("POST")
       val overriddenRequest = routingHttpRequestHandler.overrideRouting(requestHeader)
       overriddenRequest.path shouldBe "/sandbox/context/some-path"
       application.stop()

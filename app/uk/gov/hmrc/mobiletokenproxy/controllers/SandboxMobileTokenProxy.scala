@@ -29,7 +29,7 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SandboxMobileTokenProxy @Inject()(@Named("mobile-auth-stub") mobileAuthStubUrl: String) extends FrontendController {
+class SandboxMobileTokenProxy @Inject()(@Named("mobile-auth-stub") mobileAuthStubUrl: String, cc: MessagesControllerComponents) extends FrontendController(cc) {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>

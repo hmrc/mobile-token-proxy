@@ -12,7 +12,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(publishingSettings: _*)
   .settings(routesImport ++= Seq("uk.gov.hmrc.domain._"))
-  .settings(routesGenerator := StaticRoutesGenerator)
   .settings(
     majorVersion := 1,
     playDefaultPort := 8239,

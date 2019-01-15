@@ -14,9 +14,8 @@
  * limitations under the License.
  *@
 
-@import play.api.Play.current
-@import play.api.i18n.Messages.Implicits._
 @import uk.gov.hmrc.mobiletokenproxy.config.GoogleAnalyticsConfig
+@import uk.gov.hmrc.play.views.html.layouts._
 
 @(config: GoogleAnalyticsConfig,
 title: String,
@@ -27,7 +26,7 @@ userLoggedIn: Boolean = false,
 supportLinkEnabled: Boolean = true,
 serviceInfoContent: Option[Html] = None,
 contentHeader: Option[Html] = None,
-footerLinks: Option[Html] = Some(uk.gov.hmrc.play.views.html.layouts.footer_links()),
+footerLinks: FooterLinks ,
 showFeedbackLinkInBetaBanner: Boolean = true,
 linkElement: Option[Html] = None,
 headScripts: Option[Html] = None,
@@ -36,7 +35,7 @@ bodyClasses: Option[String] = None,
 mainConfig: uk.gov.hmrc.mobiletokenproxy.config.MainConfig = uk.gov.hmrc.mobiletokenproxy.config.MainConfig(),
 articleClasses: Option[String] = None,
 includeGridWrapper: Boolean = false,
-gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit request : Request[_])
+gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit request : Request[_], messages:Messages)
 
 @import layouts.govuk_template
 @import uk.gov.hmrc.play.views.html.{layouts => playLayouts}
@@ -46,8 +45,8 @@ gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit req
 }
 
 @insideHeader = {
-@if(headerNav) {
-    @playLayouts.header_nav(headerNav.get.title,headerNav.get.titleLink, headerNav.get.showBetaLink, headerNav.get.links)
+@headerNav.map { nav =>
+    nav(headerNav.get.title,headerNav.get.titleLink, headerNav.get.showBetaLink, headerNav.get.links)
 }
 }
 
@@ -97,4 +96,4 @@ gaCalls: Option[(String,String) => Html] = None)(mainContent: Html)(implicit req
     gaCalls = gaCalls)
 }
 
-@govuk_template(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, footerLinks, headerNav.isDefined)(content)
+@govuk_template(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(footerLinks()), headerNav.isDefined)(content)
