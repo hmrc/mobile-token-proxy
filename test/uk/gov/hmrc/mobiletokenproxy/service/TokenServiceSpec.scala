@@ -17,33 +17,43 @@
 package uk.gov.hmrc.mobiletokenproxy.service
 
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.Matchers
+import org.scalatest.Assertion
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.parse
 import uk.gov.hmrc.http.{BadRequestException, _}
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.LiveTokenServiceImpl
-import uk.gov.hmrc.play.test.UnitSpec
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.postfixOps
+import scala.reflect.ClassTag
 
-class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
+class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
   val connector: GenericConnector = mock[GenericConnector]
 
   val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
-  val clientId: String = "client_id"
-  val redirectUri: String = "redirect_uri"
-  val clientSecret: String = "client_secret"
-  val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
-  val expiryDecrement: Long = 0
-  val accessToken = "495b5b1725d590eb87d0f6b7dcea32a9"
+  val clientId:                     String = "client_id"
+  val redirectUri:                  String = "redirect_uri"
+  val clientSecret:                 String = "client_secret"
+  val pathToAPIGatewayAuthService:  String = "http://localhost:8236/oauth/authorize"
+  val expiryDecrement:              Long   = 0
+  val accessToken  = "495b5b1725d590eb87d0f6b7dcea32a9"
   val refreshToken = "b75f2ed960898b4cd38f23934c6befb2"
-  val expiresIn = 14400
+  val expiresIn    = 14400
 
   val service: LiveTokenServiceImpl = new LiveTokenServiceImpl(
-    connector, pathToAPIGatewayAuthService, clientId: String, redirectUri, clientSecret, pathToAPIGatewayTokenService, expiryDecrement)
+    connector,
+    pathToAPIGatewayAuthService,
+    clientId: String,
+    redirectUri,
+    clientSecret,
+    pathToAPIGatewayTokenService,
+    expiryDecrement)
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
@@ -51,26 +61,28 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
     val authCode = "authCode"
 
     val form = Map(
-      "code" -> Seq(authCode),
-      "client_id" -> Seq(clientId),
+      "code"          -> Seq(authCode),
+      "client_id"     -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
-      "grant_type" -> Seq("authorization_code"),
-      "redirect_uri" -> Seq(redirectUri)
+      "grant_type"    -> Seq("authorization_code"),
+      "redirect_uri"  -> Seq(redirectUri)
     )
 
     "return a token" in {
-      val tokenResponseFromAuthorizationCode: JsValue = parse(
-        s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken", "expires_in": $expiresIn }""")
+      val tokenResponseFromAuthorizationCode: JsValue =
+        parse(s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken", "expires_in": $expiresIn }""")
       val response = HttpResponse(200, Some(tokenResponseFromAuthorizationCode))
 
-      (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
-        pathToAPIGatewayTokenService, form, *, * ).returning(response)
+      (connector
+        .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
+        .expects(pathToAPIGatewayTokenService, form, *, *)
+        .returning(Future.successful(response))
 
-      val tokenResponse: TokenOauthResponse = await(service.getTokenFromAccessCode(authCode))
+      val tokenResponse: TokenOauthResponse = service.getTokenFromAccessCode(authCode).futureValue
 
-      tokenResponse.access_token shouldBe accessToken
-      tokenResponse.refresh_token shouldBe refreshToken
-      tokenResponse.expires_in shouldBe expiresIn
+      tokenResponse.access_token mustBe accessToken
+      tokenResponse.refresh_token mustBe refreshToken
+      tokenResponse.expires_in mustBe expiresIn
     }
 
     "throw an exception if access_token is not returned" in {
@@ -95,32 +107,37 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
     }
 
     "handle the exception when APIGatewayTokenService returns a code other than 200" in {
-      (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
-        pathToAPIGatewayTokenService, form, *, * ).returning(HttpResponse(201))
+      (connector
+        .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
+        .expects(pathToAPIGatewayTokenService, form, *, *)
+        .returning(Future.successful(HttpResponse(201)))
 
       intercept[RuntimeException] {
-        await(service.getTokenFromAccessCode(authCode))
+        service.getTokenFromAccessCode(authCode).futureValue
       }
     }
 
     def handleInvalidResponseJson(tokenResponseFromAuthorizationCode: JsValue) = {
       val response = HttpResponse(200, Some(tokenResponseFromAuthorizationCode))
 
-      (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
-        pathToAPIGatewayTokenService, form, *, * ).returning(response)
+      (connector
+        .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
+        .expects(pathToAPIGatewayTokenService, form, *, *)
+        .returning(Future.successful(response))
 
       intercept[RuntimeException] {
-        await(service.getTokenFromAccessCode(authCode))
+        service.getTokenFromAccessCode(authCode).futureValue
       }
     }
 
-    def propagateException(exception: Exception) = {
-      (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
-        pathToAPIGatewayTokenService, form, *, * ).returning( Future.failed(exception))
+    def propagateException[T <: Exception](exception: T)(implicit ct: ClassTag[T]): Assertion = {
+      (connector
+        .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
+        .expects(pathToAPIGatewayTokenService, form, *, *)
+        .returning(Future.failed(exception))
 
-      exception shouldBe intercept[Exception] {
-        await(service.getTokenFromAccessCode(authCode))
-      }
+      val actual = intercept[T] { Await.result(service.getTokenFromAccessCode(authCode), 10 seconds) }
+      exception mustBe actual
     }
   }
 
@@ -128,26 +145,28 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
     val refreshToken = "refresh_token"
 
     val form = Map(
-      refreshToken -> Seq(refreshToken),
-      "client_id" -> Seq(clientId),
+      refreshToken    -> Seq(refreshToken),
+      "client_id"     -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
-      "grant_type" -> Seq(refreshToken),
-      "redirect_uri" -> Seq(redirectUri)
+      "grant_type"    -> Seq(refreshToken),
+      "redirect_uri"  -> Seq(redirectUri)
     )
 
     "return a token" in {
-      val tokenResponseFromAuthorizationCode: JsValue = parse(
-        s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken", "expires_in": $expiresIn }""")
+      val tokenResponseFromAuthorizationCode: JsValue =
+        parse(s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken", "expires_in": $expiresIn }""")
       val response = HttpResponse(200, Some(tokenResponseFromAuthorizationCode))
 
-      (connector.doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier)).expects(
-        pathToAPIGatewayTokenService, form, *, *).returning(response)
+      (connector
+        .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
+        .expects(pathToAPIGatewayTokenService, form, *, *)
+        .returning(Future.successful(response))
 
-      val tokenResponse: TokenOauthResponse = await(service.getTokenFromRefreshToken(refreshToken))
+      val tokenResponse: TokenOauthResponse = service.getTokenFromRefreshToken(refreshToken).futureValue
 
-      tokenResponse.access_token shouldBe accessToken
-      tokenResponse.refresh_token shouldBe refreshToken
-      tokenResponse.expires_in shouldBe expiresIn
+      tokenResponse.access_token mustBe accessToken
+      tokenResponse.refresh_token mustBe refreshToken
+      tokenResponse.expires_in mustBe expiresIn
     }
 
     "throw FailToRetrieveToken if access_token is not returned" in {
@@ -172,32 +191,39 @@ class TokenServiceSpec extends UnitSpec with MockFactory with Matchers{
     }
 
     "handle the exception when APIGatewayTokenService returns a code other than 200" in {
-      (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
-        pathToAPIGatewayTokenService, form, *, * ).returning(HttpResponse(201))
+      (connector
+        .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
+        .expects(pathToAPIGatewayTokenService, form, *, *)
+        .returning(Future.successful(HttpResponse(201)))
 
       intercept[RuntimeException] {
-        await(service.getTokenFromRefreshToken(refreshToken))
+        service.getTokenFromRefreshToken(refreshToken).futureValue
       }
     }
 
     def handleInvalidResponseJson(tokenResponseFromAuthorizationCode: JsValue) = {
       val response = HttpResponse(200, Some(tokenResponseFromAuthorizationCode))
 
-      (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
-        pathToAPIGatewayTokenService, form, *, * ).returning(response)
+      (connector
+        .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
+        .expects(pathToAPIGatewayTokenService, form, *, *)
+        .returning(Future.successful(response))
 
       intercept[RuntimeException] {
-        await(service.getTokenFromRefreshToken(refreshToken))
+        service.getTokenFromRefreshToken(refreshToken).futureValue
       }
     }
 
     def propagateException(exception: Exception) = {
-      (connector.doPostForm(_: String, _:Map[String,Seq[String]])(_: ExecutionContext, _ : HeaderCarrier)).expects(
-        pathToAPIGatewayTokenService, form, *, * ).returning( Future.failed(exception))
+      (connector
+        .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
+        .expects(pathToAPIGatewayTokenService, form, *, *)
+        .returning(Future.failed(exception))
 
-      exception shouldBe intercept[Exception] {
-        await(service.getTokenFromRefreshToken(refreshToken))
+      val actual = intercept[Exception] {
+        Await.result(service.getTokenFromRefreshToken(refreshToken), 10 seconds)
       }
+      exception mustBe actual
     }
   }
 }

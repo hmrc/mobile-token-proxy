@@ -21,11 +21,13 @@ import com.google.inject.{AbstractModule, Provider}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenServiceImpl, TokenService}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
 
 import scala.util.Try
 
-class GuiceModule (environment: Environment, configuration: Configuration, servicesConfig: ServicesConfig) extends AbstractModule {
+class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
+
+  val servicesConfig = new ServicesConfig(configuration, new RunMode(configuration, environment.mode))
 
   override def configure(): Unit = {
     bindConfigString("google-analytics.token")
@@ -44,8 +46,7 @@ class GuiceModule (environment: Environment, configuration: Configuration, servi
 
     bind(classOf[ProxyPassThroughHttpHeaders]).toInstance(
       new ProxyPassThroughHttpHeaders(
-        configuration.getStringSeq(
-          "api-gateway.proxyPassthroughHttpHeaders").getOrElse(Seq.empty)))
+        configuration.getOptional[Seq[String]]("api-gateway.proxyPassthroughHttpHeaders").getOrElse(Seq.empty)))
 
     bind(classOf[CompositeSymmetricCrypto]).toProvider(
       new Provider[CryptoWithKeysFromConfig] {
