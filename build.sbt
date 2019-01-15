@@ -17,6 +17,7 @@ lazy val microservice = Project(appName, file("."))
     playDefaultPort := 8239,
     scalaVersion := "2.11.12",
     libraryDependencies ++= AppDependencies(),
+    dependencyOverrides ++= AppDependencies.overrides(),
     evictionWarningOptions in update := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
     resolvers += Resolver.jcenterRepo,
     unmanagedSourceDirectories in IntegrationTest := (baseDirectory in IntegrationTest) (base => Seq(base / "it")).value,
