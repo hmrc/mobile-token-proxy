@@ -22,6 +22,7 @@ import com.typesafe.config.Config
 import javax.inject.Inject
 import play.api.{Configuration, Play}
 import play.api.i18n.MessagesApi
+import play.api.libs.ws.WSClient
 import play.api.mvc.Request
 import play.twirl.api.Html
 import uk.gov.hmrc.http.hooks.{HttpHook, HttpHooks}
@@ -43,4 +44,4 @@ trait HttpVerbs extends HttpGet with WSGet with HttpPost with WSPost with HttpHo
 }
 
 @Singleton
-class WSHttp extends HttpVerbs
+class WSHttp @Inject()(val wsClient: WSClient) extends HttpVerbs

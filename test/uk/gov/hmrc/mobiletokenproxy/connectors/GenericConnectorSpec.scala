@@ -16,29 +16,25 @@
 
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
-
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{Matchers, WordSpecLike}
 import play.api.libs.json.Json.parse
 import play.api.libs.json.{JsValue, Writes}
-import play.api.test.FakeApplication
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
 import uk.gov.hmrc.mobiletokenproxy.controllers.StubApplicationConfiguration
-import uk.gov.hmrc.play.test._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.postfixOps
 
-class GenericConnectorSpec extends UnitSpec
-  with WithFakeApplication with ScalaFutures with StubApplicationConfiguration with MockFactory with Matchers{
-
-  override lazy val fakeApplication = FakeApplication(additionalConfiguration = config)
+class GenericConnectorSpec extends WordSpecLike with ScalaFutures with StubApplicationConfiguration with MockFactory with Matchers {
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
-  val mockHttp: HttpVerbs = mock[HttpVerbs]
+  val mockHttp:  HttpVerbs        = mock[HttpVerbs]
   val connector: GenericConnector = new GenericConnector(mockHttp)
 
   val url = "somepath"
@@ -49,16 +45,14 @@ class GenericConnectorSpec extends UnitSpec
   val http200Response: Future[HttpResponse] = Future.successful(HttpResponse(200, Some(someJson)))
 
   "genericConnector get" should {
-    def getReturning(response: Future[HttpResponse]) = {
-      (mockHttp.GET(_: String)(_: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext)).expects(
-        url, *, *, *).returning(response)
-    }
+    def getReturning(response: Future[HttpResponse]) =
+      (mockHttp.GET(_: String)(_: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext)).expects(url, *, *, *).returning(response)
 
     "throw BadRequestException on 400 response" in {
       getReturning(http400Response)
 
       intercept[BadRequestException] {
-        await(connector.doGet(url))
+        Await.result(connector.doGet(url), 10 seconds)
       }
     }
 
@@ -66,29 +60,29 @@ class GenericConnectorSpec extends UnitSpec
       getReturning(http500Response)
 
       intercept[Upstream5xxResponse] {
-        await(connector.doGet(url))
+        Await.result(connector.doGet(url), 10 seconds)
       }
     }
 
     "return JSON response on 200 success" in {
       getReturning(http200Response)
 
-      await(connector.doGet(url)).json shouldBe someJson
+      connector.doGet(url).futureValue.json shouldBe someJson
     }
   }
 
   "genericConnector post" should {
-    def postReturning(response: Future[HttpResponse]) = {
-      (mockHttp.POST(_: String, _:JsValue, _: Seq[(String, String)])
-        (_: Writes[JsValue], _: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext)).expects(
-          url, someJson, *, *, *, *, *).returning(response)
-    }
+    def postReturning(response: Future[HttpResponse]) =
+      (mockHttp
+        .POST(_: String, _: JsValue, _: Seq[(String, String)])(_: Writes[JsValue], _: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext))
+        .expects(url, someJson, *, *, *, *, *)
+        .returning(response)
 
     "throw BadRequestException on 400 response" in {
       postReturning(http400Response)
 
       intercept[BadRequestException] {
-        await(connector.doPost(url, someJson))
+        Await.result(connector.doPost(url, someJson), 10 seconds)
       }
     }
 
@@ -96,14 +90,14 @@ class GenericConnectorSpec extends UnitSpec
       postReturning(http500Response)
 
       intercept[Upstream5xxResponse] {
-        await(connector.doPost(url, someJson))
+        Await.result(connector.doPost(url, someJson), 10 seconds)
       }
     }
 
     "return JSON response on 200 success" in {
       postReturning(http200Response)
 
-      await(connector.doPost(url, someJson)).json shouldBe someJson
+      connector.doPost(url, someJson).futureValue.json shouldBe someJson
     }
   }
 }

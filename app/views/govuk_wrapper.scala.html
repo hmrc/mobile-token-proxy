@@ -15,16 +15,18 @@
  *@
 
 @import uk.gov.hmrc.mobiletokenproxy.config.GoogleAnalyticsConfig
+@import uk.gov.hmrc.play.views.html.layouts.MainContentHeader
 
 @(config: GoogleAnalyticsConfig,
   title: String,
   mainClass: Option[String] = None,
   mainDataAttributes: Option[Html] = None,
+  mainContentHeader: Html = Html(""),
   bodyClasses: Option[String] = None,
-  sidebar: Html = HtmlFormat.empty,
+  sidebar: Html = Html(""),
   contentHeader: Option[Html] = None,
-  mainContent: Html = HtmlFormat.empty,
-  serviceInfoContent: Html = HtmlFormat.empty)(implicit request: Request[_], messages:Messages)
+  mainContent: Html = Html(""),
+  serviceInfoContent: Html = Html(""))(implicit request: Request[_], messages:Messages)
 
 @import layouts.{govuk_template => hmrcGovUkTemplate}
 @import uk.gov.hmrc.play.views.html.{layouts => uiLayouts}
@@ -63,12 +65,6 @@
       betaBanner = Html(""),
       includeGridWrapper = false,
       serviceInfoContent = Some(serviceInfoContent))
-}
-
-@mainContentHeader = {
-    @if(contentHeader.isDefined) {
-        @uiLayouts.main_content_header(contentHeader = contentHeader.get)
-    }
 }
 
 @content = {

@@ -42,8 +42,10 @@ class MobileTokenProxy @Inject()(
   @Named("api-gateway.client_id") clientId: String,
   @Named("api-gateway.redirect_uri") redirectUri: String,
   @Named("api-gateway.scope") scope: String,
-  @Named("api-gateway.response_type") responseType: String)
-  extends FrontendController {
+  @Named("api-gateway.response_type") responseType: String,
+  messagesControllerComponents: MessagesControllerComponents
+)
+  extends FrontendController(messagesControllerComponents) {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
@@ -51,7 +53,7 @@ class MobileTokenProxy @Inject()(
 
   def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
     val redirectUrl = s"$pathToAPIGatewayAuthService?client_id=$clientId&redirect_uri=$redirectUri&scope=$scope&response_type=$responseType"
-    Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq :_*))
+    Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
   }
 
   def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
@@ -94,9 +96,9 @@ class MobileTokenProxy @Inject()(
   }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case _: BadRequestException => Unauthorized
+    case _: BadRequestException            => Unauthorized
     case Upstream4xxResponse(_, 401, _, _) => Unauthorized
     case Upstream4xxResponse(_, 403, _, _) => Forbidden
-    case _ => InternalServerError
+    case _                                 => InternalServerError
   }
 }
