@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class SandboxMobileTokenProxy @Inject()(@Named("mobile-auth-stub") mobileAuthStubUrl: String, cc: MessagesControllerComponents) extends FrontendController(cc) {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
-  def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
+  def token(journeyId: String): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body.validate[TokenRequest].fold(
       errors => {
         Logger.warn("Received error with service token: " + errors)
@@ -55,7 +55,7 @@ class SandboxMobileTokenProxy @Inject()(@Named("mobile-auth-stub") mobileAuthStu
       })
   }
 
-  def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+  def authorize(journeyId: String): Action[AnyContent] = Action.async { implicit request =>
     Future successful Redirect(s"$mobileAuthStubUrl/gg/sign-in")
   }
 }

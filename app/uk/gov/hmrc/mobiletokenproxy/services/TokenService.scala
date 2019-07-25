@@ -25,9 +25,9 @@ import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import scala.concurrent.{ExecutionContext, Future}
 
 trait TokenService {
-  def getTokenFromAccessCode(authCode: String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse]
+  def getTokenFromAccessCode(authCode: String, journeyId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse]
 
-  def getTokenFromRefreshToken(refreshToken: String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse]
+  def getTokenFromRefreshToken(refreshToken: String, journeyId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse]
 }
 
 trait LiveTokenService extends TokenService {
@@ -39,15 +39,15 @@ trait LiveTokenService extends TokenService {
   val pathToAPIGatewayTokenService: String
   val expiryDecrement: Long
 
-  def getTokenFromAccessCode(authCode:String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
+  def getTokenFromAccessCode(authCode:String, journeyId: String)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
     getAPIGatewayToken("code", authCode, "authorization_code", journeyId)
   }
 
-  def getTokenFromRefreshToken(refreshToken:String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse] = {
+  def getTokenFromRefreshToken(refreshToken:String, journeyId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse] = {
     getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId)
   }
 
-  def getAPIGatewayToken(key:String, code: String, grantType:String, journeyId: Option[String] = None)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
+  def getAPIGatewayToken(key:String, code: String, grantType:String, journeyId: String)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
 
     val form = Map(
       key -> Seq(code),

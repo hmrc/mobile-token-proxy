@@ -45,6 +45,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
   val accessToken  = "495b5b1725d590eb87d0f6b7dcea32a9"
   val refreshToken = "b75f2ed960898b4cd38f23934c6befb2"
   val expiresIn    = 14400
+  val journeyId    = "journeyId"
 
   val service: LiveTokenServiceImpl = new LiveTokenServiceImpl(
     connector,
@@ -78,7 +79,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .expects(pathToAPIGatewayTokenService, form, *, *)
         .returning(Future.successful(response))
 
-      val tokenResponse: TokenOauthResponse = service.getTokenFromAccessCode(authCode).futureValue
+      val tokenResponse: TokenOauthResponse = service.getTokenFromAccessCode(authCode, journeyId).futureValue
 
       tokenResponse.access_token mustBe accessToken
       tokenResponse.refresh_token mustBe refreshToken
@@ -113,7 +114,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(HttpResponse(201)))
 
       intercept[RuntimeException] {
-        service.getTokenFromAccessCode(authCode).futureValue
+        service.getTokenFromAccessCode(authCode, journeyId).futureValue
       }
     }
 
@@ -126,7 +127,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(response))
 
       intercept[RuntimeException] {
-        service.getTokenFromAccessCode(authCode).futureValue
+        service.getTokenFromAccessCode(authCode, journeyId).futureValue
       }
     }
 
@@ -136,7 +137,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .expects(pathToAPIGatewayTokenService, form, *, *)
         .returning(Future.failed(exception))
 
-      val actual = intercept[T] { Await.result(service.getTokenFromAccessCode(authCode), 10 seconds) }
+      val actual = intercept[T] { Await.result(service.getTokenFromAccessCode(authCode, journeyId), 10 seconds) }
       exception mustBe actual
     }
   }
@@ -162,7 +163,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .expects(pathToAPIGatewayTokenService, form, *, *)
         .returning(Future.successful(response))
 
-      val tokenResponse: TokenOauthResponse = service.getTokenFromRefreshToken(refreshToken).futureValue
+      val tokenResponse: TokenOauthResponse = service.getTokenFromRefreshToken(refreshToken, journeyId).futureValue
 
       tokenResponse.access_token mustBe accessToken
       tokenResponse.refresh_token mustBe refreshToken
@@ -197,7 +198,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(HttpResponse(201)))
 
       intercept[RuntimeException] {
-        service.getTokenFromRefreshToken(refreshToken).futureValue
+        service.getTokenFromRefreshToken(refreshToken, journeyId).futureValue
       }
     }
 
@@ -210,7 +211,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(response))
 
       intercept[RuntimeException] {
-        service.getTokenFromRefreshToken(refreshToken).futureValue
+        service.getTokenFromRefreshToken(refreshToken, journeyId).futureValue
       }
     }
 
@@ -221,7 +222,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.failed(exception))
 
       val actual = intercept[Exception] {
-        Await.result(service.getTokenFromRefreshToken(refreshToken), 10 seconds)
+        Await.result(service.getTokenFromRefreshToken(refreshToken, journeyId), 10 seconds)
       }
       exception mustBe actual
     }

@@ -47,7 +47,7 @@ class MobileTokenProxyISpec
   "GET /mobile-token-proxy/oauth/authorize" should {
     "redirect to oauth successfully" in {
       oauthRedirectSuccess()
-      val response = wsUrl("/mobile-token-proxy/oauth/authorize").get().futureValue
+      val response = wsUrl("/mobile-token-proxy/oauth/authorize?journeyId=journeyId").get().futureValue
       response.status shouldBe 200
     }
   }
@@ -55,14 +55,14 @@ class MobileTokenProxyISpec
   "POST /mobile-token-proxy/oauth/token" should {
     def postOAuthToken(form: String): WSResponse = {
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      wsUrl(s"/mobile-token-proxy/oauth/token").addHttpHeaders(jsonHeader).post(parse(form)).futureValue
+      wsUrl(s"/mobile-token-proxy/oauth/token?journeyId=journeyId").addHttpHeaders(jsonHeader).post(parse(form)).futureValue
     }
 
     def verifyPostOAuthTokenFailureStatusCode(form: String, upstreamResponseCode: Int, responseCodeToReport: Int): Unit = {
       oauthTokenExchangeFailure(upstreamResponseCode)
 
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      val response = wsUrl(s"/mobile-token-proxy/oauth/token").addHttpHeaders(jsonHeader).post(parse(form)).futureValue
+      val response = wsUrl(s"/mobile-token-proxy/oauth/token?journeyId=journeyId").addHttpHeaders(jsonHeader).post(parse(form)).futureValue
       response.status shouldBe responseCodeToReport
     }
 
