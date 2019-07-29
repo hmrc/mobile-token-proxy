@@ -33,7 +33,7 @@ class SandboxMobileTokenProxyISpec
   "POST /mobile-token-proxy/oauth/token" should {
     def postOAuthToken(form: String): WSResponse = {
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      wsUrl(s"/mobile-token-proxy/oauth/token").addHttpHeaders(jsonHeader, mobileUserId).post(parse(form)).futureValue
+      wsUrl(s"/mobile-token-proxy/oauth/token?journeyId=journeyId").addHttpHeaders(jsonHeader, mobileUserId).post(parse(form)).futureValue
     }
 
     val formWithAuthCode: String = """{ "authorizationCode":"123"}"""
@@ -59,7 +59,7 @@ class SandboxMobileTokenProxyISpec
   "GET /mobile-token-proxy/oauth/authorize" should {
     "redirect to /gg/sign-in and receive a response" in {
       ggSignInSuccess()
-      val call = wsUrl(s"/mobile-token-proxy/oauth/authorize").addHttpHeaders(mobileUserId).get().futureValue
+      val call = wsUrl(s"/mobile-token-proxy/oauth/authorize?journeyId=journeyId").addHttpHeaders(mobileUserId).get().futureValue
       call.status shouldBe 200
       call.body   should include("Success code=sandboxSuccess")
     }

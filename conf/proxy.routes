@@ -1,2 +1,2 @@
-GET         /oauth/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: Option[String])
-POST        /oauth/token                uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token(journeyId: Option[String])
+GET         /oauth/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: String)
+POST        /oauth/token                uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token(journeyId: String)

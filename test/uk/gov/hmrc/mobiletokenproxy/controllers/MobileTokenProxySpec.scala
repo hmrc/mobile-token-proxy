@@ -49,7 +49,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
   private val vendorHeader   = "X-Vendor-Instance-Id"
   private val deviceIdHeader = "X-Client-Device-ID"
-  private val journeyId      = Some("journeyId")
+  private val journeyId      = "journeyId"
   private val authCode       = "authCode123"
   private val refreshToken   = "refreshToken123"
   private val accessToken    = "495b5b1725d590eb87d0f6b7dcea32a9"
@@ -108,18 +108,18 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     val requestWithEmptyJsonBody: FakeRequest[JsValue] = requestWithJsonBody("{}")
 
     "return BadRequest if the authorization code or refreshToken is missing" in {
-      val result = controller.token()(requestWithEmptyJsonBody).futureValue
+      val result = controller.token(journeyId)(requestWithEmptyJsonBody).futureValue
       result.header.status mustBe 400
     }
 
     "return BadRequest if the request is empty" in {
-      val result = controller.token()(requestWithEmptyJsonBody).futureValue
+      val result = controller.token(journeyId)(requestWithEmptyJsonBody).futureValue
       result.header.status mustBe 400
     }
 
     "return BadRequest if both authorization code and refreshToken is supplied" in {
       val result =
-        controller.token()(requestWithJsonBody(s"""{"authorizationCode":"123456789","refreshToken":"some refresh token"}""")).futureValue
+        controller.token(journeyId)(requestWithJsonBody(s"""{"authorizationCode":"123456789","refreshToken":"some refresh token"}""")).futureValue
       result.header.status mustBe 400
     }
   }
@@ -130,7 +130,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "successfully return access-token and refresh token for a valid request" in {
       (service
-        .getTokenFromAccessCode(_: String, _: Option[String])(_: HeaderCarrier, _: ExecutionContext))
+        .getTokenFromAccessCode(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
         .expects(authCode, journeyId, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
@@ -147,7 +147,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "successfully return access-token and refresh-token for a valid request + pass configured TxM HTTP headers to backend services " in {
       (service
-        .getTokenFromRefreshToken(_: String, _: Option[String])(_: HeaderCarrier, _: ExecutionContext))
+        .getTokenFromRefreshToken(_: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
         .expects(refreshToken, journeyId, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
@@ -160,7 +160,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
   "requesting the authorize service" should {
     "return a 303 redirect with the URL to the API Gateway authorize service" in {
-      val result = controller.authorize()(requestWithHttpHeaders(FakeRequest()))
+      val result = controller.authorize(journeyId)(requestWithHttpHeaders(FakeRequest()))
 
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe

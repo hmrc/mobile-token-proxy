@@ -51,12 +51,12 @@ class MobileTokenProxy @Inject()(
   lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
 
 
-  def authorize(journeyId: Option[String] = None): Action[AnyContent] = Action.async { implicit request =>
+  def authorize(journeyId: String): Action[AnyContent] = Action.async { implicit request =>
     val redirectUrl = s"$pathToAPIGatewayAuthService?client_id=$clientId&redirect_uri=$redirectUri&scope=$scope&response_type=$responseType"
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
   }
 
-  def token(journeyId: Option[String] = None): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
+  def token(journeyId: String): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body.validate[TokenRequest].fold(
       errors => {
         Logger.warn("Received error with service token: " + errors)
