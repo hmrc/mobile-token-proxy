@@ -25,37 +25,49 @@ import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import scala.concurrent.{ExecutionContext, Future}
 
 trait TokenService {
-  def getTokenFromAccessCode(authCode: String, journeyId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse]
+  def getTokenFromAccessCode(authCode: String, journeyId: String, serviceId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse]
 
-  def getTokenFromRefreshToken(refreshToken: String, journeyId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse]
+  def getTokenFromRefreshToken(refreshToken: String, journeyId: String, serviceId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse]
 }
 
 trait LiveTokenService extends TokenService {
   val genericConnector: GenericConnector
   val pathToAPIGatewayAuthService: String
-  val clientId: String
-  val redirectUri: String
-  val clientSecret: String
   val pathToAPIGatewayTokenService: String
   val expiryDecrement: Long
+  val ngcClientId: String
+  val ngcRedirectUri: String
+  val ngcClientSecret: String
+  val rdsClientId: String
+  val rdsRedirectUri: String
+  val rdsClientSecret: String
 
-  def getTokenFromAccessCode(authCode:String, journeyId: String)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
-    getAPIGatewayToken("code", authCode, "authorization_code", journeyId)
+  def getTokenFromAccessCode(authCode:String, journeyId: String, serviceId: String)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
+    getAPIGatewayToken("code", authCode, "authorization_code", journeyId, serviceId)
   }
 
-  def getTokenFromRefreshToken(refreshToken:String, journeyId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse] = {
-    getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId)
+  def getTokenFromRefreshToken(refreshToken:String, journeyId: String, serviceId: String)(implicit hc: HeaderCarrier, ex: ExecutionContext): Future[TokenOauthResponse] = {
+    getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, serviceId)
   }
 
-  def getAPIGatewayToken(key:String, code: String, grantType:String, journeyId: String)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
+  def getAPIGatewayToken(key:String, code: String, grantType:String, journeyId: String , serviceId: String)(implicit hc: HeaderCarrier, ex:ExecutionContext): Future[TokenOauthResponse] = {
 
-    val form = Map(
-      key -> Seq(code),
-      "client_id" -> Seq(clientId),
-      "client_secret" -> Seq(clientSecret),
-      "grant_type" -> Seq(grantType),
-      "redirect_uri" -> Seq(redirectUri)
-    )
+    val form = serviceId.toLowerCase match {
+      case "ngc" => Map(
+        key -> Seq(code),
+        "client_id" -> Seq(ngcClientId),
+        "client_secret" -> Seq(ngcClientSecret),
+        "grant_type" -> Seq(grantType),
+        "redirect_uri" -> Seq(ngcRedirectUri)
+      )
+      case "rds" => Map(
+        key -> Seq(code),
+        "client_id" -> Seq(rdsClientId),
+        "client_secret" -> Seq(rdsClientSecret),
+        "grant_type" -> Seq(grantType),
+        "redirect_uri" -> Seq(rdsRedirectUri)
+      )
+    }
 
     genericConnector.doPostForm(pathToAPIGatewayTokenService, form).map(result => {
       result.status match {
@@ -90,11 +102,15 @@ trait LiveTokenService extends TokenService {
 
 @Singleton
 class LiveTokenServiceImpl @Inject()(
-  override val genericConnector: GenericConnector,
-  @Named("api-gateway.pathToAPIGatewayAuthService") override val pathToAPIGatewayAuthService: String,
-  @Named("api-gateway.client_id") override val clientId: String,
-  @Named("api-gateway.redirect_uri") override val redirectUri: String,
-  @Named("api-gateway.client_secret") override val clientSecret: String,
-  @Named("api-gateway.pathToAPIGatewayTokenService")  override val pathToAPIGatewayTokenService: String,
-  @Named("api-gateway.expiry_decrement") override val expiryDecrement: Long ) extends LiveTokenService {
+                                      override val genericConnector: GenericConnector,
+                                      @Named("api-gateway.pathToAPIGatewayAuthService") override val pathToAPIGatewayAuthService: String,
+                                      @Named("api-gateway.pathToAPIGatewayTokenService")  override val pathToAPIGatewayTokenService: String,
+                                      @Named("api-gateway.expiry_decrement") override val expiryDecrement: Long,
+                                      @Named("api-gateway.ngc.client_id") override val ngcClientId: String,
+                                      @Named("api-gateway.ngc.redirect_uri") override val ngcRedirectUri: String,
+                                      @Named("api-gateway.ngc.client_secret") override val ngcClientSecret: String,
+                                      @Named("api-gateway.rds.client_id") override val rdsClientId: String,
+                                      @Named("api-gateway.rds.redirect_uri") override val rdsRedirectUri: String,
+                                      @Named("api-gateway.rds.client_secret") override val rdsClientSecret: String
+                                    ) extends LiveTokenService {
 }

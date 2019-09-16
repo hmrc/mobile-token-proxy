@@ -1,2 +1,7 @@
-GET         /oauth/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: String)
-POST        /oauth/token                uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token(journeyId: String)
+# Deprecated
+GET         /oauth/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: String, serviceName: String="ngc")
+POST        /oauth/token                uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token(journeyId: String, serviceName: String="ngc")
+
+
+GET         /oauth/:serviceName/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: String, serviceName: String)
+POST        /oauth/:serviceName/token                uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token(journeyId: String, serviceName: String)

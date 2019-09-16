@@ -34,69 +34,79 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MobileTokenProxy @Inject()(
-  genericConnector: GenericConnector,
-  service: TokenService,
-  cryptoProvider: Provider[CompositeSymmetricCrypto],
-  proxyPassthroughHttpHeaders: ProxyPassThroughHttpHeaders,
+  genericConnector:                                                              GenericConnector,
+  service:                                                                       TokenService,
+  cryptoProvider:                                                                Provider[CompositeSymmetricCrypto],
+  proxyPassthroughHttpHeaders:                                                   ProxyPassThroughHttpHeaders,
+  @Named("api-gateway.response_type") responseType:                              String,
   @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
-  @Named("api-gateway.client_id") clientId: String,
-  @Named("api-gateway.redirect_uri") redirectUri: String,
-  @Named("api-gateway.scope") scope: String,
-  @Named("api-gateway.response_type") responseType: String,
-  messagesControllerComponents: MessagesControllerComponents
-)
-  extends FrontendController(messagesControllerComponents) {
+  @Named("api-gateway.ngc.client_id") ngcClientId:                               String,
+  @Named("api-gateway.ngc.scope") ngcScope:                                      String,
+  @Named("api-gateway.ngc.redirect_uri") ngcRedirectUri:                         String,
+  @Named("api-gateway.rds.client_id") rdsClientId:                               String,
+  @Named("api-gateway.rds.scope") rdsScope:                                      String,
+  @Named("api-gateway.rds.redirect_uri") rdsRedirectUri:                         String,
+  messagesControllerComponents:                                                  MessagesControllerComponents
+) extends FrontendController(messagesControllerComponents) {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
 
-
-  def authorize(journeyId: String): Action[AnyContent] = Action.async { implicit request =>
-    val redirectUrl = s"$pathToAPIGatewayAuthService?client_id=$clientId&redirect_uri=$redirectUri&scope=$scope&response_type=$responseType"
+  def authorize(journeyId: String, serviceId: String = "ngc"): Action[AnyContent] = Action.async { implicit request =>
+    val redirectUrl = serviceId.toLowerCase match {
+      case "ngc" => s"$pathToAPIGatewayAuthService?client_id=$ngcClientId&redirect_uri=$ngcRedirectUri&scope=$ngcScope&response_type=$responseType"
+      case "rds" => s"$pathToAPIGatewayAuthService?client_id=$rdsClientId&redirect_uri=$rdsRedirectUri&scope=$rdsScope&response_type=$responseType"
+      case _ => throw new IllegalArgumentException("Invalid service id")
+    }
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
   }
 
-  def token(journeyId: String): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
-    request.body.validate[TokenRequest].fold(
-      errors => {
-        Logger.warn("Received error with service token: " + errors)
-        Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
-      },
-      tokenRequest => {
+  def token(journeyId: String, serviceId: String = "ngc"): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
+    request.body
+      .validate[TokenRequest]
+      .fold(
+        errors => {
+          Logger.warn("Received error with service token: " + errors)
+          Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
+        },
+        tokenRequest => {
 
-        def buildHeaderCarrier = {
-          val headers: Map[String, String] = request.headers.toSimpleMap.filter {
-            a => proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+          def buildHeaderCarrier = {
+            val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
+              proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+            }
+            hc.withExtraHeaders(headers.toSeq: _*)
           }
-          hc.withExtraHeaders(headers.toSeq: _*)
+
+          (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+
+            case (Some(_: String), Some(authcode: String)) =>
+              Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
+
+            case (None, Some(authCode: String)) =>
+              getToken(service.getTokenFromAccessCode(authCode, journeyId, serviceId)(buildHeaderCarrier, ec))
+
+            case (Some(refreshToken: String), None) =>
+              getToken(service.getTokenFromRefreshToken(refreshToken, journeyId, serviceId)(buildHeaderCarrier, ec))
+
+            case _ =>
+              Future.successful(BadRequest)
+          }
         }
-
-        (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
-
-          case (Some(_: String), Some(authcode: String)) =>
-            Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
-
-          case (None, Some(authCode: String)) =>
-            getToken(service.getTokenFromAccessCode(authCode, journeyId)(buildHeaderCarrier, ec))
-
-          case (Some(refreshToken: String), None) =>
-            getToken(service.getTokenFromRefreshToken(refreshToken, journeyId)(buildHeaderCarrier, ec))
-
-          case _ =>
-            Future.successful(BadRequest)
-        }
-      })
+      )
   }
 
-  private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier): Future[Result] = {
-    func.map { res => Ok(toJson(res))
-    }.recover {
-      recoverError
-    }
-  }
+  private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier): Future[Result] =
+    func
+      .map { res =>
+        Ok(toJson(res))
+      }
+      .recover {
+        recoverError
+      }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case _: BadRequestException            => Unauthorized
+    case _: BadRequestException => Unauthorized
     case Upstream4xxResponse(_, 401, _, _) => Unauthorized
     case Upstream4xxResponse(_, 403, _, _) => Forbidden
     case _                                 => InternalServerError
