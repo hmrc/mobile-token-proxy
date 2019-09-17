@@ -25,7 +25,7 @@ import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.words.ShouldVerb
 import org.scalatestplus.play.PlaySpec
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import play.api.libs.json.Json.parse
 import play.api.mvc._
 import play.api.test.FakeRequest
@@ -170,6 +170,29 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
         "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
       header(vendorHeader, result).get   mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
+    }
+    "return a 303 redirect with the URL to the API Gateway authorize service when serviceId = ngc" in {
+      val result = controller.authorize(journeyId, "ngc")(requestWithHttpHeaders(FakeRequest()))
+
+      result.futureValue.header.status mustBe 303
+      header("Location", result).get mustBe
+        "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
+      header(vendorHeader, result).get   mustBe "header vendor"
+      header(deviceIdHeader, result).get mustBe "header device Id"
+    }
+    "return a 303 redirect with the URL to the API Gateway authorize service when serviceId = rds" in {
+      val result = controller.authorize(journeyId, "rds")(requestWithHttpHeaders(FakeRequest()))
+
+      result.futureValue.header.status mustBe 303
+      header("Location", result).get mustBe
+        "http://localhost:8236/oauth/authorize?client_id=rds_client_id&redirect_uri=rds_redirect_uri&scope=rds-some-scopes&response_type=code"
+      header(vendorHeader, result).get   mustBe "header vendor"
+      header(deviceIdHeader, result).get mustBe "header device Id"
+    }
+    "return throw exception when serviceId = Invalid" in {
+      intercept[IllegalArgumentException] {
+        controller.authorize(journeyId, "invalid")(requestWithHttpHeaders(FakeRequest()))
+      }
     }
   }
 }
