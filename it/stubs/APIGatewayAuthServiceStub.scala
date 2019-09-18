@@ -3,12 +3,15 @@ package stubs
 import com.github.tomakehurst.wiremock.client.WireMock._
 
 object APIGatewayAuthServiceStub {
-  def oauthRedirectSuccess(): Unit = {
-    val redirectUrl =
-      "/oauth/authorize?client_id=i_whTXqBWq9xj0BqdtJ4b_YaxV8a&" +
+  def oauthRedirectSuccess(service: String): Unit = {
+    val redirectUrl = service match {
+      case "ngc" => "/oauth/authorize?client_id=i_whTXqBWq9xj0BqdtJ4b_YaxV8a&" +
         "redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&" +
         "scope=read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary&" +
         "response_type=code"
+      case "rds" => "/oauth/authorize?client_id=rds_i_whTXqBWq9xj0BqdtJ4b_YaxV8a&redirect_uri=urn:ietf:wg:oauth:2.0:oob:auto&scope=read:mobile-rds-vehicle&response_type=code"
+    }
+
 
     stubFor(get(urlEqualTo(redirectUrl)).willReturn(aResponse().withStatus(200)))
   }
