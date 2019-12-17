@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.mobiletokenproxy.service
 
+import eu.timepit.refined.auto._
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Assertion
 import org.scalatest.concurrent.ScalaFutures
@@ -26,6 +27,7 @@ import uk.gov.hmrc.http.{BadRequestException, _}
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.LiveTokenServiceImpl
+import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -45,10 +47,10 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
   val rdsClientSecret:              String = "client_secret"
   val pathToAPIGatewayAuthService:  String = "http://localhost:8236/oauth/authorize"
   val expiryDecrement:              Long   = 0
-  val accessToken      = "495b5b1725d590eb87d0f6b7dcea32a9"
-  val refreshToken     = "b75f2ed960898b4cd38f23934c6befb2"
-  val expiresIn        = 14400
-  val journeyId        = "journeyId"
+  val accessToken  = "495b5b1725d590eb87d0f6b7dcea32a9"
+  val refreshToken = "b75f2ed960898b4cd38f23934c6befb2"
+  val expiresIn    = 14400
+  val journeyId: JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
   val defaultServiceId = "ngc"
 
   val service: LiveTokenServiceImpl = new LiveTokenServiceImpl(
