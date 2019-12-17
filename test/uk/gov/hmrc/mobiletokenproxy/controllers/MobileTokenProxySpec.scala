@@ -19,13 +19,12 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.google.inject.Provider
+import eu.timepit.refined.auto._
 import org.scalamock.matchers.MatcherBase
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.words.ShouldVerb
 import org.scalatestplus.play.PlaySpec
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json.parse
 import play.api.mvc._
 import play.api.test.FakeRequest
@@ -36,6 +35,7 @@ import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.TokenService
+import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,10 +49,10 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
   private val vendorHeader   = "X-Vendor-Instance-Id"
   private val deviceIdHeader = "X-Client-Device-ID"
-  private val journeyId      = "journeyId"
-  private val authCode       = "authCode123"
-  private val refreshToken   = "refreshToken123"
-  private val accessToken    = "495b5b1725d590eb87d0f6b7dcea32a9"
+  private val journeyId: JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
+  private val authCode     = "authCode123"
+  private val refreshToken = "refreshToken123"
+  private val accessToken  = "495b5b1725d590eb87d0f6b7dcea32a9"
   private val tokenExpory: Long = 14400
 
   private val testHTTPHeadersWithScrambledCase: Seq[(String, String)] =
@@ -82,14 +82,14 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
         override def get(): CompositeSymmetricCrypto = cryptographer
       },
       new ProxyPassThroughHttpHeaders(Seq(vendorHeader, deviceIdHeader)),
-      responseType = "code",
-      pathToAPIGatewayAuthService = "http://localhost:8236/oauth/authorize",
-      ngcClientId = "ngc-client-id",
-      ngcScope = "ngc-some-scopes",
-      ngcRedirectUri = "ngc_redirect_uri",
-      rdsClientId = "rds_client_id",
-      rdsScope = "rds-some-scopes",
-      rdsRedirectUri = "rds_redirect_uri",
+      responseType                 = "code",
+      pathToAPIGatewayAuthService  = "http://localhost:8236/oauth/authorize",
+      ngcClientId                  = "ngc-client-id",
+      ngcScope                     = "ngc-some-scopes",
+      ngcRedirectUri               = "ngc_redirect_uri",
+      rdsClientId                  = "rds_client_id",
+      rdsScope                     = "rds-some-scopes",
+      rdsRedirectUri               = "rds_redirect_uri",
       messagesControllerComponents = mcc
     )
 
@@ -133,14 +133,14 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "successfully return access-token and refresh token for a valid request" in {
       (service
-        .getTokenFromAccessCode(_: String, _: String, _:String)(_: HeaderCarrier, _: ExecutionContext))
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: String)(_: HeaderCarrier, _: ExecutionContext))
         .expects(authCode, journeyId, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestWithAuthCode))
 
       result.futureValue.header.status mustBe 200
-      contentAsJson(result)            mustBe parse(tokenResponseJson)
+      contentAsJson(result) mustBe parse(tokenResponseJson)
     }
   }
 
@@ -150,14 +150,14 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "successfully return access-token and refresh-token for a valid request + pass configured TxM HTTP headers to backend services " in {
       (service
-        .getTokenFromRefreshToken(_: String, _: String, _: String)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId,"ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestRequestWithRefreshToken))
 
       result.futureValue.header.status mustBe 200
-      contentAsJson(result)            mustBe parse(tokenResponseJson)
+      contentAsJson(result) mustBe parse(tokenResponseJson)
     }
   }
 
@@ -168,7 +168,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
         "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
-      header(vendorHeader, result).get   mustBe "header vendor"
+      header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }
     "return a 303 redirect with the URL to the API Gateway authorize service when serviceId = ngc" in {
@@ -177,7 +177,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
         "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
-      header(vendorHeader, result).get   mustBe "header vendor"
+      header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }
     "return a 303 redirect with the URL to the API Gateway authorize service when serviceId = rds" in {
@@ -186,7 +186,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
         "http://localhost:8236/oauth/authorize?client_id=rds_client_id&redirect_uri=rds_redirect_uri&scope=rds-some-scopes&response_type=code"
-      header(vendorHeader, result).get   mustBe "header vendor"
+      header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }
     "return throw exception when serviceId = Invalid" in {

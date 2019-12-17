@@ -33,7 +33,7 @@ class SandboxMobileTokenProxyISpec
   "POST /mobile-token-proxy/oauth/token" should {
     def postOAuthToken(form: String): WSResponse = {
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      wsUrl(s"/mobile-token-proxy/oauth/token?journeyId=journeyId").addHttpHeaders(jsonHeader, mobileUserId).post(parse(form)).futureValue
+      wsUrl(s"/mobile-token-proxy/oauth/token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75").addHttpHeaders(jsonHeader, mobileUserId).post(parse(form)).futureValue
     }
 
     val formWithAuthCode: String = """{ "authorizationCode":"123"}"""
@@ -54,12 +54,28 @@ class SandboxMobileTokenProxyISpec
       postOAuthToken("{}").status shouldBe 400
     }
 
+    "return bad request if journeyId is not supplied" in {
+      val response = wsUrl("/mobile-token-proxy/oauth/token")
+        .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
+        .post(parse(formWithAuthCode))
+        .futureValue
+      response.status shouldBe 400
+    }
+
+    "return bad request if journeyId is invalid" in {
+      val response = wsUrl("/mobile-token-proxy/oauth/token?journeyId=ThisIsAnInvalidJourneyId")
+        .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
+        .post(parse(formWithAuthCode))
+        .futureValue
+      response.status shouldBe 400
+    }
+
   }
 
   "GET /mobile-token-proxy/oauth/authorize" should {
     "redirect to /gg/sign-in and receive a response" in {
       ggSignInSuccess()
-      val call = wsUrl(s"/mobile-token-proxy/oauth/authorize?journeyId=journeyId").addHttpHeaders(mobileUserId).get().futureValue
+      val call = wsUrl(s"/mobile-token-proxy/oauth/authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75").addHttpHeaders(mobileUserId).get().futureValue
       call.status shouldBe 200
       call.body   should include("Success code=sandboxSuccess")
     }

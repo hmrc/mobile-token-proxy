@@ -28,6 +28,7 @@ import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
+import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,16 +53,16 @@ class MobileTokenProxy @Inject()(
 
   lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
 
-  def authorize(journeyId: String, serviceId: String = "ngc"): Action[AnyContent] = Action.async { implicit request =>
+  def authorize(journeyId: JourneyId, serviceId: String = "ngc"): Action[AnyContent] = Action.async { implicit request =>
     val redirectUrl = serviceId.toLowerCase match {
       case "ngc" => s"$pathToAPIGatewayAuthService?client_id=$ngcClientId&redirect_uri=$ngcRedirectUri&scope=$ngcScope&response_type=$responseType"
       case "rds" => s"$pathToAPIGatewayAuthService?client_id=$rdsClientId&redirect_uri=$rdsRedirectUri&scope=$rdsScope&response_type=$responseType"
-      case _ => throw new IllegalArgumentException("Invalid service id")
+      case _     => throw new IllegalArgumentException("Invalid service id")
     }
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
   }
 
-  def token(journeyId: String, serviceId: String = "ngc"): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
+  def token(journeyId: JourneyId, serviceId: String = "ngc"): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body
       .validate[TokenRequest]
       .fold(
