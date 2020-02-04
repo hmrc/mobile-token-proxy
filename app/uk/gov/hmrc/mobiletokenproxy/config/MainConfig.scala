@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package uk.gov.hmrc.mobiletokenproxy.config
 import play.twirl.api.Html
 import uk.gov.hmrc.mobiletokenproxy.config.HtmlConst.empty
 
-case class MainConfig(maybeMainClass: Option[String] = None, maybeMainDataAttributes: Option[Html] = None) {
+case class MainConfig(
+  maybeMainClass:          Option[String] = None,
+  maybeMainDataAttributes: Option[Html]   = None) {
 
   def mainClass: Html = maybeMainClass.map(asClassAttr).getOrElse(empty)
 

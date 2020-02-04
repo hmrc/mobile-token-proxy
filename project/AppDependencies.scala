@@ -3,17 +3,17 @@ import sbt._
 object AppDependencies {
   import play.core.PlayVersion
 
-  private val bootstrapPlayVersion = "0.41.0"
-  private val govTemplateVersion   = "5.27.0-play-26"
+  private val bootstrapPlayVersion = "1.3.0"
+  private val govTemplateVersion   = "5.48.0-play-26"
   private val playUiVersion        = "7.40.0-play-26"
-  private val playHmrcApiVersion   = "3.4.0-play-26"
+  private val playHmrcApiVersion   = "4.1.0-play-26"
   private val domainVersion        = "5.6.0-play-26"
 
   private val scalatestPlusPlayVersion = "3.1.2"
-  private val scalaMockVersion         = "4.1.0"
+  private val scalaMockVersion         = "4.4.0"
   private val pegdownVersion           = "1.6.0"
-  private val integrationTestVersion   = "0.4.0-play-26"
-  private val wiremockVersion          = "2.20.0"
+  private val integrationTestVersion   = "0.9.0-play-26"
+  private val wiremockVersion          = "2.21.0"
   private val refinedVersion           = "0.9.4"
 
   val compile = Seq(
@@ -30,39 +30,42 @@ object AppDependencies {
     lazy val test:  Seq[ModuleID] = ???
   }
 
+  private def testCommon(scope: String) = Seq(
+    "org.pegdown"            % "pegdown"             % pegdownVersion           % scope,
+    "com.typesafe.play"      %% "play-test"          % PlayVersion.current      % scope,
+    "org.scalatestplus.play" %% "scalatestplus-play" % scalatestPlusPlayVersion % scope
+  )
+
   object Test {
+
     def apply(): Seq[ModuleID] =
       new TestDependencies {
 
-        override lazy val test = Seq(
-          "org.scalatestplus.play" %% "scalatestplus-play" % scalatestPlusPlayVersion % scope,
-          "com.typesafe.play"      %% "play-test"          % PlayVersion.current      % scope,
-          "org.scalamock"          %% "scalamock"          % scalaMockVersion         % scope,
-          "org.pegdown"            % "pegdown"             % pegdownVersion           % scope
-        )
+        override lazy val test = testCommon(scope) ++ Seq(
+            "org.scalamock" %% "scalamock" % scalaMockVersion % scope
+          )
       }.test
   }
 
   object IntegrationTest {
+
     def apply(): Seq[ModuleID] =
       new TestDependencies {
 
         override lazy val scope = "it"
 
-        override lazy val test = Seq(
-          "uk.gov.hmrc"            %% "service-integration-test" % integrationTestVersion   % scope,
-          "com.typesafe.play"      %% "play-test"                % PlayVersion.current      % scope,
-          "org.scalatestplus.play" %% "scalatestplus-play"       % scalatestPlusPlayVersion % scope,
-          "com.github.tomakehurst" % "wiremock"                  % wiremockVersion          % scope,
-          "org.pegdown"            % "pegdown"                   % pegdownVersion           % scope
-        )
+        override lazy val test = testCommon(scope) ++ Seq(
+            "uk.gov.hmrc"            %% "service-integration-test" % integrationTestVersion % scope,
+            "com.github.tomakehurst" % "wiremock"                  % wiremockVersion        % scope
+          )
       }.test
 
     // Transitive dependencies in scalatest/scalatestplusplay drag in a newer version of jetty that is not
     // compatible with wiremock, so we need to pin the jetty stuff to the older version.
     // see https://groups.google.com/forum/#!topic/play-framework/HAIM1ukUCnI
     val jettyVersion = "9.2.13.v20150730"
-    def overrides(): Set[ModuleID] = Set(
+
+    def overrides(): Seq[ModuleID] = Seq(
       "org.eclipse.jetty"           % "jetty-server"       % jettyVersion,
       "org.eclipse.jetty"           % "jetty-servlet"      % jettyVersion,
       "org.eclipse.jetty"           % "jetty-security"     % jettyVersion,
@@ -81,5 +84,5 @@ object AppDependencies {
   }
 
   def apply():     Seq[ModuleID] = compile ++ Test() ++ IntegrationTest()
-  def overrides(): Set[ModuleID] = IntegrationTest.overrides()
+  def overrides(): Seq[ModuleID] = IntegrationTest.overrides()
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class MobileTokenProxy @Inject()(
+class MobileTokenProxy @Inject() (
   genericConnector:                                                              GenericConnector,
   service:                                                                       TokenService,
   cryptoProvider:                                                                Provider[CompositeSymmetricCrypto],
@@ -47,22 +47,30 @@ class MobileTokenProxy @Inject()(
   @Named("api-gateway.rds.client_id") rdsClientId:                               String,
   @Named("api-gateway.rds.scope") rdsScope:                                      String,
   @Named("api-gateway.rds.redirect_uri") rdsRedirectUri:                         String,
-  messagesControllerComponents:                                                  MessagesControllerComponents
-) extends FrontendController(messagesControllerComponents) {
+  messagesControllerComponents:                                                  MessagesControllerComponents)
+    extends FrontendController(messagesControllerComponents) {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
 
-  def authorize(journeyId: JourneyId, serviceId: String = "ngc"): Action[AnyContent] = Action.async { implicit request =>
+  def authorize(
+    journeyId: JourneyId,
+    serviceId: String = "ngc"
+  ): Action[AnyContent] = Action.async { implicit request =>
     val redirectUrl = serviceId.toLowerCase match {
-      case "ngc" => s"$pathToAPIGatewayAuthService?client_id=$ngcClientId&redirect_uri=$ngcRedirectUri&scope=$ngcScope&response_type=$responseType"
-      case "rds" => s"$pathToAPIGatewayAuthService?client_id=$rdsClientId&redirect_uri=$rdsRedirectUri&scope=$rdsScope&response_type=$responseType"
-      case _     => throw new IllegalArgumentException("Invalid service id")
+      case "ngc" =>
+        s"$pathToAPIGatewayAuthService?client_id=$ngcClientId&redirect_uri=$ngcRedirectUri&scope=$ngcScope&response_type=$responseType"
+      case "rds" =>
+        s"$pathToAPIGatewayAuthService?client_id=$rdsClientId&redirect_uri=$rdsRedirectUri&scope=$rdsScope&response_type=$responseType"
+      case _ => throw new IllegalArgumentException("Invalid service id")
     }
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
   }
 
-  def token(journeyId: JourneyId, serviceId: String = "ngc"): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
+  def token(
+    journeyId: JourneyId,
+    serviceId: String = "ngc"
+  ): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body
       .validate[TokenRequest]
       .fold(

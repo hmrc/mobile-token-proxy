@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,15 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 trait StubApplicationConfiguration {
 
   val config: Map[String, Any] = Map[String, Any](
-    "auditing.enabled" -> false,
-    "appName" -> "api-gateway-proxy",
-    "client_id" -> "some_client_id",
-    "client_secret" -> "some_client_secret",
-    "redirect_uri" -> "urn:ietf:wg:oauth:2.0:oob:auto",
-    "grant_type" -> "authorization_code",
+    "auditing.enabled"             -> false,
+    "appName"                      -> "api-gateway-proxy",
+    "client_id"                    -> "some_client_id",
+    "client_secret"                -> "some_client_secret",
+    "redirect_uri"                 -> "urn:ietf:wg:oauth:2.0:oob:auto",
+    "grant_type"                   -> "authorization_code",
     "pathToAPIGatewayTokenService" -> "http://localhost:8236/oauth/token",
-    "pathToAPIGatewayAuthService" -> "http://localhost:8236/oauth/authorize",
-    "scope" -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration",
-    "response_type" -> "code"
+    "pathToAPIGatewayAuthService"  -> "http://localhost:8236/oauth/authorize",
+    "scope"                        -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration",
+    "response_type"                -> "code"
   )
 }

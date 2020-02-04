@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,22 @@ import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
 import scala.concurrent.{ExecutionContext, Future}
 
 trait TokenService {
-  def getTokenFromAccessCode(authCode: String, journeyId: JourneyId, serviceId: String)(
-    implicit hc:                       HeaderCarrier,
-    ex:                                ExecutionContext): Future[TokenOauthResponse]
 
-  def getTokenFromRefreshToken(refreshToken: String, journeyId: JourneyId, serviceId: String)(
-    implicit hc:                             HeaderCarrier,
-    ex:                                      ExecutionContext): Future[TokenOauthResponse]
+  def getTokenFromAccessCode(
+    authCode:    String,
+    journeyId:   JourneyId,
+    serviceId:   String
+  )(implicit hc: HeaderCarrier,
+    ex:          ExecutionContext
+  ): Future[TokenOauthResponse]
+
+  def getTokenFromRefreshToken(
+    refreshToken: String,
+    journeyId:    JourneyId,
+    serviceId:    String
+  )(implicit hc:  HeaderCarrier,
+    ex:           ExecutionContext
+  ): Future[TokenOauthResponse]
 }
 
 trait LiveTokenService extends TokenService {
@@ -47,19 +56,33 @@ trait LiveTokenService extends TokenService {
   val rdsRedirectUri:               String
   val rdsClientSecret:              String
 
-  def getTokenFromAccessCode(authCode: String, journeyId: JourneyId, serviceId: String)(
-    implicit hc:                       HeaderCarrier,
-    ex:                                ExecutionContext): Future[TokenOauthResponse] =
+  def getTokenFromAccessCode(
+    authCode:    String,
+    journeyId:   JourneyId,
+    serviceId:   String
+  )(implicit hc: HeaderCarrier,
+    ex:          ExecutionContext
+  ): Future[TokenOauthResponse] =
     getAPIGatewayToken("code", authCode, "authorization_code", journeyId, serviceId)
 
-  def getTokenFromRefreshToken(refreshToken: String, journeyId: JourneyId, serviceId: String)(
-    implicit hc:                             HeaderCarrier,
-    ex:                                      ExecutionContext): Future[TokenOauthResponse] =
+  def getTokenFromRefreshToken(
+    refreshToken: String,
+    journeyId:    JourneyId,
+    serviceId:    String
+  )(implicit hc:  HeaderCarrier,
+    ex:           ExecutionContext
+  ): Future[TokenOauthResponse] =
     getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, serviceId)
 
-  def getAPIGatewayToken(key: String, code: String, grantType: String, journeyId: JourneyId, serviceId: String)(
-    implicit hc:              HeaderCarrier,
-    ex:                       ExecutionContext): Future[TokenOauthResponse] = {
+  def getAPIGatewayToken(
+    key:         String,
+    code:        String,
+    grantType:   String,
+    journeyId:   JourneyId,
+    serviceId:   String
+  )(implicit hc: HeaderCarrier,
+    ex:          ExecutionContext
+  ): Future[TokenOauthResponse] = {
 
     val form = serviceId.toLowerCase match {
       case "ngc" =>
@@ -82,7 +105,7 @@ trait LiveTokenService extends TokenService {
 
     genericConnector
       .doPostForm(pathToAPIGatewayTokenService, form)
-      .map(result => {
+      .map { result =>
         result.status match {
           case 200 =>
             val accessToken  = (result.json \ "access_token").asOpt[String]
@@ -100,13 +123,15 @@ trait LiveTokenService extends TokenService {
           case _ =>
             throw new RuntimeException(s"Unexpected response code from APIGatewayTokenService: $result.status")
         }
-      })
+      }
   }
 
   private def appyDecrementConfig(expiresIn: Long): Long = {
     val expiryDecrementConfig = expiryDecrement
     if (expiryDecrementConfig > expiresIn) {
-      Logger.error(s"Config error expiry_decrement $expiryDecrementConfig can't be greater than the token expiry $expiresIn")
+      Logger.error(
+        s"Config error expiry_decrement $expiryDecrementConfig can't be greater than the token expiry $expiresIn"
+      )
       expiresIn
     } else expiresIn - expiryDecrementConfig
   }
@@ -114,7 +139,7 @@ trait LiveTokenService extends TokenService {
 }
 
 @Singleton
-class LiveTokenServiceImpl @Inject()(
+class LiveTokenServiceImpl @Inject() (
   override val genericConnector:                                                                GenericConnector,
   @Named("api-gateway.pathToAPIGatewayAuthService") override val pathToAPIGatewayAuthService:   String,
   @Named("api-gateway.pathToAPIGatewayTokenService") override val pathToAPIGatewayTokenService: String,
@@ -124,5 +149,5 @@ class LiveTokenServiceImpl @Inject()(
   @Named("api-gateway.ngc.client_secret") override val ngcClientSecret:                         String,
   @Named("api-gateway.rds.client_id") override val rdsClientId:                                 String,
   @Named("api-gateway.rds.redirect_uri") override val rdsRedirectUri:                           String,
-  @Named("api-gateway.rds.client_secret") override val rdsClientSecret:                         String
-) extends LiveTokenService {}
+  @Named("api-gateway.rds.client_secret") override val rdsClientSecret:                         String)
+    extends LiveTokenService {}

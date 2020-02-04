@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@ class EncryptionTestSpec extends Matchers with WordSpecLike {
 
   "Using the Java libraries for AES" should {
     "successfully encrypt and decrypt" in {
-      val encodedBase64Key = Base64.encodeBase64String(Array[Byte](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
-      val key = Base64.decodeBase64(encodedBase64Key)
+      val encodedBase64Key =
+        Base64.encodeBase64String(Array[Byte](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
+      val key       = Base64.decodeBase64(encodedBase64Key)
       val secretKey = new SecretKeySpec(key, "AES")
       val encrypter = new Encrypter(secretKey)
       val decrypter = new Decrypter(secretKey)
 
-      val original = "some_server_token"
+      val original  = "some_server_token"
       val encrypted = encrypter.encrypt(original)
       val decrypted = decrypter.decrypt(encrypted)
 

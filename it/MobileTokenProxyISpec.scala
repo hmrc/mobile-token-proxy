@@ -49,6 +49,7 @@ class MobileTokenProxyISpec
       response.status shouldBe 200
     }
   }
+
   val test = Table(
     ("Name of Group Of Tests", "urlPrefix", "serviceId"),
     ("Old Url with no Service Id", "/mobile-token-proxy/oauth/", "ngc"),
@@ -68,15 +69,25 @@ class MobileTokenProxyISpec
     s"POST ${urlPrefix}token" should {
       def postOAuthToken(form: String): WSResponse = {
         val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-        wsUrl(s"${urlPrefix}token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75").addHttpHeaders(jsonHeader).post(parse(form)).futureValue
+        wsUrl(s"${urlPrefix}token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
+          .addHttpHeaders(jsonHeader)
+          .post(parse(form))
+          .futureValue
       }
 
-      def verifyPostOAuthTokenFailureStatusCode(form: String, upstreamResponseCode: Int, responseCodeToReport: Int): Unit = {
+      def verifyPostOAuthTokenFailureStatusCode(
+        form:                 String,
+        upstreamResponseCode: Int,
+        responseCodeToReport: Int
+      ): Unit = {
         oauthTokenExchangeFailure(upstreamResponseCode)
 
         val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
         val response =
-          wsUrl(s"${urlPrefix}token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75").addHttpHeaders(jsonHeader).post(parse(form)).futureValue
+          wsUrl(s"${urlPrefix}token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
+            .addHttpHeaders(jsonHeader)
+            .post(parse(form))
+            .futureValue
         response.status shouldBe responseCodeToReport
       }
 

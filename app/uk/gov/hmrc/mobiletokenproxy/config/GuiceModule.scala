@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,10 @@ import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
 
 import scala.util.Try
 
-class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule {
+class GuiceModule(
+  environment:   Environment,
+  configuration: Configuration)
+    extends AbstractModule {
 
   val servicesConfig = new ServicesConfig(configuration, new RunMode(configuration, environment.mode))
 
@@ -46,16 +49,19 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bindConfigLongDefaultToZero("api-gateway.expiry_decrement")
     bind(classOf[HttpVerbs]).to(classOf[WSHttp])
     bind(classOf[TokenService]).to(classOf[LiveTokenServiceImpl])
-    bind(classOf[String]).annotatedWith(named("mobile-auth-stub")).toInstance(servicesConfig.baseUrl("mobile-auth-stub"))
+    bind(classOf[String])
+      .annotatedWith(named("mobile-auth-stub"))
+      .toInstance(servicesConfig.baseUrl("mobile-auth-stub"))
 
     bind(classOf[ProxyPassThroughHttpHeaders]).toInstance(
       new ProxyPassThroughHttpHeaders(
-        configuration.getOptional[Seq[String]]("api-gateway.proxyPassthroughHttpHeaders").getOrElse(Seq.empty)))
+        configuration.getOptional[Seq[String]]("api-gateway.proxyPassthroughHttpHeaders").getOrElse(Seq.empty)
+      )
+    )
 
-    bind(classOf[CompositeSymmetricCrypto]).toProvider(
-      new Provider[CryptoWithKeysFromConfig] {
-        override def get(): CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig("aes", configuration.underlying)
-      })
+    bind(classOf[CompositeSymmetricCrypto]).toProvider(new Provider[CryptoWithKeysFromConfig] {
+      override def get(): CryptoWithKeysFromConfig = new CryptoWithKeysFromConfig("aes", configuration.underlying)
+    })
   }
 
   private def bindConfigLongDefaultToZero(path: String): Unit = {
@@ -63,7 +69,6 @@ class GuiceModule(environment: Environment, configuration: Configuration) extend
     bindConstant().annotatedWith(named(path)).to(l)
   }
 
-  private def bindConfigString(path: String): Unit = {
+  private def bindConfigString(path: String): Unit =
     bindConstant().annotatedWith(named(path)).to(configuration.underlying.getString(path))
-  }
 }
