@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,8 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .expects(pathToAPIGatewayTokenService, form, *, *)
         .returning(Future.successful(response))
 
-      val tokenResponse: TokenOauthResponse = service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId).futureValue
+      val tokenResponse: TokenOauthResponse =
+        service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId).futureValue
 
       tokenResponse.access_token mustBe accessToken
       tokenResponse.refresh_token mustBe refreshToken
@@ -147,7 +148,9 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .expects(pathToAPIGatewayTokenService, form, *, *)
         .returning(Future.failed(exception))
 
-      val actual = intercept[T] { Await.result(service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId), 10 seconds) }
+      val actual = intercept[T] {
+        Await.result(service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId), 10 seconds)
+      }
       exception mustBe actual
     }
   }
@@ -173,7 +176,8 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .expects(pathToAPIGatewayTokenService, form, *, *)
         .returning(Future.successful(response))
 
-      val tokenResponse: TokenOauthResponse = service.getTokenFromRefreshToken(refreshToken, journeyId, defaultServiceId).futureValue
+      val tokenResponse: TokenOauthResponse =
+        service.getTokenFromRefreshToken(refreshToken, journeyId, defaultServiceId).futureValue
 
       tokenResponse.access_token mustBe accessToken
       tokenResponse.refresh_token mustBe refreshToken

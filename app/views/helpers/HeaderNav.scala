@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 package views.helpers
 
-case class HeaderNav(title: Option[String],
-                     titleLink: Option[play.api.mvc.Call] = None,
-                     showBetaLink: Boolean,
-                     links: Option[play.twirl.api.Html] = None)
+case class HeaderNav(
+  title:        Option[String],
+  titleLink:    Option[play.api.mvc.Call] = None,
+  showBetaLink: Boolean,
+  links:        Option[play.twirl.api.Html] = None)

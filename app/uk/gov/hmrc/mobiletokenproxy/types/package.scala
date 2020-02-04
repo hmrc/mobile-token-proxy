@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,12 +52,18 @@ package object types {
     validate:       Validate[T, P]
   ): PathBindable[R[T, P]] = new PathBindable[R[T, P]] {
 
-    override def bind(key: String, value: String): Either[String, R[T, P]] =
+    override def bind(
+      key:   String,
+      value: String
+    ): Either[String, R[T, P]] =
       baseTypeBinder.bind(key, value).right.flatMap { baseValue =>
         refType.refine[P](baseValue)
       }
 
-    override def unbind(key: String, value: R[T, P]): String =
+    override def unbind(
+      key:   String,
+      value: R[T, P]
+    ): String =
       baseTypeBinder.unbind(key, refType.unwrap(value))
   }
 }

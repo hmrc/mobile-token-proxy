@@ -1,6 +1,6 @@
 # microservice specific routes
 
-->          /mobile-token-proxy                 proxy.Routes
+->        /mobile-token-proxy        proxy.Routes
 
 
 

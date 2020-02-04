@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import play.api.mvc.EssentialFilter
 import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
 
 @Singleton
-class ApiGatewayProxyFilters @Inject()(frontendFilters: FrontendFilters) extends HttpFilters{
-  //CSRFFilter stops the POST working
-  override def filters: Seq[EssentialFilter] = frontendFilters.filters.filterNot(_.getClass.getSimpleName == "CSRFFilter")
-}
+class ApiGatewayProxyFilters @Inject() (frontendFilters: FrontendFilters) extends HttpFilters {
 
+  //CSRFFilter stops the POST working
+  override def filters: Seq[EssentialFilter] =
+    frontendFilters.filters.filterNot(_.getClass.getSimpleName == "CSRFFilter")
+}

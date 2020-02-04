@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,30 +30,39 @@ import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class SandboxMobileTokenProxy @Inject()(@Named("mobile-auth-stub") mobileAuthStubUrl: String, cc: MessagesControllerComponents) extends FrontendController(cc) {
+class SandboxMobileTokenProxy @Inject() (
+  @Named("mobile-auth-stub") mobileAuthStubUrl: String,
+  cc:                                           MessagesControllerComponents)
+    extends FrontendController(cc) {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   def token(journeyId: JourneyId): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
-    request.body.validate[TokenRequest].fold(
-      errors => {
-        Logger.warn("Received error with service token: " + errors)
-        Future successful BadRequest(Json.obj("message" -> JsError.toJson(errors)))
-      },
-      tokenRequest => {
-        (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+    request.body
+      .validate[TokenRequest]
+      .fold(
+        errors => {
+          Logger.warn("Received error with service token: " + errors)
+          Future successful BadRequest(Json.obj("message" -> JsError.toJson(errors)))
+        },
+        tokenRequest =>
+          (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
-          case (Some(_), Some(_)) =>
-            Future successful BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!")
+            case (Some(_), Some(_)) =>
+              Future successful BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!")
 
-          case (None, Some(_)) =>
-            Future successful Ok(Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800)))
-          case (Some(_), None) =>
-            Future successful Ok(Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800)))
+            case (None, Some(_)) =>
+              Future successful Ok(
+                Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
+              )
+            case (Some(_), None) =>
+              Future successful Ok(
+                Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
+              )
 
-          case _ =>
-            Future successful BadRequest
-        }
-      })
+            case _ =>
+              Future successful BadRequest
+          }
+      )
   }
 
   def authorize(journeyId: JourneyId): Action[AnyContent] = Action.async { implicit request =>

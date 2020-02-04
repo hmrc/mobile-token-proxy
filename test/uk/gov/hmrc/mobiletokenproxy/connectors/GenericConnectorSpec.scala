@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,12 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
-class GenericConnectorSpec extends WordSpecLike with ScalaFutures with StubApplicationConfiguration with MockFactory with Matchers {
+class GenericConnectorSpec
+    extends WordSpecLike
+    with ScalaFutures
+    with StubApplicationConfiguration
+    with MockFactory
+    with Matchers {
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
@@ -46,7 +51,10 @@ class GenericConnectorSpec extends WordSpecLike with ScalaFutures with StubAppli
 
   "genericConnector get" should {
     def getReturning(response: Future[HttpResponse]) =
-      (mockHttp.GET(_: String)(_: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext)).expects(url, *, *, *).returning(response)
+      (mockHttp
+        .GET(_: String)(_: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext))
+        .expects(url, *, *, *)
+        .returning(response)
 
     "throw BadRequestException on 400 response" in {
       getReturning(http400Response)
@@ -74,7 +82,10 @@ class GenericConnectorSpec extends WordSpecLike with ScalaFutures with StubAppli
   "genericConnector post" should {
     def postReturning(response: Future[HttpResponse]) =
       (mockHttp
-        .POST(_: String, _: JsValue, _: Seq[(String, String)])(_: Writes[JsValue], _: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext))
+        .POST(_: String, _: JsValue, _: Seq[(String, String)])(_: Writes[JsValue],
+                                                               _: HttpReads[HttpResponse],
+                                                               _: HeaderCarrier,
+                                                               _: ExecutionContext))
         .expects(url, someJson, *, *, *, *, *)
         .returning(response)
 

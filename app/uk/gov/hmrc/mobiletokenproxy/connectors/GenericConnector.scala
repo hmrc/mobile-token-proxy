@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,28 @@ import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class  GenericConnector @Inject()(val http: HttpVerbs) {
-  def doGet(path:String)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
+class GenericConnector @Inject() (val http: HttpVerbs) {
+
+  def doGet(
+    path:        String
+  )(implicit ec: ExecutionContext,
+    hc:          HeaderCarrier
+  ): Future[HttpResponse] =
     http.GET(path)
-  }
 
-  def doPost(path:String, json:JsValue)(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
+  def doPost(
+    path:        String,
+    json:        JsValue
+  )(implicit ec: ExecutionContext,
+    hc:          HeaderCarrier
+  ): Future[HttpResponse] =
     http.POST(path, json)
-  }
 
-  def doPostForm(path:String, form:Map[String,Seq[String]])(implicit ec : ExecutionContext, hc : HeaderCarrier): Future[HttpResponse] = {
+  def doPostForm(
+    path:        String,
+    form:        Map[String, Seq[String]]
+  )(implicit ec: ExecutionContext,
+    hc:          HeaderCarrier
+  ): Future[HttpResponse] =
     http.POSTForm(path, form)
-  }
 }

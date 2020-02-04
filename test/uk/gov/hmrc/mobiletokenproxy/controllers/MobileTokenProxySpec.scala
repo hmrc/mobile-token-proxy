@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
   private val tokenResponseJson =
     s"""{"access_token":"$accessToken","refresh_token":"$refreshToken","expires_in":$tokenExpory}"""
 
-  private val messagesActionBuilder: MessagesActionBuilder = new DefaultMessagesActionBuilderImpl(stubBodyParser[AnyContent](), stubMessagesApi())
+  private val messagesActionBuilder: MessagesActionBuilder =
+    new DefaultMessagesActionBuilderImpl(stubBodyParser[AnyContent](), stubMessagesApi())
   private val cc = stubControllerComponents()
 
   private val mcc: MessagesControllerComponents = DefaultMessagesControllerComponents(
@@ -94,12 +95,12 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     )
 
   def headerCarrierWith(headers: Seq[(String, String)]): MatcherBase =
-    argThat((hc: HeaderCarrier) => {
+    argThat { (hc: HeaderCarrier) =>
       val allFound: Seq[Boolean] = headers.map { header =>
         hc.extraHeaders.contains(header)
       }
       !allFound.contains(false)
-    })
+    }
 
   def requestWithJsonBody(body: String): FakeRequest[JsValue] =
     FakeRequest(POST, "url").withBody(parse(body)).withHeaders("Content-Type" -> "application/json")
@@ -122,7 +123,11 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "return BadRequest if both authorization code and refreshToken is supplied" in {
       val result =
-        controller.token(journeyId)(requestWithJsonBody(s"""{"authorizationCode":"123456789","refreshToken":"some refresh token"}""")).futureValue
+        controller
+          .token(journeyId)(
+            requestWithJsonBody(s"""{"authorizationCode":"123456789","refreshToken":"some refresh token"}""")
+          )
+          .futureValue
       result.header.status mustBe 400
     }
   }
@@ -167,7 +172,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
-        "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
+      "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
       header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }
@@ -176,7 +181,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
-        "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
+      "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
       header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }
@@ -185,7 +190,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
-        "http://localhost:8236/oauth/authorize?client_id=rds_client_id&redirect_uri=rds_redirect_uri&scope=rds-some-scopes&response_type=code"
+      "http://localhost:8236/oauth/authorize?client_id=rds_client_id&redirect_uri=rds_redirect_uri&scope=rds-some-scopes&response_type=code"
       header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,28 +20,36 @@ import akka.actor.ActorSystem
 import com.google.inject.Singleton
 import com.typesafe.config.Config
 import javax.inject.Inject
-import play.api.{Configuration, Play}
 import play.api.i18n.MessagesApi
 import play.api.libs.ws.WSClient
 import play.api.mvc.Request
+import play.api.{Configuration, Play}
 import play.twirl.api.Html
 import uk.gov.hmrc.http.hooks.{HttpHook, HttpHooks}
 import uk.gov.hmrc.http.{HttpGet, HttpPost}
 import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
 import uk.gov.hmrc.play.http.ws._
 
+class ErrorHandler @Inject() (
+  val messagesApi:   MessagesApi,
+  val configuration: Configuration)
+    extends FrontendErrorHandler {
 
-class ErrorHandler @Inject()(val messagesApi: MessagesApi, val configuration: Configuration) extends FrontendErrorHandler {
-  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]): Html =
-     views.html.global_error(pageTitle, heading, message)
+  override def standardErrorTemplate(
+    pageTitle:        String,
+    heading:          String,
+    message:          String
+  )(implicit request: Request[_]
+  ): Html =
+    views.html.global_error(pageTitle, heading, message)
 }
 
 trait HttpVerbs extends HttpGet with WSGet with HttpPost with WSPost with HttpHooks {
-  override val hooks: Seq[HttpHook] = NoneRequired
-  override protected def actorSystem: ActorSystem = Play.current.actorSystem
+  override val hooks:                 Seq[HttpHook] = NoneRequired
+  override protected def actorSystem: ActorSystem   = Play.current.actorSystem
 
   override protected def configuration: Option[Config] = Some(Play.current.configuration.underlying)
 }
 
 @Singleton
-class WSHttp @Inject()(val wsClient: WSClient) extends HttpVerbs
+class WSHttp @Inject() (val wsClient: WSClient) extends HttpVerbs

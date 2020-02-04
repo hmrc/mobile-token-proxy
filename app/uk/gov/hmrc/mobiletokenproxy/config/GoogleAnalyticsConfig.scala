@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import scala.util.Try
 
 @Singleton
-class GoogleAnalyticsConfig @Inject()(servicesConfig: ServicesConfig) {
+class GoogleAnalyticsConfig @Inject() (servicesConfig: ServicesConfig) {
   private def loadConfig(key: String): Option[String] = Try(servicesConfig.getString(key)).toOption
 
   lazy val analyticsToken: Option[String] = loadConfig("google-analytics.token")
-  lazy val analyticsHost : String         =
+
+  lazy val analyticsHost: String =
     loadConfig("google-analytics.host").getOrElse(throw new RuntimeException(s"google-analytics.host"))
 }
