@@ -19,7 +19,7 @@ package uk.gov.hmrc.mobiletokenproxy.config
 import javax.inject.{Inject, Singleton}
 import play.api.http.HttpFilters
 import play.api.mvc.EssentialFilter
-import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
+import uk.gov.hmrc.play.bootstrap.frontend.filters.FrontendFilters
 
 @Singleton
 class ApiGatewayProxyFilters @Inject() (frontendFilters: FrontendFilters) extends HttpFilters {

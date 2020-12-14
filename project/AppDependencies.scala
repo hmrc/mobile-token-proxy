@@ -3,7 +3,7 @@ import sbt._
 object AppDependencies {
   import play.core.PlayVersion
 
-  private val bootstrapPlayVersion = "1.3.0"
+  private val bootstrapPlayVersion = "3.0.0"
   private val govTemplateVersion   = "5.48.0-play-26"
   private val playUiVersion        = "7.40.0-play-26"
   private val playHmrcApiVersion   = "4.1.0-play-26"
@@ -13,16 +13,16 @@ object AppDependencies {
   private val scalaMockVersion         = "4.4.0"
   private val pegdownVersion           = "1.6.0"
   private val integrationTestVersion   = "0.9.0-play-26"
-  private val wiremockVersion          = "2.21.0"
-  private val refinedVersion           = "0.9.4"
+  private val wiremockVersion          = "2.27.2"
+  private val refinedVersion           = "0.9.19"
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "bootstrap-play-26" % bootstrapPlayVersion,
-    "uk.gov.hmrc" %% "govuk-template"    % govTemplateVersion,
-    "uk.gov.hmrc" %% "play-ui"           % playUiVersion,
-    "uk.gov.hmrc" %% "play-hmrc-api"     % playHmrcApiVersion,
-    "uk.gov.hmrc" %% "domain"            % domainVersion,
-    "eu.timepit"  %% "refined"           % refinedVersion
+    "uk.gov.hmrc" %% "bootstrap-frontend-play-26" % bootstrapPlayVersion,
+    "uk.gov.hmrc" %% "govuk-template"             % govTemplateVersion,
+    "uk.gov.hmrc" %% "play-ui"                    % playUiVersion,
+    "uk.gov.hmrc" %% "play-hmrc-api"              % playHmrcApiVersion,
+    "uk.gov.hmrc" %% "domain"                     % domainVersion,
+    "eu.timepit"  %% "refined"                    % refinedVersion
   )
 
   trait TestDependencies {

@@ -21,7 +21,7 @@ import com.google.inject.{AbstractModule, Provider}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenServiceImpl, TokenService}
-import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.util.Try
 
@@ -30,7 +30,7 @@ class GuiceModule(
   configuration: Configuration)
     extends AbstractModule {
 
-  val servicesConfig = new ServicesConfig(configuration, new RunMode(configuration, environment.mode))
+  val servicesConfig = new ServicesConfig(configuration)
 
   override def configure(): Unit = {
     bindConfigString("google-analytics.token")
