@@ -52,8 +52,10 @@ class GenericConnectorSpec
   "genericConnector get" should {
     def getReturning(response: Future[HttpResponse]) =
       (mockHttp
-        .GET(_: String)(_: HttpReads[HttpResponse], _: HeaderCarrier, _: ExecutionContext))
-        .expects(url, *, *, *)
+        .GET(_: String, _: Seq[(String, String)], _: Seq[(String, String)])(_: HttpReads[HttpResponse],
+                                                                            _: HeaderCarrier,
+                                                                            _: ExecutionContext))
+        .expects(url, *, *, *, *, *)
         .returning(response)
 
     "throw BadRequestException on 400 response" in {

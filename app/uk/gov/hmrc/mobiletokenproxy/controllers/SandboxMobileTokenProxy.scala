@@ -25,7 +25,7 @@ import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,12 +36,14 @@ class SandboxMobileTokenProxy @Inject() (
     extends FrontendController(cc) {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
+  val logger: Logger = Logger(this.getClass)
+
   def token(journeyId: JourneyId): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
     request.body
       .validate[TokenRequest]
       .fold(
         errors => {
-          Logger.warn("Received error with service token: " + errors)
+          logger.warn("Received error with service token: " + errors)
           Future successful BadRequest(Json.obj("message" -> JsError.toJson(errors)))
         },
         tokenRequest =>

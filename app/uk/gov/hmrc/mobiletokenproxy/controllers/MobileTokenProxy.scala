@@ -29,7 +29,7 @@ import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
 import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
-import uk.gov.hmrc.play.bootstrap.controller.FrontendController
+import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 

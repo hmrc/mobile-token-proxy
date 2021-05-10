@@ -3,21 +3,21 @@ import sbt._
 object AppDependencies {
   import play.core.PlayVersion
 
-  private val bootstrapPlayVersion = "3.0.0"
-  private val govTemplateVersion   = "5.48.0-play-26"
-  private val playUiVersion        = "7.40.0-play-26"
-  private val playHmrcApiVersion   = "4.1.0-play-26"
-  private val domainVersion        = "5.6.0-play-26"
+  private val bootstrapPlayVersion = "5.1.0"
+  private val govTemplateVersion   = "5.66.0-play-27"
+  private val playUiVersion        = "9.2.0-play-27"
+  private val playHmrcApiVersion   = "6.2.0-play-27"
+  private val domainVersion        = "5.11.0-play-27"
 
-  private val scalatestPlusPlayVersion = "3.1.2"
+  private val scalatestPlusPlayVersion = "4.0.3"
   private val scalaMockVersion         = "4.4.0"
   private val pegdownVersion           = "1.6.0"
-  private val integrationTestVersion   = "0.9.0-play-26"
+  private val integrationTestVersion   = "1.1.0-play-27"
   private val wiremockVersion          = "2.27.2"
   private val refinedVersion           = "0.9.19"
 
   val compile = Seq(
-    "uk.gov.hmrc" %% "bootstrap-frontend-play-26" % bootstrapPlayVersion,
+    "uk.gov.hmrc" %% "bootstrap-frontend-play-27" % bootstrapPlayVersion,
     "uk.gov.hmrc" %% "govuk-template"             % govTemplateVersion,
     "uk.gov.hmrc" %% "play-ui"                    % playUiVersion,
     "uk.gov.hmrc" %% "play-hmrc-api"              % playHmrcApiVersion,

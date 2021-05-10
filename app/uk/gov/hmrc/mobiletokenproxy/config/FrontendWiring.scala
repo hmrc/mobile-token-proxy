@@ -19,20 +19,21 @@ package uk.gov.hmrc.mobiletokenproxy.config
 import akka.actor.ActorSystem
 import com.google.inject.Singleton
 import com.typesafe.config.Config
+
 import javax.inject.Inject
 import play.api.i18n.MessagesApi
 import play.api.libs.ws.WSClient
 import play.api.mvc.Request
-import play.api.{Configuration, Play}
+import play.api.Configuration
 import play.twirl.api.Html
 import uk.gov.hmrc.http.hooks.{HttpHook, HttpHooks}
 import uk.gov.hmrc.http.{HttpGet, HttpPost}
-import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
+import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
 import uk.gov.hmrc.play.http.ws._
 
 class ErrorHandler @Inject() (
-  val messagesApi:   MessagesApi,
-  val configuration: Configuration)
+  val messagesApi: MessagesApi,
+  val config:      Configuration)
     extends FrontendErrorHandler {
 
   override def standardErrorTemplate(
@@ -46,10 +47,13 @@ class ErrorHandler @Inject() (
 
 trait HttpVerbs extends HttpGet with WSGet with HttpPost with WSPost with HttpHooks {
   override val hooks:                 Seq[HttpHook] = NoneRequired
-  override protected def actorSystem: ActorSystem   = Play.current.actorSystem
-
-  override protected def configuration: Option[Config] = Some(Play.current.configuration.underlying)
+  override protected def actorSystem: ActorSystem   = actorSystem
 }
 
 @Singleton
-class WSHttp @Inject() (val wsClient: WSClient) extends HttpVerbs
+class WSHttp @Inject() (
+  val wsClient: WSClient,
+  config:       Configuration)
+    extends HttpVerbs {
+  override protected def configuration: Config = config.underlying
+}
