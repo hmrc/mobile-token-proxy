@@ -42,9 +42,6 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
   val ngcClientId:                  String = "client_id"
   val ngcRedirectUri:               String = "redirect_uri"
   val ngcClientSecret:              String = "client_secret"
-  val rdsClientId:                  String = "client_id"
-  val rdsRedirectUri:               String = "redirect_uri"
-  val rdsClientSecret:              String = "client_secret"
   val pathToAPIGatewayAuthService:  String = "http://localhost:8236/oauth/authorize"
   val expiryDecrement:              Long   = 0
   val accessToken  = "495b5b1725d590eb87d0f6b7dcea32a9"
@@ -60,10 +57,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
     expiryDecrement              = expiryDecrement,
     ngcClientId                  = ngcClientId,
     ngcRedirectUri               = ngcRedirectUri,
-    ngcClientSecret              = ngcClientSecret,
-    rdsClientId                  = rdsClientId,
-    rdsRedirectUri               = rdsRedirectUri,
-    rdsClientSecret              = rdsClientSecret
+    ngcClientSecret              = ngcClientSecret
   )
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()

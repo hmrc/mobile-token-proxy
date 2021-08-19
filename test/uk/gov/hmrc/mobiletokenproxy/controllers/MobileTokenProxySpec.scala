@@ -88,9 +88,6 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       ngcClientId                  = "ngc-client-id",
       ngcScope                     = "ngc-some-scopes",
       ngcRedirectUri               = "ngc_redirect_uri",
-      rdsClientId                  = "rds_client_id",
-      rdsScope                     = "rds-some-scopes",
-      rdsRedirectUri               = "rds_redirect_uri",
       messagesControllerComponents = mcc
     )
 
@@ -182,15 +179,6 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
       "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
-      header(vendorHeader, result).get mustBe "header vendor"
-      header(deviceIdHeader, result).get mustBe "header device Id"
-    }
-    "return a 303 redirect with the URL to the API Gateway authorize service when serviceId = rds" in {
-      val result = controller.authorize(journeyId, "rds")(requestWithHttpHeaders(FakeRequest()))
-
-      result.futureValue.header.status mustBe 303
-      header("Location", result).get mustBe
-      "http://localhost:8236/oauth/authorize?client_id=rds_client_id&redirect_uri=rds_redirect_uri&scope=rds-some-scopes&response_type=code"
       header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }
