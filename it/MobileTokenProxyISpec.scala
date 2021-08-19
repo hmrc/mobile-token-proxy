@@ -31,11 +31,8 @@ class MobileTokenProxyISpec
       "api-gateway.ngc.redirect_uri"             -> "urn:ietf:wg:oauth:2.0:oob:auto",
       "api-gateway.ngc.client_secret"            -> "client_secret",
       "api-gateway.ngc.scope"                    -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary",
-      "api-gateway.rds.client_id"                -> "rds_i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
-      "api-gateway.rds.redirect_uri"             -> "urn:ietf:wg:oauth:2.0:oob:auto",
-      "api-gateway.rds.client_secret"            -> "rds_client_secret",
-      "api-gateway.rds.scope"                    -> "read:mobile-rds-vehicle",
-      "api-gateway.expiry_decrement"             -> 0
+      "api-gateway.expiry_decrement"             -> 0,
+      "auditing.enabled"                         -> false
     )
 
   implicit lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
@@ -50,11 +47,19 @@ class MobileTokenProxyISpec
     }
   }
 
+  "GET /mobile-token-proxy/oauth/invalidService" should {
+    "return an invalid service error" in {
+      val response = wsUrl(
+        s"/mobile-token-proxy/oauth/invalidService/authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75"
+      ).get().futureValue
+      response.status shouldBe 500
+    }
+  }
+
   val test = Table(
     ("Name of Group Of Tests", "urlPrefix", "serviceId"),
     ("Old Url with no Service Id", "/mobile-token-proxy/oauth/", "ngc"),
-    ("New Url with NGC Service Id", "/mobile-token-proxy/oauth/ngc/", "ngc"),
-    ("New Url with RDS Service Id", "/mobile-token-proxy/oauth/rds/", "rds")
+    ("New Url with NGC Service Id", "/mobile-token-proxy/oauth/ngc/", "ngc")
   )
 
   forAll(test) { (name: String, urlPrefix: String, serviceId: String) =>

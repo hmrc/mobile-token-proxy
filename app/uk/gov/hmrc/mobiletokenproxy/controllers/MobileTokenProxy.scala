@@ -44,9 +44,6 @@ class MobileTokenProxy @Inject() (
   @Named("api-gateway.ngc.client_id") ngcClientId:                               String,
   @Named("api-gateway.ngc.scope") ngcScope:                                      String,
   @Named("api-gateway.ngc.redirect_uri") ngcRedirectUri:                         String,
-  @Named("api-gateway.rds.client_id") rdsClientId:                               String,
-  @Named("api-gateway.rds.scope") rdsScope:                                      String,
-  @Named("api-gateway.rds.redirect_uri") rdsRedirectUri:                         String,
   messagesControllerComponents:                                                  MessagesControllerComponents)
     extends FrontendController(messagesControllerComponents) {
   implicit val ec: ExecutionContext = ExecutionContext.global
@@ -60,8 +57,6 @@ class MobileTokenProxy @Inject() (
     val redirectUrl = serviceId.toLowerCase match {
       case "ngc" =>
         s"$pathToAPIGatewayAuthService?client_id=$ngcClientId&redirect_uri=$ngcRedirectUri&scope=$ngcScope&response_type=$responseType"
-      case "rds" =>
-        s"$pathToAPIGatewayAuthService?client_id=$rdsClientId&redirect_uri=$rdsRedirectUri&scope=$rdsScope&response_type=$responseType"
       case _ => throw new IllegalArgumentException("Invalid service id")
     }
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))

@@ -52,9 +52,6 @@ trait LiveTokenService extends TokenService {
   val ngcClientId:                  String
   val ngcRedirectUri:               String
   val ngcClientSecret:              String
-  val rdsClientId:                  String
-  val rdsRedirectUri:               String
-  val rdsClientSecret:              String
 
   def getTokenFromAccessCode(
     authCode:    String,
@@ -93,14 +90,8 @@ trait LiveTokenService extends TokenService {
           "grant_type"    -> Seq(grantType),
           "redirect_uri"  -> Seq(ngcRedirectUri)
         )
-      case "rds" =>
-        Map(
-          key             -> Seq(code),
-          "client_id"     -> Seq(rdsClientId),
-          "client_secret" -> Seq(rdsClientSecret),
-          "grant_type"    -> Seq(grantType),
-          "redirect_uri"  -> Seq(rdsRedirectUri)
-        )
+      case _ =>
+        throw new IllegalArgumentException("Invalid service id")
     }
 
     genericConnector
@@ -146,8 +137,5 @@ class LiveTokenServiceImpl @Inject() (
   @Named("api-gateway.expiry_decrement") override val expiryDecrement:                          Long,
   @Named("api-gateway.ngc.client_id") override val ngcClientId:                                 String,
   @Named("api-gateway.ngc.redirect_uri") override val ngcRedirectUri:                           String,
-  @Named("api-gateway.ngc.client_secret") override val ngcClientSecret:                         String,
-  @Named("api-gateway.rds.client_id") override val rdsClientId:                                 String,
-  @Named("api-gateway.rds.redirect_uri") override val rdsRedirectUri:                           String,
-  @Named("api-gateway.rds.client_secret") override val rdsClientSecret:                         String)
+  @Named("api-gateway.ngc.client_secret") override val ngcClientSecret:                         String)
     extends LiveTokenService {}

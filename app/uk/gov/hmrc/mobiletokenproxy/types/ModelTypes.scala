@@ -23,17 +23,9 @@ import eu.timepit.refined.string.MatchesRegex
 
 object ModelTypes {
 
-  val rdsService: Service = "rds"
-  val ngcService: Service = "ngc"
-
   type JourneyId = String Refined ValidJourneyId
-  type Service   = String Refined ValidMobileService
 
   private type ValidJourneyId =
     MatchesRegex[W.`"""[A-Fa-f0-9]{8}\\-[A-Fa-f0-9]{4}\\-[A-Fa-f0-9]{4}\\-[A-Fa-f0-9]{4}\\-[A-Fa-f0-9]{12}"""`.T]
-
-  //TODO: Introduce the service validation once the core app is using the new endpoint: mobile-token-proxy/:service
-  private type ValidMobileService =
-    MatchesRegex[W.`"(rds)|(ngc)"`.T]
 
 }
