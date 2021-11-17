@@ -119,8 +119,9 @@ trait LiveTokenService extends TokenService {
 
   private def appyDecrementConfig(expiresIn: Long): Long = {
     val expiryDecrementConfig = expiryDecrement
+    val logger: Logger = Logger(this.getClass)
     if (expiryDecrementConfig > expiresIn) {
-      Logger.error(
+      logger.error(
         s"Config error expiry_decrement $expiryDecrementConfig can't be greater than the token expiry $expiresIn"
       )
       expiresIn
