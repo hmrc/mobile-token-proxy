@@ -22,6 +22,7 @@ import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
+import play.api.mvc.BodyParser
 import uk.gov.hmrc.crypto.CompositeSymmetricCrypto
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
@@ -50,6 +51,8 @@ class MobileTokenProxy @Inject() (
 
   lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
 
+  val logger: Logger = Logger(this.getClass)
+
   def authorize(
     journeyId: JourneyId,
     serviceId: String = "ngc"
@@ -65,12 +68,12 @@ class MobileTokenProxy @Inject() (
   def token(
     journeyId: JourneyId,
     serviceId: String = "ngc"
-  ): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
+  ): Action[JsValue] = Action.async(controllerComponents.parsers.json) { implicit request =>
     request.body
       .validate[TokenRequest]
       .fold(
         errors => {
-          Logger.warn("Received error with service token: " + errors)
+          logger.warn("Received error with service token: " + errors)
           Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
         },
         tokenRequest => {

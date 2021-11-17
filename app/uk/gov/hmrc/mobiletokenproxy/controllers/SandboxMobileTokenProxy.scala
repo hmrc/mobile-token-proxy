@@ -38,7 +38,7 @@ class SandboxMobileTokenProxy @Inject() (
 
   val logger: Logger = Logger(this.getClass)
 
-  def token(journeyId: JourneyId): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
+  def token(journeyId: JourneyId): Action[JsValue] = Action.async(controllerComponents.parsers.json) { implicit request =>
     request.body
       .validate[TokenRequest]
       .fold(
