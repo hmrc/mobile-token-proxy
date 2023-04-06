@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class MobileTokenProxy @Inject() (
   genericConnector:                                                              GenericConnector,
   service:                                                                       TokenService,
-  cryptoProvider:                                                                Provider[CompositeSymmetricCrypto],
   proxyPassthroughHttpHeaders:                                                   ProxyPassThroughHttpHeaders,
   @Named("api-gateway.response_type") responseType:                              String,
   @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
@@ -48,8 +47,6 @@ class MobileTokenProxy @Inject() (
   messagesControllerComponents:                                                  MessagesControllerComponents)
     extends FrontendController(messagesControllerComponents) {
   implicit val ec: ExecutionContext = ExecutionContext.global
-
-  lazy val aesCryptographer: CompositeSymmetricCrypto = cryptoProvider.get()
 
   val logger: Logger = Logger(this.getClass)
 
