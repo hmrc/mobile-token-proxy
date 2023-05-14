@@ -128,6 +128,7 @@ class MobileTokenProxyISpec
         verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 404, 500)
         verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 500, 500)
         verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 503, 500)
+        verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 429, 429)
       }
 
       "return bad request if journeyId is not supplied" in {

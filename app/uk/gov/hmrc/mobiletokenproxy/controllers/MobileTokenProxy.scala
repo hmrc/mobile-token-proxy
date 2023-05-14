@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,7 @@ class MobileTokenProxy @Inject() (
     case _: BadRequestException => Unauthorized
     case Upstream4xxResponse(_, 401, _, _) => Unauthorized
     case Upstream4xxResponse(_, 403, _, _) => Forbidden
+    case Upstream4xxResponse(_, 429, _, _) => TooManyRequests
     case _                                 => InternalServerError
   }
 }
