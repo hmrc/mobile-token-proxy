@@ -17,9 +17,10 @@
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
 import com.google.inject.{Inject, Singleton}
-import play.api.libs.json._
+import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 

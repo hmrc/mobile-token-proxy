@@ -18,7 +18,8 @@ package uk.gov.hmrc.mobiletokenproxy.connectors
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.libs.json.Json.parse
 import play.api.libs.json.{JsValue, Writes}
 import uk.gov.hmrc.http._
@@ -31,7 +32,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
 class GenericConnectorSpec
-    extends WordSpecLike
+    extends AnyWordSpecLike
     with ScalaFutures
     with StubApplicationConfiguration
     with MockFactory
@@ -45,9 +46,9 @@ class GenericConnectorSpec
   val url = "somepath"
   val someJson: JsValue = parse("""{"test":1234}""")
 
-  val http500Response: Future[HttpResponse] = Future.failed(Upstream5xxResponse("Error", 500, 500))
+  val http500Response: Future[HttpResponse] = Future.failed(UpstreamErrorResponse("Error", 500, 500))
   val http400Response: Future[HttpResponse] = Future.failed(new BadRequestException("bad request"))
-  val http200Response: Future[HttpResponse] = Future.successful(HttpResponse(200, Some(someJson)))
+  val http200Response: Future[HttpResponse] = Future.successful(HttpResponse(200, someJson.toString()))
 
   "genericConnector get" should {
     def getReturning(response: Future[HttpResponse]) =
@@ -69,7 +70,7 @@ class GenericConnectorSpec
     "throw Upstream5xxResponse on 500 response" in {
       getReturning(http500Response)
 
-      intercept[Upstream5xxResponse] {
+      intercept[UpstreamErrorResponse] {
         Await.result(connector.doGet(url), 10 seconds)
       }
     }
@@ -102,7 +103,7 @@ class GenericConnectorSpec
     "throw Upstream5xxResponse on 500 response" in {
       postReturning(http500Response)
 
-      intercept[Upstream5xxResponse] {
+      intercept[UpstreamErrorResponse] {
         Await.result(connector.doPost(url, someJson), 10 seconds)
       }
     }

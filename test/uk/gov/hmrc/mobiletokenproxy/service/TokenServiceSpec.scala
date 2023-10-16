@@ -23,7 +23,8 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.parse
-import uk.gov.hmrc.http.{BadRequestException, _}
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.LiveTokenServiceImpl
@@ -74,9 +75,9 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
     )
 
     "return a token" in {
-      val tokenResponseFromAuthorizationCode: JsValue =
-        parse(s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken", "expires_in": $expiresIn }""")
-      val response = HttpResponse(200, Some(tokenResponseFromAuthorizationCode))
+      val tokenResponseFromAuthorizationCode: String =
+        s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken", "expires_in": $expiresIn }"""
+      val response = HttpResponse(200, tokenResponseFromAuthorizationCode)
 
       (connector
         .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
@@ -84,7 +85,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(response))
 
       val tokenResponse: TokenOauthResponse =
-        service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId).futureValue
+        await(service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId))
 
       tokenResponse.access_token mustBe accessToken
       tokenResponse.refresh_token mustBe refreshToken
@@ -107,8 +108,8 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
       propagateException(new BadRequestException("I don't understand!"))
       propagateException(new UnauthorizedException("Denied!"))
       propagateException(new ServiceUnavailableException("Sorry we cannot take your call right now!"))
-      propagateException(Upstream4xxResponse("4xx", 400, 400))
-      propagateException(Upstream5xxResponse("5xx", 500, 500))
+      propagateException(UpstreamErrorResponse("4xx", 400, 400))
+      propagateException(UpstreamErrorResponse("5xx", 500, 500))
       propagateException(new Exception())
     }
 
@@ -116,7 +117,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
       (connector
         .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
         .expects(pathToAPIGatewayTokenService, form, *, *)
-        .returning(Future.successful(HttpResponse(201)))
+        .returning(Future.successful(HttpResponse(201, "{}")))
 
       intercept[RuntimeException] {
         service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId).futureValue
@@ -124,7 +125,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
     }
 
     def handleInvalidResponseJson(tokenResponseFromAuthorizationCode: JsValue) = {
-      val response = HttpResponse(200, Some(tokenResponseFromAuthorizationCode))
+      val response = HttpResponse(200, tokenResponseFromAuthorizationCode.toString())
 
       (connector
         .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
@@ -161,9 +162,9 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
     )
 
     "return a token" in {
-      val tokenResponseFromAuthorizationCode: JsValue =
-        parse(s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken", "expires_in": $expiresIn }""")
-      val response = HttpResponse(200, Some(tokenResponseFromAuthorizationCode))
+      val tokenResponseFromAuthorizationCode: String =
+        s"""{ "access_token": "$accessToken", "refresh_token": "$refreshToken", "expires_in": $expiresIn }"""
+      val response = HttpResponse(200, tokenResponseFromAuthorizationCode)
 
       (connector
         .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
@@ -194,8 +195,8 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
       propagateException(new BadRequestException("I should be in detention"))
       propagateException(new UnauthorizedException("Oh no you don't"))
       propagateException(new ServiceUnavailableException("Sorry we cannot take your call right now"))
-      propagateException(Upstream4xxResponse("4xx", 400, 400))
-      propagateException(Upstream5xxResponse("5xx", 500, 500))
+      propagateException(UpstreamErrorResponse("4xx", 400, 400))
+      propagateException(UpstreamErrorResponse("5xx", 500, 500))
       propagateException(new Exception())
     }
 
@@ -203,7 +204,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
       (connector
         .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
         .expects(pathToAPIGatewayTokenService, form, *, *)
-        .returning(Future.successful(HttpResponse(201)))
+        .returning(Future.successful(HttpResponse(201, "{}")))
 
       intercept[RuntimeException] {
         service.getTokenFromRefreshToken(refreshToken, journeyId, defaultServiceId).futureValue
@@ -211,7 +212,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
     }
 
     def handleInvalidResponseJson(tokenResponseFromAuthorizationCode: JsValue) = {
-      val response = HttpResponse(200, Some(tokenResponseFromAuthorizationCode))
+      val response = HttpResponse(200, tokenResponseFromAuthorizationCode.toString())
 
       (connector
         .doPostForm(_: String, _: Map[String, Seq[String]])(_: ExecutionContext, _: HeaderCarrier))
