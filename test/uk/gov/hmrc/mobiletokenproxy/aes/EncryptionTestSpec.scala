@@ -18,9 +18,10 @@ package uk.gov.hmrc.mobiletokenproxy.aes
 
 import javax.crypto.spec.SecretKeySpec
 import org.apache.commons.codec.binary.Base64
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class EncryptionTestSpec extends Matchers with WordSpecLike {
+class EncryptionTestSpec extends Matchers with AnyWordSpecLike {
 
   "Using the Java libraries for AES" should {
     "successfully encrypt and decrypt" in {

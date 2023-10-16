@@ -38,33 +38,34 @@ class SandboxMobileTokenProxy @Inject() (
 
   val logger: Logger = Logger(this.getClass)
 
-  def token(journeyId: JourneyId): Action[JsValue] = Action.async(controllerComponents.parsers.json) { implicit request =>
-    request.body
-      .validate[TokenRequest]
-      .fold(
-        errors => {
-          logger.warn("Received error with service token: " + errors)
-          Future successful BadRequest(Json.obj("message" -> JsError.toJson(errors)))
-        },
-        tokenRequest =>
-          (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+  def token(journeyId: JourneyId): Action[JsValue] = Action.async(controllerComponents.parsers.json) {
+    implicit request =>
+      request.body
+        .validate[TokenRequest]
+        .fold(
+          errors => {
+            logger.warn("Received error with service token: " + errors)
+            Future successful BadRequest(Json.obj("message" -> JsError.toJson(errors)))
+          },
+          tokenRequest =>
+            (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
-            case (Some(_), Some(_)) =>
-              Future successful BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!")
+              case (Some(_), Some(_)) =>
+                Future successful BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!")
 
-            case (None, Some(_)) =>
-              Future successful Ok(
-                Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
-              )
-            case (Some(_), None) =>
-              Future successful Ok(
-                Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
-              )
+              case (None, Some(_)) =>
+                Future successful Ok(
+                  Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
+                )
+              case (Some(_), None) =>
+                Future successful Ok(
+                  Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
+                )
 
-            case _ =>
-              Future successful BadRequest
-          }
-      )
+              case _ =>
+                Future successful BadRequest
+            }
+        )
   }
 
   def authorize(journeyId: JourneyId): Action[AnyContent] = Action.async { implicit request =>

@@ -18,7 +18,6 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.google.inject.Provider
 import eu.timepit.refined.auto._
 import org.scalamock.matchers.MatcherBase
 import org.scalamock.scalatest.MockFactory
@@ -28,8 +27,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.json.Json.parse
 import play.api.mvc._
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{POST, header, stubBodyParser, stubControllerComponents, stubMessagesApi, _}
-import uk.gov.hmrc.crypto.CompositeSymmetricCrypto
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
@@ -44,8 +42,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
   implicit val system:       ActorSystem       = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  private val service       = mock[TokenService]
-  private val cryptographer = mock[CompositeSymmetricCrypto]
+  private val service = mock[TokenService]
 
   private val vendorHeader   = "X-Vendor-Instance-Id"
   private val deviceIdHeader = "X-Client-Device-ID"

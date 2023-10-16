@@ -1,24 +1,22 @@
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json.parse
 import play.api.libs.ws.ahc.AhcWSClient
 import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import stubs.APIGatewayAuthServiceStub._
-import uk.gov.hmrc.integration.ServiceSpec
 import utils.{WireMockSupport, WsScalaTestClient}
 
 class MobileTokenProxyISpec
-    extends WordSpecLike
-    with ServiceSpec
+    extends AnyWordSpecLike
     with Matchers
     with GuiceOneServerPerSuite
     with WsScalaTestClient
     with WireMockSupport {
-
-  override def externalServices: Seq[String] = Seq()
 
   override implicit lazy val app: Application = appBuilder.build()
 
@@ -42,16 +40,18 @@ class MobileTokenProxyISpec
 
   "GET /ping/ping" should {
     "be healthy" in {
-      val response = wsUrl("/ping/ping").get().futureValue
+      val response = await(wsUrl("/ping/ping").get())
       response.status shouldBe 200
     }
   }
 
   "GET /mobile-token-proxy/oauth/invalidService" should {
     "return an invalid service error" in {
-      val response = wsUrl(
-        s"/mobile-token-proxy/oauth/invalidService/authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75"
-      ).get().futureValue
+      val response = await(
+        wsUrl(
+          s"/mobile-token-proxy/oauth/invalidService/authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75"
+        ).get()
+      )
       response.status shouldBe 500
     }
   }
@@ -66,7 +66,7 @@ class MobileTokenProxyISpec
     s"GET ${urlPrefix}authorize" should {
       "redirect to oauth successfully" in {
         oauthRedirectSuccess(serviceId)
-        val response = wsUrl(s"${urlPrefix}authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75").get().futureValue
+        val response = await(wsUrl(s"${urlPrefix}authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75").get())
         response.status shouldBe 200
       }
     }
@@ -74,10 +74,11 @@ class MobileTokenProxyISpec
     s"POST ${urlPrefix}token" should {
       def postOAuthToken(form: String): WSResponse = {
         val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-        wsUrl(s"${urlPrefix}token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
-          .addHttpHeaders(jsonHeader)
-          .post(parse(form))
-          .futureValue
+        await(
+          wsUrl(s"${urlPrefix}token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
+            .addHttpHeaders(jsonHeader)
+            .post(parse(form))
+        )
       }
 
       def verifyPostOAuthTokenFailureStatusCode(
@@ -89,10 +90,11 @@ class MobileTokenProxyISpec
 
         val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
         val response =
-          wsUrl(s"${urlPrefix}token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
-            .addHttpHeaders(jsonHeader)
-            .post(parse(form))
-            .futureValue
+          await(
+            wsUrl(s"${urlPrefix}token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
+              .addHttpHeaders(jsonHeader)
+              .post(parse(form))
+          )
         response.status shouldBe responseCodeToReport
       }
 
@@ -131,18 +133,20 @@ class MobileTokenProxyISpec
       }
 
       "return bad request if journeyId is not supplied" in {
-        val response = wsUrl(s"${urlPrefix}token")
-          .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
-          .post(parse(formWithAuthCode))
-          .futureValue
+        val response = await(
+          wsUrl(s"${urlPrefix}token")
+            .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
+            .post(parse(formWithAuthCode))
+        )
         response.status shouldBe 400
       }
 
       "return bad request if journeyId is invalid" in {
-        val response = wsUrl(s"${urlPrefix}token?journeyId=ThisIsAnInvalidJourneyId")
-          .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
-          .post(parse(formWithAuthCode))
-          .futureValue
+        val response = await(
+          wsUrl(s"${urlPrefix}token?journeyId=ThisIsAnInvalidJourneyId")
+            .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
+            .post(parse(formWithAuthCode))
+        )
         response.status shouldBe 400
       }
     }

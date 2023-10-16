@@ -17,9 +17,8 @@
 package uk.gov.hmrc.mobiletokenproxy.config
 
 import com.google.inject.name.Names.named
-import com.google.inject.{AbstractModule, Provider}
+import com.google.inject.AbstractModule
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, CryptoWithKeysFromConfig}
 import uk.gov.hmrc.mobiletokenproxy.services.{LiveTokenServiceImpl, TokenService}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 

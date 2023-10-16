@@ -16,14 +16,11 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
-import com.google.inject.Provider
 import javax.inject.{Inject, Named, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
-import play.api.mvc.BodyParser
-import uk.gov.hmrc.crypto.CompositeSymmetricCrypto
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.connectors._

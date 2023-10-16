@@ -1,24 +1,22 @@
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json.parse
 import play.api.libs.ws.ahc.AhcWSClient
 import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import stubs.MobileAuthStub.ggSignInSuccess
-import uk.gov.hmrc.integration.ServiceSpec
 import utils.{WireMockSupport, WsScalaTestClient}
 
 class SandboxMobileTokenProxyISpec
-    extends WordSpecLike
-    with ServiceSpec
+    extends AnyWordSpecLike
     with Matchers
     with GuiceOneServerPerSuite
     with WsScalaTestClient
     with WireMockSupport {
   override implicit lazy val app: Application = appBuilder.build()
-
-  override def externalServices: Seq[String] = Seq()
 
   def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder().configure(
     Map("microservice.services.mobile-auth-stub.port" -> wireMockPort)
@@ -33,10 +31,11 @@ class SandboxMobileTokenProxyISpec
   "POST /mobile-token-proxy/oauth/token" should {
     def postOAuthToken(form: String): WSResponse = {
       val jsonHeader: (String, String) = "Accept" -> "application/vnd.hmrc.1.0+json"
-      wsUrl(s"/mobile-token-proxy/oauth/token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
-        .addHttpHeaders(jsonHeader, mobileUserId)
-        .post(parse(form))
-        .futureValue
+      await(
+        wsUrl(s"/mobile-token-proxy/oauth/token?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
+          .addHttpHeaders(jsonHeader, mobileUserId)
+          .post(parse(form))
+      )
     }
 
     val formWithAuthCode: String = """{ "authorizationCode":"123"}"""
@@ -58,18 +57,20 @@ class SandboxMobileTokenProxyISpec
     }
 
     "return bad request if journeyId is not supplied" in {
-      val response = wsUrl("/mobile-token-proxy/oauth/token")
-        .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
-        .post(parse(formWithAuthCode))
-        .futureValue
+      val response = await(
+        wsUrl("/mobile-token-proxy/oauth/token")
+          .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
+          .post(parse(formWithAuthCode))
+      )
       response.status shouldBe 400
     }
 
     "return bad request if journeyId is invalid" in {
-      val response = wsUrl("/mobile-token-proxy/oauth/token?journeyId=ThisIsAnInvalidJourneyId")
-        .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
-        .post(parse(formWithAuthCode))
-        .futureValue
+      val response = await(
+        wsUrl("/mobile-token-proxy/oauth/token?journeyId=ThisIsAnInvalidJourneyId")
+          .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
+          .post(parse(formWithAuthCode))
+      )
       response.status shouldBe 400
     }
 
@@ -78,10 +79,11 @@ class SandboxMobileTokenProxyISpec
   "GET /mobile-token-proxy/oauth/authorize" should {
     "redirect to /gg/sign-in and receive a response" in {
       ggSignInSuccess()
-      val call = wsUrl(s"/mobile-token-proxy/oauth/authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
-        .addHttpHeaders(mobileUserId)
-        .get()
-        .futureValue
+      val call = await(
+        wsUrl(s"/mobile-token-proxy/oauth/authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
+          .addHttpHeaders(mobileUserId)
+          .get()
+      )
       call.status shouldBe 200
       call.body   should include("Success code=sandboxSuccess")
     }
