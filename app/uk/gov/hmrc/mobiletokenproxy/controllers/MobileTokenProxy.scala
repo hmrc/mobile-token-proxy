@@ -23,7 +23,6 @@ import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
-import uk.gov.hmrc.mobiletokenproxy.connectors._
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
 import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
@@ -33,7 +32,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MobileTokenProxy @Inject() (
-  genericConnector:                                                              GenericConnector,
   service:                                                                       TokenService,
   proxyPassthroughHttpHeaders:                                                   ProxyPassThroughHttpHeaders,
   @Named("api-gateway.response_type") responseType:                              String,
