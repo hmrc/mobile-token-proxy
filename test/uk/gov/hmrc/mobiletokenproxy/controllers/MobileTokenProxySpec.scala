@@ -30,7 +30,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
-import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.TokenService
 import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
@@ -74,7 +73,6 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
   val controller =
     new MobileTokenProxy(
-      mock[GenericConnector],
       service,
       new ProxyPassThroughHttpHeaders(Seq(vendorHeader, deviceIdHeader)),
       responseType                 = "code",

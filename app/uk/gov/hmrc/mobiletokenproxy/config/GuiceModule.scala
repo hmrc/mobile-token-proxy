@@ -32,8 +32,6 @@ class GuiceModule(
   val servicesConfig = new ServicesConfig(configuration)
 
   override def configure(): Unit = {
-    bindConfigString("google-analytics.token")
-    bindConfigString("google-analytics.host")
     bindConfigString("api-gateway.pathToAPIGatewayTokenService")
     bindConfigString("api-gateway.pathToAPIGatewayAuthService")
     bindConfigString("api-gateway.response_type")
