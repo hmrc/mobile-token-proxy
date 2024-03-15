@@ -32,9 +32,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SandboxMobileTokenProxy @Inject() (
   @Named("mobile-auth-stub") mobileAuthStubUrl: String,
-  cc:                                           MessagesControllerComponents)
+  cc:                                           MessagesControllerComponents
+)(implicit ec:                                  ExecutionContext)
     extends FrontendController(cc) {
-  implicit val ec: ExecutionContext = ExecutionContext.global
 
   val logger: Logger = Logger(this.getClass)
 

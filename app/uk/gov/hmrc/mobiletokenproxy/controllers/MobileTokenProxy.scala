@@ -39,9 +39,9 @@ class MobileTokenProxy @Inject() (
   @Named("api-gateway.ngc.client_id") ngcClientId:                               String,
   @Named("api-gateway.ngc.scope") ngcScope:                                      String,
   @Named("api-gateway.ngc.redirect_uri") ngcRedirectUri:                         String,
-  messagesControllerComponents:                                                  MessagesControllerComponents)
+  messagesControllerComponents:                                                  MessagesControllerComponents
+)(implicit ec:                                                                   ExecutionContext)
     extends FrontendController(messagesControllerComponents) {
-  implicit val ec: ExecutionContext = ExecutionContext.global
 
   val logger: Logger = Logger(this.getClass)
 
