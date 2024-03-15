@@ -44,26 +44,4 @@ package object types {
     ): String =
       baseTypeBinder.unbind(key, refType.unwrap(value))
   }
-
-  implicit def refinedPathBindable[R[_, _], T, P](
-    implicit
-    baseTypeBinder: PathBindable[T],
-    refType:        RefType[R],
-    validate:       Validate[T, P]
-  ): PathBindable[R[T, P]] = new PathBindable[R[T, P]] {
-
-    override def bind(
-      key:   String,
-      value: String
-    ): Either[String, R[T, P]] =
-      baseTypeBinder.bind(key, value).right.flatMap { baseValue =>
-        refType.refine[P](baseValue)
-      }
-
-    override def unbind(
-      key:   String,
-      value: R[T, P]
-    ): String =
-      baseTypeBinder.unbind(key, refType.unwrap(value))
-  }
 }
