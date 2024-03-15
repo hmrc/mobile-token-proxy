@@ -15,7 +15,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     majorVersion := 1,
     playDefaultPort := 8239,
-    scalaVersion := "2.12.8",
+    scalaVersion := "2.13.8",
     ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;.*(config|views.*);.*(AuthService|BuildInfo|Routes).*",
     ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*models.*;.*repositories.*;" +
     ".*BuildInfo.*;.*javascript.*;.*FrontendAuditConnector.*;.*Routes.*;.*GuiceInjector;.*DataCacheConnector;" +
