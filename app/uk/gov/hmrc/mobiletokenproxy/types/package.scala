@@ -17,7 +17,7 @@
 package uk.gov.hmrc.mobiletokenproxy
 
 import eu.timepit.refined.api.{RefType, Validate}
-import play.api.mvc.{PathBindable, QueryStringBindable}
+import play.api.mvc.QueryStringBindable
 
 package object types {
 
@@ -34,7 +34,7 @@ package object types {
     ): Option[Either[String, R[T, P]]] =
       baseTypeBinder
         .bind(key, params)
-        .map(_.right.flatMap { baseValue =>
+        .map(_.flatMap { baseValue =>
           refType.refine[P](baseValue)
         })
 

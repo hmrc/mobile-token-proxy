@@ -29,6 +29,9 @@ class MobileTokenProxyISpec
       "api-gateway.ngc.redirect_uri"             -> "urn:ietf:wg:oauth:2.0:oob:auto",
       "api-gateway.ngc.client_secret"            -> "client_secret",
       "api-gateway.ngc.scope"                    -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary",
+      "api-gateway.ngc.v2.client_id"             -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
+      "api-gateway.ngc.v2.redirect_uri"          -> "uk.gov.hmrc://hmrcapp",
+      "api-gateway.ngc.v2.scope"                 -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary",
       "api-gateway.expiry_decrement"             -> 0,
       "auditing.enabled"                         -> false
     )
@@ -57,15 +60,15 @@ class MobileTokenProxyISpec
   }
 
   val test = Table(
-    ("Name of Group Of Tests", "urlPrefix", "serviceId"),
-    ("Old Url with no Service Id", "/mobile-token-proxy/oauth/", "ngc"),
-    ("New Url with NGC Service Id", "/mobile-token-proxy/oauth/ngc/", "ngc")
+    ("urlPrefix"),
+    ("/mobile-token-proxy/oauth/"),
+    ("/mobile-token-proxy/oauth/ngc/")
   )
 
-  forAll(test) { (name: String, urlPrefix: String, serviceId: String) =>
+  forAll(test) { (urlPrefix: String) =>
     s"GET ${urlPrefix}authorize" should {
       "redirect to oauth successfully" in {
-        oauthRedirectSuccess(serviceId)
+        oauthRedirectSuccess("urn:ietf:wg:oauth:2.0:oob:auto")
         val response = await(wsUrl(s"${urlPrefix}authorize?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75").get())
         response.status shouldBe 200
       }
@@ -149,6 +152,18 @@ class MobileTokenProxyISpec
         )
         response.status shouldBe 400
       }
+    }
+  }
+  s"GET /mobile-token-proxy/oauth/authorize/v2" should {
+    "redirect to oauth successfully with new redirect URL and User-Agent header" in {
+      oauthRedirectSuccess("uk.gov.hmrc://hmrcapp")
+      val response = await(
+        wsUrl(
+          "/mobile-token-proxy/oauth/authorize/v2?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75&userAgent=user-agent"
+        ).get()
+      )
+      response.status shouldBe 200
+      println("HEADERS = " + response.headers)
     }
   }
 }

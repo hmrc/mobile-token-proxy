@@ -45,6 +45,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
   private val vendorHeader   = "X-Vendor-Instance-Id"
   private val deviceIdHeader = "X-Client-Device-ID"
+  private val userAgentHeader = "User-Agent"
   private val journeyId: JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
   private val authCode     = "authCode123"
   private val refreshToken = "refreshToken123"
@@ -80,6 +81,9 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       ngcClientId                  = "ngc-client-id",
       ngcScope                     = "ngc-some-scopes",
       ngcRedirectUri               = "ngc_redirect_uri",
+      ngcClientIdV2                = "ngc-client-id-v2",
+      ngcScopeV2                   = "ngc-some-scopes-v2",
+      ngcRedirectUriV2             = "ngc_redirect_uri-v2",
       messagesControllerComponents = mcc
     )
 
@@ -178,6 +182,19 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       intercept[IllegalArgumentException] {
         controller.authorize(journeyId, "invalid")(requestWithHttpHeaders(FakeRequest()))
       }
+    }
+  }
+
+  "requesting the V2 authorize service" should {
+    "return a 303 redirect with the new URL and user-agent header to the API Gateway authorize service" in {
+      val result = controller.authorizeV2(journeyId, "userAgentHeader")(requestWithHttpHeaders(FakeRequest()))
+
+      result.futureValue.header.status mustBe 303
+      header("Location", result).get mustBe
+        "http://localhost:8236/oauth/authorize?client_id=ngc-client-id-v2&redirect_uri=ngc_redirect_uri-v2&scope=ngc-some-scopes-v2&response_type=code"
+      header(vendorHeader, result).get mustBe "header vendor"
+      header(deviceIdHeader, result).get mustBe "header device Id"
+      header(userAgentHeader, result).get mustBe "userAgentHeader"
     }
   }
 }
