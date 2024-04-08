@@ -27,13 +27,12 @@ import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 @Singleton
 class SandboxMobileTokenProxy @Inject() (
   @Named("mobile-auth-stub") mobileAuthStubUrl: String,
-  cc:                                           MessagesControllerComponents
-)(implicit ec:                                  ExecutionContext)
+  cc:                                           MessagesControllerComponents)
     extends FrontendController(cc) {
 
   val logger: Logger = Logger(this.getClass)
@@ -68,7 +67,7 @@ class SandboxMobileTokenProxy @Inject() (
         )
   }
 
-  def authorize(journeyId: JourneyId): Action[AnyContent] = Action.async { implicit request =>
+  def authorize(journeyId: JourneyId): Action[AnyContent] = Action.async {
     Future successful Redirect(s"$mobileAuthStubUrl/gg/sign-in")
   }
 }

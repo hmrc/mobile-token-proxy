@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc._
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, Upstream4xxResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.model._
 import uk.gov.hmrc.mobiletokenproxy.services._
@@ -39,6 +39,9 @@ class MobileTokenProxy @Inject() (
   @Named("api-gateway.ngc.client_id") ngcClientId:                               String,
   @Named("api-gateway.ngc.scope") ngcScope:                                      String,
   @Named("api-gateway.ngc.redirect_uri") ngcRedirectUri:                         String,
+  @Named("api-gateway.ngc.v2.client_id") ngcClientIdV2:                          String,
+  @Named("api-gateway.ngc.v2.scope") ngcScopeV2:                                 String,
+  @Named("api-gateway.ngc.v2.redirect_uri") ngcRedirectUriV2:                    String,
   messagesControllerComponents:                                                  MessagesControllerComponents
 )(implicit ec:                                                                   ExecutionContext)
     extends FrontendController(messagesControllerComponents) {
@@ -55,6 +58,16 @@ class MobileTokenProxy @Inject() (
       case _ => throw new IllegalArgumentException("Invalid service id")
     }
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
+  }
+
+  def authorizeV2(
+    journeyId: JourneyId,
+    userAgent: String
+  ): Action[AnyContent] = Action.async { implicit request =>
+    val redirectUrl =
+      s"$pathToAPIGatewayAuthService?client_id=$ngcClientIdV2&redirect_uri=$ngcRedirectUriV2&scope=$ngcScopeV2&response_type=$responseType"
+    val headers = request.headers.toSimpleMap + ("User-Agent" -> userAgent)
+    Future.successful(Redirect(redirectUrl).withHeaders(headers.toSeq: _*))
   }
 
   def token(
@@ -106,8 +119,8 @@ class MobileTokenProxy @Inject() (
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
     case _: BadRequestException => Unauthorized
-    case Upstream4xxResponse(_, 401, _, _) => Unauthorized
-    case Upstream4xxResponse(_, 403, _, _) => Forbidden
-    case _                                 => InternalServerError
+    case UpstreamErrorResponse(_, 401, _, _) => Unauthorized
+    case UpstreamErrorResponse(_, 403, _, _) => Forbidden
+    case _                                   => InternalServerError
   }
 }
