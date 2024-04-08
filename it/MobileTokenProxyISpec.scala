@@ -9,6 +9,7 @@ import play.api.libs.ws.ahc.AhcWSClient
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import stubs.APIGatewayAuthServiceStub._
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.{WireMockSupport, WsScalaTestClient}
 
 class MobileTokenProxyISpec
@@ -155,7 +156,7 @@ class MobileTokenProxyISpec
     }
   }
   s"GET /mobile-token-proxy/oauth/authorize/v2" should {
-    "redirect to oauth successfully with new redirect URL and User-Agent header" in {
+    "redirect to oauth successfully with new redirect URL" in {
       oauthRedirectSuccess("uk.gov.hmrc://hmrcapp")
       val response = await(
         wsUrl(
@@ -163,7 +164,6 @@ class MobileTokenProxyISpec
         ).get()
       )
       response.status shouldBe 200
-      println("HEADERS = " + response.headers)
     }
   }
 }
