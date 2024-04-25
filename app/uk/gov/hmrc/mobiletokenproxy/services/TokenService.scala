@@ -30,7 +30,7 @@ trait TokenService {
   def getTokenFromAccessCode(
     authCode:    String,
     journeyId:   JourneyId,
-    serviceId:   String
+    v2:          Boolean
   )(implicit hc: HeaderCarrier,
     ex:          ExecutionContext
   ): Future[TokenOauthResponse]
@@ -38,7 +38,7 @@ trait TokenService {
   def getTokenFromRefreshToken(
     refreshToken: String,
     journeyId:    JourneyId,
-    serviceId:    String
+    v2:           Boolean
   )(implicit hc:  HeaderCarrier,
     ex:           ExecutionContext
   ): Future[TokenOauthResponse]
@@ -52,37 +52,47 @@ trait LiveTokenService extends TokenService {
   val ngcClientId:                  String
   val ngcRedirectUri:               String
   val ngcClientSecret:              String
+  val ngcClientIdV2:                String
+  val ngcRedirectUriV2:             String
 
   def getTokenFromAccessCode(
     authCode:    String,
     journeyId:   JourneyId,
-    serviceId:   String
+    v2:          Boolean
   )(implicit hc: HeaderCarrier,
     ex:          ExecutionContext
   ): Future[TokenOauthResponse] =
-    getAPIGatewayToken("code", authCode, "authorization_code", journeyId, serviceId)
+    getAPIGatewayToken("code", authCode, "authorization_code", journeyId, v2)
 
   def getTokenFromRefreshToken(
     refreshToken: String,
     journeyId:    JourneyId,
-    serviceId:    String
+    v2:           Boolean
   )(implicit hc:  HeaderCarrier,
     ex:           ExecutionContext
   ): Future[TokenOauthResponse] =
-    getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, serviceId)
+    getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, v2)
 
   def getAPIGatewayToken(
     key:         String,
     code:        String,
     grantType:   String,
     journeyId:   JourneyId,
-    serviceId:   String
+    v2:          Boolean
   )(implicit hc: HeaderCarrier,
     ex:          ExecutionContext
   ): Future[TokenOauthResponse] = {
 
-    val form = serviceId.toLowerCase match {
-      case "ngc" =>
+    val form = {
+      if (v2) {
+        Map(
+          key             -> Seq(code),
+          "client_id"     -> Seq(ngcClientIdV2),
+          "client_secret" -> Seq(ngcClientSecret),
+          "grant_type"    -> Seq(grantType),
+          "redirect_uri"  -> Seq(ngcRedirectUriV2)
+        )
+      } else {
         Map(
           key             -> Seq(code),
           "client_id"     -> Seq(ngcClientId),
@@ -90,8 +100,8 @@ trait LiveTokenService extends TokenService {
           "grant_type"    -> Seq(grantType),
           "redirect_uri"  -> Seq(ngcRedirectUri)
         )
-      case _ =>
-        throw new IllegalArgumentException("Invalid service id")
+      }
+
     }
 
     genericConnector
@@ -138,5 +148,7 @@ class LiveTokenServiceImpl @Inject() (
   @Named("api-gateway.expiry_decrement") override val expiryDecrement:                          Long,
   @Named("api-gateway.ngc.client_id") override val ngcClientId:                                 String,
   @Named("api-gateway.ngc.redirect_uri") override val ngcRedirectUri:                           String,
-  @Named("api-gateway.ngc.client_secret") override val ngcClientSecret:                         String)
+  @Named("api-gateway.ngc.client_secret") override val ngcClientSecret:                         String,
+  @Named("api-gateway.ngc.v2.client_id") override val ngcClientIdV2:                            String,
+  @Named("api-gateway.ngc.v2.redirect_uri") override val ngcRedirectUriV2:                      String)
     extends LiveTokenService {}

@@ -96,16 +96,54 @@ class MobileTokenProxy @Inject() (
               Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
             case (None, Some(authCode: String)) =>
-              getToken(service.getTokenFromAccessCode(authCode, journeyId, serviceId)(buildHeaderCarrier, ec))
+              getToken(service.getTokenFromAccessCode(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
 
             case (Some(refreshToken: String), None) =>
-              getToken(service.getTokenFromRefreshToken(refreshToken, journeyId, serviceId)(buildHeaderCarrier, ec))
+              getToken(service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec))
 
             case _ =>
               Future.successful(BadRequest)
           }
         }
       )
+  }
+
+  def tokenV2(journeyId: JourneyId): Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) {
+    implicit form: MessagesRequest[Map[String, Seq[String]]] =>
+      def buildHeaderCarrier = {
+        val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
+          proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+        }
+        hc.withExtraHeaders(headers.toSeq: _*)
+      }
+
+      (form.body.get("refreshToken"), form.body.get("authorizationCode")) match {
+
+        case (Some(_: Seq[String]), Some(_: Seq[String])) =>
+          Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
+
+        case (None, Some(authCode: Seq[String])) =>
+          getToken(
+            service.getTokenFromAccessCode(
+              authCode.headOption.getOrElse(throw new BadRequestException("auth token not found")),
+              journeyId,
+              v2 = true
+            )(buildHeaderCarrier, ec)
+          )
+
+        case (Some(refreshToken: Seq[String]), None) =>
+          getToken(
+            service.getTokenFromRefreshToken(
+              refreshToken.headOption.getOrElse(throw new BadRequestException("refresh token not found")),
+              journeyId,
+              v2 = true
+            )(buildHeaderCarrier, ec)
+          )
+
+        case _ =>
+          Future.successful(BadRequest)
+      }
+
   }
 
   private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier): Future[Result] =

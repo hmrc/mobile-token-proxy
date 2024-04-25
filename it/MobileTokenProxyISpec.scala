@@ -9,7 +9,6 @@ import play.api.libs.ws.ahc.AhcWSClient
 import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import stubs.APIGatewayAuthServiceStub._
-import uk.gov.hmrc.http.HeaderCarrier
 import utils.{WireMockSupport, WsScalaTestClient}
 
 class MobileTokenProxyISpec
@@ -155,6 +154,7 @@ class MobileTokenProxyISpec
       }
     }
   }
+
   s"GET /mobile-token-proxy/oauth/authorize/v2" should {
     "redirect to oauth successfully with new redirect URL" in {
       oauthRedirectSuccess("uk.gov.hmrc://hmrcapp")
@@ -164,6 +164,85 @@ class MobileTokenProxyISpec
         ).get()
       )
       response.status shouldBe 200
+    }
+  }
+
+  s"POST /mobile-token-proxy/oauth/token/v2" should {
+    val contentHeader: (String, String) = "Content-Type" -> "application/x-www-form-urlencoded"
+    def postOAuthToken(form: String): WSResponse =
+      await(
+        wsUrl("/mobile-token-proxy/oauth/token/v2?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
+          .addHttpHeaders(contentHeader)
+          .post(form)
+      )
+
+    def verifyPostOAuthTokenFailureStatusCode(
+      form:                 String,
+      upstreamResponseCode: Int,
+      responseCodeToReport: Int
+    ): Unit = {
+      oauthTokenExchangeFailure(upstreamResponseCode)
+
+      val response =
+        await(
+          wsUrl("/mobile-token-proxy/oauth/token/v2?journeyId=dd1ebd2e-7156-47c7-842b-8308099c5e75")
+            .addHttpHeaders(contentHeader)
+            .post(form)
+        )
+      response.status shouldBe responseCodeToReport
+    }
+
+    val formWithAuthCode: String = "authorizationCode=123"
+    val formWithToken:    String = "refreshToken=456"
+
+    "get token from authorizationCode" in {
+      oauthTokenExchangeSuccess()
+      val response = postOAuthToken(formWithAuthCode)
+      response.status shouldBe 200
+    }
+
+    "get token from refreshToken" in {
+      oauthTokenExchangeSuccess()
+      val response = postOAuthToken(formWithToken)
+      response.status shouldBe 200
+    }
+
+    "return bad request if both tokens are supplied" in {
+      val response = postOAuthToken(s"$formWithAuthCode&$formWithToken")
+      response.status shouldBe 400
+    }
+
+    "return bad request if neither token is supplied" in {
+      val response = postOAuthToken("")
+      response.status shouldBe 400
+    }
+
+    "propagate error codes" in {
+      // 400 is returned by oauth-frontend in certain circumstances -  treat as 401
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 400, 401)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 401, 401)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 403, 403)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 404, 500)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 500, 500)
+      verifyPostOAuthTokenFailureStatusCode(formWithAuthCode, 503, 500)
+    }
+
+    "return bad request if journeyId is not supplied" in {
+      val response = await(
+        wsUrl("/mobile-token-proxy/oauth/token/v2")
+          .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
+          .post(formWithAuthCode)
+      )
+      response.status shouldBe 400
+    }
+
+    "return bad request if journeyId is invalid" in {
+      val response = await(
+        wsUrl("/mobile-token-proxy/oauth/token/v2?journeyId=ThisIsAnInvalidJourneyId")
+          .addHttpHeaders("Accept" -> "application/vnd.hmrc.1.0+json")
+          .post(formWithAuthCode)
+      )
+      response.status shouldBe 400
     }
   }
 }

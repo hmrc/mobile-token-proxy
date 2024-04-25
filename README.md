@@ -1,18 +1,18 @@
-
 # mobile-token-proxy
 
 [![Build Status](https://travis-ci.org/hmrc/mobile-token-proxy.svg?branch=master)](https://travis-ci.org/hmrc/mobile-token-proxy) [ ![Download](https://api.bintray.com/packages/hmrc/releases/mobile-token-proxy/images/download.svg) ](https://bintray.com/hmrc/releases/mobile-token-proxy/_latestVersion)
 
-The service acts as a proxy to the API Gateway /oauth/token service and is also responsible for generating the API Gateway authentication HTTP request.
-
+The service acts as a proxy to the API Gateway /oauth/token service and is also responsible for generating the API
+Gateway authentication HTTP request.
 
 ## Endpoints
 
-| Path                     | Supported Methods | Description |
-| -------------------------| ------------------| ------------|
-|```/oauth/authorize```    | GET               | Request to build an authentication request to the API Gateway. [More...](docs/authorize.md) |
-|```/oauth/token```        | POST              | Request for an access-token to make API Gateway service calls. [More...](docs/token.md) |
-
+| Path                      | Supported Methods | Description                                                                                 |
+|---------------------------|-------------------|---------------------------------------------------------------------------------------------|
+| ```/oauth/authorize```    | GET               | Request to build an authentication request to the API Gateway. [More...](docs/authorize.md) |
+| ```/oauth/token```        | POST              | Request for an access-token to make API Gateway service calls. [More...](docs/token.md)     |
+| ```/oauth/authorize/v2``` | GET               | Version 2 of authorize endpoint to support OLFG. [More...](docs/token.md)                   |
+| ```/oauth/token/v2```     | POST              | Version 2 of token endpoint to support OLFG. [More...](docs/token.md)                       |
 
 ## Using the service locally.
 
@@ -31,7 +31,8 @@ Once the services are running then follow steps below in order to test the /auth
 ```
 
 2) Once the service redirects to the below URL, override the port 9025 with 9949.
-Please note since CoAFE is not running, the request will fail. This makes no difference and please override the port and then press return.
+   Please note since CoAFE is not running, the request will fail. This makes no difference and please override the port
+   and then press return.
 
 ```
 http://localhost:9025/gg/sign-in?continue=http%3A%2F%2Flocalhost%3A8236%2Foauth%2Fgrantscope%3Fredirect_uri%3Durn%253Aietf%253Awg%253Aoauth%253A2.0%253Aoob%253Aauto%26auth_id%3D26201d52-cf29-4f74-98c5-53126a6a8b60%26scope%3Dread%253Apersonal-income%2Bread%253Acustomer-profile%2Bread%253Amessages%2Bread%253Asubmission-tracker%2Bread%253Aweb-session
@@ -47,7 +48,8 @@ http://localhost:9025/gg/sign-in?continue=http%3A%2F%2Flocalhost%3A8236%2Foauth%
 http://localhost:8239/oauth/token
 ```
 
-The form POST to the above URL will look like below. Please note the authorizationCode is extracted from the access-code in step 4 above.
+The form POST to the above URL will look like below. Please note the authorizationCode is extracted from the access-code
+in step 4 above.
 
 ```
 {"authorizationCode":"a4059838-c9d4-4a2f-9539-2c8b4fa60395"}
@@ -69,7 +71,7 @@ The form POST to the above URL will look like below. Please note the authorizati
 {"refreshToken":"a4059838-c9d4-4a2f-9539-2c8b4fa60395"}
 ```
 
-
 ### License
 
-This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
+This code is open source software licensed under
+the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
