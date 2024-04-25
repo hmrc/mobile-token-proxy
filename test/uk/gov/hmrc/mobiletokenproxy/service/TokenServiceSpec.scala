@@ -39,17 +39,19 @@ import scala.reflect.ClassTag
 class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
   val connector: GenericConnector = mock[GenericConnector]
 
-  val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
-  val ngcClientId:                  String = "client_id"
-  val ngcRedirectUri:               String = "redirect_uri"
-  val ngcClientSecret:              String = "client_secret"
-  val pathToAPIGatewayAuthService:  String = "http://localhost:8236/oauth/authorize"
-  val expiryDecrement:              Long   = 0
-  val accessToken  = "495b5b1725d590eb87d0f6b7dcea32a9"
-  val refreshToken = "b75f2ed960898b4cd38f23934c6befb2"
-  val expiresIn    = 14400
-  val journeyId: JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
-  val defaultServiceId = "ngc"
+  val pathToAPIGatewayTokenService: String    = "http://localhost:8236/oauth/token"
+  val ngcClientId:                  String    = "client_id"
+  val ngcRedirectUri:               String    = "redirect_uri"
+  val ngcClientSecret:              String    = "client_secret"
+  val pathToAPIGatewayAuthService:  String    = "http://localhost:8236/oauth/authorize"
+  val expiryDecrement:              Long      = 0
+  val accessToken:                  String    = "495b5b1725d590eb87d0f6b7dcea32a9"
+  val refreshToken:                 String    = "b75f2ed960898b4cd38f23934c6befb2"
+  val expiresIn:                    Int       = 14400
+  val journeyId:                    JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
+  val defaultServiceId:             String    = "ngc"
+  val ngcClientIdV2:                String    = "client_id_v2"
+  val ngcRedirectUriV2:             String    = "redirect_uri_v2"
 
   val service: LiveTokenServiceImpl = new LiveTokenServiceImpl(
     genericConnector             = connector,
@@ -58,7 +60,9 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
     expiryDecrement              = expiryDecrement,
     ngcClientId                  = ngcClientId,
     ngcRedirectUri               = ngcRedirectUri,
-    ngcClientSecret              = ngcClientSecret
+    ngcClientSecret              = ngcClientSecret,
+    ngcClientIdV2                = ngcClientIdV2,
+    ngcRedirectUriV2             = ngcRedirectUriV2
   )
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
@@ -85,7 +89,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(response))
 
       val tokenResponse: TokenOauthResponse =
-        await(service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId))
+        await(service.getTokenFromAccessCode(authCode, journeyId, v2 = false))
 
       tokenResponse.access_token mustBe accessToken
       tokenResponse.refresh_token mustBe refreshToken
@@ -120,7 +124,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(HttpResponse(201, "{}")))
 
       intercept[RuntimeException] {
-        service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId).futureValue
+        service.getTokenFromAccessCode(authCode, journeyId, v2 = false).futureValue
       }
     }
 
@@ -133,7 +137,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(response))
 
       intercept[RuntimeException] {
-        service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId).futureValue
+        service.getTokenFromAccessCode(authCode, journeyId, v2 = false).futureValue
       }
     }
 
@@ -144,7 +148,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.failed(exception))
 
       val actual = intercept[T] {
-        Await.result(service.getTokenFromAccessCode(authCode, journeyId, defaultServiceId), 10 seconds)
+        Await.result(service.getTokenFromAccessCode(authCode, journeyId, v2 = false), 10 seconds)
       }
       exception mustBe actual
     }
@@ -172,7 +176,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(response))
 
       val tokenResponse: TokenOauthResponse =
-        service.getTokenFromRefreshToken(refreshToken, journeyId, defaultServiceId).futureValue
+        service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false).futureValue
 
       tokenResponse.access_token mustBe accessToken
       tokenResponse.refresh_token mustBe refreshToken
@@ -207,7 +211,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(HttpResponse(201, "{}")))
 
       intercept[RuntimeException] {
-        service.getTokenFromRefreshToken(refreshToken, journeyId, defaultServiceId).futureValue
+        service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false).futureValue
       }
     }
 
@@ -220,7 +224,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.successful(response))
 
       intercept[RuntimeException] {
-        service.getTokenFromRefreshToken(refreshToken, journeyId, defaultServiceId).futureValue
+        service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false).futureValue
       }
     }
 
@@ -231,7 +235,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
         .returning(Future.failed(exception))
 
       val actual = intercept[Exception] {
-        Await.result(service.getTokenFromRefreshToken(refreshToken, journeyId, defaultServiceId), 10 seconds)
+        Await.result(service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false), 10 seconds)
       }
       exception mustBe actual
     }
