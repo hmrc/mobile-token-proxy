@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.ActorMaterializer
 import eu.timepit.refined.auto._
 import org.scalamock.matchers.MatcherBase
 import org.scalamock.scalatest.MockFactory
@@ -41,16 +41,16 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
   implicit val system:       ActorSystem       = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  private val service = mock[TokenService]
+  private val journeyId:   JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
+  private val tokenExpory: Long      = 14400
 
+  private val service         = mock[TokenService]
   private val vendorHeader    = "X-Vendor-Instance-Id"
   private val deviceIdHeader  = "X-Client-Device-ID"
   private val userAgentHeader = "User-Agent"
-  private val journeyId: JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
-  private val authCode     = "authCode123"
-  private val refreshToken = "refreshToken123"
-  private val accessToken  = "495b5b1725d590eb87d0f6b7dcea32a9"
-  private val tokenExpory: Long = 14400
+  private val authCode        = "authCode123"
+  private val refreshToken    = "refreshToken123"
+  private val accessToken     = "495b5b1725d590eb87d0f6b7dcea32a9"
 
   private val testHTTPHeadersWithScrambledCase: Seq[(String, String)] =
     Seq(vendorHeader.toUpperCase() -> "header vendor", deviceIdHeader.toLowerCase() -> "header device Id")
