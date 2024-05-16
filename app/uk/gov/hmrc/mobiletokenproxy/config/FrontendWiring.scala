@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.google.inject.Singleton
 import com.typesafe.config.Config
 
