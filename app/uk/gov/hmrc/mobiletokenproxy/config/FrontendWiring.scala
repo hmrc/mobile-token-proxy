@@ -16,44 +16,28 @@
 
 package uk.gov.hmrc.mobiletokenproxy.config
 
-import org.apache.pekko.actor.ActorSystem
-import com.google.inject.Singleton
-import com.typesafe.config.Config
-
 import javax.inject.Inject
 import play.api.i18n.MessagesApi
-import play.api.libs.ws.WSClient
-import play.api.mvc.Request
+
+import play.api.mvc.RequestHeader
 import play.api.Configuration
 import play.twirl.api.Html
-import uk.gov.hmrc.http.hooks.{HttpHook, HttpHooks}
-import uk.gov.hmrc.http.{HttpGet, HttpPost}
 import uk.gov.hmrc.play.bootstrap.frontend.http.FrontendErrorHandler
-import uk.gov.hmrc.play.http.ws._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class ErrorHandler @Inject() (
   val messagesApi: MessagesApi,
-  val config:      Configuration)
+  val config:      Configuration
+)(implicit val ec: ExecutionContext)
     extends FrontendErrorHandler {
 
   override def standardErrorTemplate(
     pageTitle:        String,
     heading:          String,
     message:          String
-  )(implicit request: Request[_]
-  ): Html =
-    views.html.global_error(pageTitle, heading, message)
-}
+  )(implicit request: RequestHeader
+  ): Future[Html] =
+    Future.successful(views.html.global_error(pageTitle, heading, message))
 
-trait HttpVerbs extends HttpGet with WSGet with HttpPost with WSPost with HttpHooks {
-  override val hooks:                 Seq[HttpHook] = NoneRequired
-  override protected def actorSystem: ActorSystem   = actorSystem
-}
-
-@Singleton
-class WSHttp @Inject() (
-  val wsClient: WSClient,
-  config:       Configuration)
-    extends HttpVerbs {
-  override protected def configuration: Config = config.underlying
 }

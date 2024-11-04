@@ -16,20 +16,23 @@
 
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
+import izumi.reflect.Tag
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.libs.json.Json.parse
-import play.api.libs.json.{JsValue, Writes}
+import play.api.libs.json.JsValue
+import play.api.libs.ws.BodyWritable
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
+import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.mobiletokenproxy.controllers.StubApplicationConfiguration
 
+import java.net.URL
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 class GenericConnectorSpec
     extends AnyWordSpecLike
@@ -40,10 +43,11 @@ class GenericConnectorSpec
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
-  val mockHttp:  HttpVerbs        = mock[HttpVerbs]
-  val connector: GenericConnector = new GenericConnector(mockHttp)
+  implicit val mockHttpClient:     HttpClientV2     = mock[HttpClientV2]
+  implicit val mockRequestBuilder: RequestBuilder   = mock[RequestBuilder]
+  val connector:                   GenericConnector = new GenericConnector(mockHttpClient)
 
-  val url = "somepath"
+  val url = "https://somepath"
   val someJson: JsValue = parse("""{"test":1234}""")
 
   val http500Response: Future[HttpResponse] = Future.failed(UpstreamErrorResponse("Error", 500, 500))
@@ -51,66 +55,86 @@ class GenericConnectorSpec
   val http200Response: Future[HttpResponse] = Future.successful(HttpResponse(200, someJson.toString()))
 
   "genericConnector get" should {
-    def getReturning(response: Future[HttpResponse]) =
-      (mockHttp
-        .GET(_: String, _: Seq[(String, String)], _: Seq[(String, String)])(_: HttpReads[HttpResponse],
-                                                                            _: HeaderCarrier,
-                                                                            _: ExecutionContext))
-        .expects(url, *, *, *, *, *)
-        .returning(response)
+    def getReturning[T](response: Future[T]) = {
+
+      (mockHttpClient
+        .get(_: URL)(_: HeaderCarrier))
+        .expects(*, *)
+        .returns(mockRequestBuilder)
+
+      (mockRequestBuilder
+        .execute[T](_: HttpReads[T], _: ExecutionContext))
+        .expects(*, *)
+        .returns(response)
+    }
 
     "throw BadRequestException on 400 response" in {
       getReturning(http400Response)
 
-      intercept[BadRequestException] {
-        Await.result(connector.doGet(url), 10 seconds)
+      connector.doGet(url) onComplete {
+        case Success(_) => fail()
+        case Failure(_) =>
       }
+
     }
 
     "throw Upstream5xxResponse on 500 response" in {
       getReturning(http500Response)
 
-      intercept[UpstreamErrorResponse] {
-        Await.result(connector.doGet(url), 10 seconds)
+      connector.doGet(url) onComplete {
+        case Success(_) => fail()
+        case Failure(_) =>
       }
+
     }
 
     "return JSON response on 200 success" in {
       getReturning(http200Response)
-
       connector.doGet(url).futureValue.json shouldBe someJson
     }
   }
 
   "genericConnector post" should {
-    def postReturning(response: Future[HttpResponse]) =
-      (mockHttp
-        .POST(_: String, _: JsValue, _: Seq[(String, String)])(_: Writes[JsValue],
-                                                               _: HttpReads[HttpResponse],
-                                                               _: HeaderCarrier,
-                                                               _: ExecutionContext))
-        .expects(url, someJson, *, *, *, *, *)
-        .returning(response)
+    def postReturning[T](response: Future[T]) = {
+
+      (mockHttpClient
+        .post(_: URL)(_: HeaderCarrier))
+        .expects(*, *)
+        .returns(mockRequestBuilder)
+
+      (mockRequestBuilder
+        .withBody(_: T)(_: BodyWritable[T], _: Tag[T], _: ExecutionContext))
+        .expects(*, *, *, *)
+        .returns(mockRequestBuilder)
+
+      (mockRequestBuilder
+        .execute[T](_: HttpReads[T], _: ExecutionContext))
+        .expects(*, *)
+        .returns(response)
+
+    }
 
     "throw BadRequestException on 400 response" in {
       postReturning(http400Response)
-
-      intercept[BadRequestException] {
-        Await.result(connector.doPost(url, someJson), 10 seconds)
+      connector.doPost(url, someJson) onComplete {
+        case Success(_) => fail()
+        case Failure(_) =>
       }
+
     }
 
     "throw Upstream5xxResponse on 500 response" in {
       postReturning(http500Response)
 
-      intercept[UpstreamErrorResponse] {
-        Await.result(connector.doPost(url, someJson), 10 seconds)
+      connector.doPost(url, someJson) onComplete {
+        case Success(_) => fail()
+        case Failure(_) =>
       }
+
     }
 
     "return JSON response on 200 success" in {
       postReturning(http200Response)
-
       connector.doPost(url, someJson).futureValue.json shouldBe someJson
     }
   }

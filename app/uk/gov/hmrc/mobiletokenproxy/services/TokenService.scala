@@ -18,6 +18,7 @@ package uk.gov.hmrc.mobiletokenproxy.services
 
 import javax.inject.{Inject, Named, Singleton}
 import play.api.Logger
+import play.api.http.Status.{BAD_REQUEST, FORBIDDEN, UNAUTHORIZED}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
@@ -121,6 +122,21 @@ trait LiveTokenService extends TokenService {
               throw new IllegalArgumentException(s"Failed to read the JSON result attributes from ${result.json}.")
             }
 
+          case 400 =>
+            throw UpstreamErrorResponse(s"BAD REQUEST from APIGatewayTokenService: ${result.status}",
+                                        BAD_REQUEST,
+                                        BAD_REQUEST,
+                                        Map.empty)
+          case 401 =>
+            throw UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: ${result.status}",
+                                        UNAUTHORIZED,
+                                        UNAUTHORIZED,
+                                        Map.empty)
+          case 403 =>
+            throw UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: ${result.status}",
+                                        FORBIDDEN,
+                                        FORBIDDEN,
+                                        Map.empty)
           case _ =>
             throw new RuntimeException(s"Unexpected response code from APIGatewayTokenService: $result.status")
         }
