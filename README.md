@@ -12,7 +12,14 @@ Gateway authentication HTTP request.
 | ```/oauth/authorize```    | GET               | Request to build an authentication request to the API Gateway. [More...](docs/authorize.md) |
 | ```/oauth/token```        | POST              | Request for an access-token to make API Gateway service calls. [More...](docs/token.md)     |
 | ```/oauth/authorize/v2``` | GET               | Version 2 of authorize endpoint to support OLFG. [More...](docs/token.md)                   |
-| ```/oauth/token/v2```     | POST              | Version 2 of token endpoint to support OLFG. [More...](docs/token.md)                       |
+| ```/oauth/token/v2```     | POST              | Version 2 of token endpoint to support OLFG. [More...](docs/token.md)       |
+
+
+## Run Tests
+- Run Unit Tests:  `sbt test`
+- Run Integration Tests: `sbt it:test`
+- Run Unit and Integration Tests: `sbt test it:test`
+- Run Unit and Integration Tests with coverage report: `sbt clean compile coverage test it:test coverageReport dependencyUpdates`
 
 ## Using the service locally.
 

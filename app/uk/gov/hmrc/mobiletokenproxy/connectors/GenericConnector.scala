@@ -17,22 +17,24 @@
 package uk.gov.hmrc.mobiletokenproxy.connectors
 
 import com.google.inject.{Inject, Singleton}
-import play.api.libs.json.JsValue
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.mobiletokenproxy.config.HttpVerbs
+import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class GenericConnector @Inject() (val http: HttpVerbs) {
+class GenericConnector @Inject() (val http: HttpClientV2) {
 
   def doGet(
     path:        String
   )(implicit ec: ExecutionContext,
     hc:          HeaderCarrier
   ): Future[HttpResponse] =
-    http.GET(path)
+    http
+      .get(url"$path")
+      .execute[HttpResponse]
 
   def doPost(
     path:        String,
@@ -40,7 +42,10 @@ class GenericConnector @Inject() (val http: HttpVerbs) {
   )(implicit ec: ExecutionContext,
     hc:          HeaderCarrier
   ): Future[HttpResponse] =
-    http.POST(path, json)
+    http
+      .post(url"$path")
+      .withBody(json)
+      .execute[HttpResponse]
 
   def doPostForm(
     path:        String,
@@ -48,5 +53,8 @@ class GenericConnector @Inject() (val http: HttpVerbs) {
   )(implicit ec: ExecutionContext,
     hc:          HeaderCarrier
   ): Future[HttpResponse] =
-    http.POSTForm(path, form)
+    http
+      .post(url"$path")
+      .withBody(Json.toJson(form))
+      .execute[HttpResponse]
 }

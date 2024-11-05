@@ -43,7 +43,6 @@ class GuiceModule(
     bindConfigString("api-gateway.ngc.v2.client_id")
     bindConfigString("api-gateway.ngc.v2.redirect_uri")
     bindConfigLongDefaultToZero("api-gateway.expiry_decrement")
-    bind(classOf[HttpVerbs]).to(classOf[WSHttp])
     bind(classOf[TokenService]).to(classOf[LiveTokenServiceImpl])
     bind(classOf[String])
       .annotatedWith(named("mobile-auth-stub"))
