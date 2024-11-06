@@ -48,7 +48,8 @@ class GenericConnectorSpec
   val connector:                   GenericConnector = new GenericConnector(mockHttpClient)
 
   val url = "https://somepath"
-  val someJson: JsValue = parse("""{"test":1234}""")
+  val someJson: JsValue                  = parse("""{"test":1234}""")
+  val somePost: Map[String, Seq[String]] = Map("test" -> Seq("1234"))
 
   val http500Response: Future[HttpResponse] = Future.failed(UpstreamErrorResponse("Error", 500, 500))
   val http400Response: Future[HttpResponse] = Future.failed(new BadRequestException("bad request"))
@@ -137,5 +138,53 @@ class GenericConnectorSpec
       postReturning(http200Response)
       connector.doPost(url, someJson).futureValue.json shouldBe someJson
     }
+  }
+
+  "genericConnector post Form" should {
+
+    def postFormReturning[T](response: Future[T]) = {
+
+      (mockHttpClient
+        .post(_: URL)(_: HeaderCarrier))
+        .expects(*, *)
+        .returns(mockRequestBuilder)
+
+      (mockRequestBuilder
+        .withBody(_: Map[String, Seq[String]])(_: BodyWritable[Map[String, Seq[String]]],
+                                               _: Tag[Map[String, Seq[String]]],
+                                               _: ExecutionContext))
+        .expects(*, *, *, *)
+        .returns(mockRequestBuilder)
+
+      (mockRequestBuilder
+        .execute[T](_: HttpReads[T], _: ExecutionContext))
+        .expects(*, *)
+        .returns(response)
+    }
+
+    "return JSON response on 200 success" in {
+      postFormReturning(http200Response)
+      connector.doPostForm(url, somePost).futureValue.json shouldBe someJson
+    }
+
+    "throw BadRequestException on 400 response" in {
+      postFormReturning(http400Response)
+      connector.doPostForm(url, somePost) onComplete {
+        case Success(_) => fail()
+        case Failure(_) =>
+      }
+
+    }
+
+    "throw Upstream5xxResponse on 500 response" in {
+      postFormReturning(http500Response)
+
+      connector.doPostForm(url, somePost) onComplete {
+        case Success(_) => fail()
+        case Failure(_) =>
+      }
+
+    }
+
   }
 }

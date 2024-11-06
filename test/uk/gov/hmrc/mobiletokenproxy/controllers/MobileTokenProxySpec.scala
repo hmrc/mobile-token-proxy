@@ -17,18 +17,19 @@
 package uk.gov.hmrc.mobiletokenproxy.controllers
 
 import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.stream.ActorMaterializer
+import org.apache.pekko.stream.Materializer
 import eu.timepit.refined.auto._
 import org.scalamock.matchers.MatcherBase
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.play.PlaySpec
+import play.api.http.Status.{BAD_REQUEST, FORBIDDEN, UNAUTHORIZED}
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.parse
 import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.TokenService
@@ -38,8 +39,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with ScalaFutures {
-  implicit val system:       ActorSystem       = ActorSystem()
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val system:       ActorSystem  = ActorSystem()
+  implicit val materializer: Materializer = Materializer(system)
 
   private val journeyId:   JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
   private val tokenExpory: Long      = 14400
@@ -106,6 +107,12 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
   "token request payloads" should {
     val requestWithEmptyJsonBody: FakeRequest[JsValue] = requestWithJsonBody("{}")
+    val requestWithBadJsonBody:   FakeRequest[JsValue] = requestWithJsonBody("""{"baddata":"error"}""")
+
+    "return Error if invalid token  Request is send " in {
+      val result = controller.token(journeyId)(requestWithBadJsonBody).futureValue
+      result.header.status mustBe 400
+    }
 
     "return BadRequest if the authorization code or refreshToken is missing" in {
       val result = controller.token(journeyId)(requestWithEmptyJsonBody).futureValue
@@ -138,6 +145,70 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       result.futureValue.header.status mustBe 200
       contentAsJson(result) mustBe parse(tokenResponseJson)
     }
+    "Return Unauthorized error if getTokenFromAccessCode service failed with BAD RequestException" in {
+      (service
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .returning(
+          Future.failed(
+            new BadRequestException(s"BAD Request Exception from APIGatewayTokenService: 400")
+          )
+        )
+
+      val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestWithAuthCode))
+
+      result.futureValue.header.status mustBe 401
+    }
+    "Return Unauthorized error if getTokenFromAccessCode service failed with BAD Request" in {
+      (service
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .returning(
+          Future.failed(
+            UpstreamErrorResponse(s"BAD Request from APIGatewayTokenService: 400", BAD_REQUEST, BAD_REQUEST, Map.empty)
+          )
+        )
+
+      val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestWithAuthCode))
+
+      result.futureValue.header.status mustBe 401
+    }
+    "Return Unauthorized error if getTokenFromAccessCode service failed with Unauthorized Request" in {
+      (service
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .returning(
+          Future.failed(
+            UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: 401",
+                                  UNAUTHORIZED,
+                                  UNAUTHORIZED,
+                                  Map.empty)
+          )
+        )
+
+      val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestWithAuthCode))
+
+      result.futureValue.header.status mustBe 401
+
+    }
+    "Return FORBIDDEN error if getTokenFromAccessCode service failed with FORBIDDEN Request" in {
+      (service
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .returning(
+          Future.failed(
+            UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: 403",
+                                  FORBIDDEN,
+                                  FORBIDDEN,
+                                  Map.empty)
+          )
+        )
+
+      val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestWithAuthCode))
+
+      result.futureValue.header.status mustBe FORBIDDEN
+
+    }
   }
 
   "requesting a new access-token from a refresh-token" should {
@@ -155,6 +226,74 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       result.futureValue.header.status mustBe 200
       contentAsJson(result) mustBe parse(tokenResponseJson)
     }
+
+    "Return Unauthorized error if getTokenFromRefreshToken service failed with BAd Request Exception" in {
+      (service
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .returning(
+          Future.failed(
+            new BadRequestException(s"BAD Request from APIGatewayTokenService: 400")
+          )
+        )
+
+      val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestRequestWithRefreshToken))
+
+      result.futureValue.header.status mustBe UNAUTHORIZED
+
+    }
+    "Return Unauthorized error if getTokenFromRefreshToken service failed with BAd Request " in {
+      (service
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .returning(
+          Future.failed(
+            UpstreamErrorResponse(s"BAD Request from APIGatewayTokenService: 400", BAD_REQUEST, BAD_REQUEST, Map.empty)
+          )
+        )
+
+      val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestRequestWithRefreshToken))
+
+      result.futureValue.header.status mustBe UNAUTHORIZED
+
+    }
+    "Return Unauthorized error if getTokenFromRefreshToken service failed with UNAUTHORIZED Request " in {
+      (service
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .returning(
+          Future.failed(
+            UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: 401",
+                                  UNAUTHORIZED,
+                                  UNAUTHORIZED,
+                                  Map.empty)
+          )
+        )
+
+      val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestRequestWithRefreshToken))
+
+      result.futureValue.header.status mustBe UNAUTHORIZED
+
+    }
+    "Return FORBIDDEN error if getTokenFromRefreshToken service failed with FORBIDDEN Request " in {
+      (service
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .returning(
+          Future.failed(
+            UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: 400",
+                                  FORBIDDEN,
+                                  FORBIDDEN,
+                                  Map.empty)
+          )
+        )
+
+      val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestRequestWithRefreshToken))
+
+      result.futureValue.header.status mustBe FORBIDDEN
+
+    }
+
   }
 
   "token v2 request payloads" should {

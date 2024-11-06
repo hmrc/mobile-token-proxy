@@ -55,6 +55,6 @@ class GenericConnector @Inject() (val http: HttpClientV2) {
   ): Future[HttpResponse] =
     http
       .post(url"$path")
-      .withBody(Json.toJson(form))
+      .withBody(form)
       .execute[HttpResponse]
 }
