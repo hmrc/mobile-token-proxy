@@ -1,8 +1,15 @@
 # Deprecated
 GET         /oauth/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: JourneyId, serviceName: String="ngc")
-GET         /oauth/authorize/v2         uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorizeV2(journeyId: JourneyId, userAgent: String)
+GET         /oauth/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: JourneyId, serviceName: String="ngc-test")
+
+GET         /oauth/authorize/v2         uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorizeV2(journeyId: JourneyId, userAgent: String, serviceName: String="ngc")
+GET         /oauth/authorize/v2         uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorizeV2(journeyId: JourneyId, userAgent: String, serviceName: String="ngc-test")
+
 POST        /oauth/token                uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token(journeyId: JourneyId, serviceName: String="ngc")
-POST        /oauth/token/v2             uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.tokenV2(journeyId: JourneyId)
+POST        /oauth/token                uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.token(journeyId: JourneyId, serviceName: String="ngc-test")
+
+POST        /oauth/token/v2             uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.tokenV2(journeyId: JourneyId, serviceName: String="ngc")
+POST        /oauth/token/v2             uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.tokenV2(journeyId: JourneyId, serviceName: String="ngc-test")
 
 
 GET         /oauth/:serviceName/authorize            uk.gov.hmrc.mobiletokenproxy.controllers.MobileTokenProxy.authorize(journeyId: JourneyId, serviceName: String)

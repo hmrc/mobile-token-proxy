@@ -52,6 +52,11 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
   val defaultServiceId:             String    = "ngc"
   val ngcClientIdV2:                String    = "client_id_v2"
   val ngcRedirectUriV2:             String    = "redirect_uri_v2"
+  val ngcClientIdTest:              String    = "ngc_client_id_test"
+  val ngcRedirectUriTest:           String    = "ngc_redirect_uri_test"
+  val ngcClientSecretTest:          String    = "ngc_client_secretId_test"
+  val ngcClientIdV2Test:            String    = "ngc_clientId_v2_test"
+  val ngcRedirectUriV2Test:         String    = "ngc_redirect_uri_v2_test"
 
   val service: LiveTokenServiceImpl = new LiveTokenServiceImpl(
     genericConnector             = connector,
@@ -62,7 +67,12 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
     ngcRedirectUri               = ngcRedirectUri,
     ngcClientSecret              = ngcClientSecret,
     ngcClientIdV2                = ngcClientIdV2,
-    ngcRedirectUriV2             = ngcRedirectUriV2
+    ngcRedirectUriV2             = ngcRedirectUriV2,
+    ngcClientIdTest              = ngcClientIdTest,
+    ngcClientSecretTest          = ngcClientSecretTest,
+    ngcRedirectUriTest           =ngcRedirectUriTest,
+    ngcClientIdV2Test            = ngcClientIdV2Test,
+    ngcRedirectUriV2Test         = ngcRedirectUriV2Test
   )
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()

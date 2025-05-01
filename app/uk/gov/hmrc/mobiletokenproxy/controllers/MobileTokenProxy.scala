@@ -39,9 +39,15 @@ class MobileTokenProxy @Inject() (
   @Named("api-gateway.ngc.client_id") ngcClientId:                               String,
   @Named("api-gateway.ngc.scope") ngcScope:                                      String,
   @Named("api-gateway.ngc.redirect_uri") ngcRedirectUri:                         String,
+  @Named("api-gateway.ngc-test.client_id") ngcTestClientId:                      String,
+  @Named("api-gateway.ngc-test.scope") ngcTestScope:                             String,
+  @Named("api-gateway.ngc-test.redirect_uri") ngcTestRedirectUri:                String,
   @Named("api-gateway.ngc.v2.client_id") ngcClientIdV2:                          String,
   @Named("api-gateway.ngc.v2.scope") ngcScopeV2:                                 String,
   @Named("api-gateway.ngc.v2.redirect_uri") ngcRedirectUriV2:                    String,
+  @Named("api-gateway.ngc-test.v2.client_id") ngcTestClientIdV2:                 String,
+  @Named("api-gateway.ngc-test.v2.scope") ngcTestScopeV2:                        String,
+  @Named("api-gateway.ngc-test.v2.redirect_uri") ngcTestRedirectUriV2:           String,
   messagesControllerComponents:                                                  MessagesControllerComponents
 )(implicit ec:                                                                   ExecutionContext)
     extends FrontendController(messagesControllerComponents) {
@@ -55,6 +61,8 @@ class MobileTokenProxy @Inject() (
     val redirectUrl = serviceId.toLowerCase match {
       case "ngc" =>
         s"$pathToAPIGatewayAuthService?client_id=$ngcClientId&redirect_uri=$ngcRedirectUri&scope=$ngcScope&response_type=$responseType"
+      case "ngc-test" =>
+        s"$pathToAPIGatewayAuthService?client_id=$ngcTestClientId&redirect_uri=$ngcTestRedirectUri&scope=$ngcTestScope&response_type=$responseType"
       case _ => throw new IllegalArgumentException("Invalid service id")
     }
     Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
@@ -62,87 +70,176 @@ class MobileTokenProxy @Inject() (
 
   def authorizeV2(
     journeyId: JourneyId,
-    userAgent: String
+    userAgent: String,
+    serviceId: String
   ): Action[AnyContent] = Action.async { implicit request =>
-    val redirectUrl =
-      s"$pathToAPIGatewayAuthService?client_id=$ngcClientIdV2&redirect_uri=$ngcRedirectUriV2&scope=$ngcScopeV2&response_type=$responseType"
-    val headers = request.headers.toSimpleMap + ("User-Agent" -> userAgent)
-    Future.successful(Redirect(redirectUrl).withHeaders(headers.toSeq: _*))
+    val redirectUrl = serviceId.toLowerCase match {
+      case "ngc" =>
+        s"$pathToAPIGatewayAuthService?client_id=$ngcClientIdV2&redirect_uri=$ngcRedirectUriV2&scope=$ngcScopeV2&response_type=$responseType"
+
+      case _ =>
+        s"$pathToAPIGatewayAuthService?client_id=$ngcTestClientIdV2&redirect_uri=$ngcTestRedirectUriV2&scope=$ngcTestScopeV2&response_type=$responseType"
+    }
+    Future.successful(Redirect(redirectUrl).withHeaders((request.headers.toSimpleMap + ("User-Agent" -> userAgent)).toSeq: _*))
   }
 
   def token(
     journeyId: JourneyId,
     serviceId: String = "ngc"
-  ): Action[JsValue] = Action.async(controllerComponents.parsers.json) { implicit request =>
-    request.body
-      .validate[TokenRequest]
-      .fold(
-        errors => {
-          logger.warn("Received error with service token: " + errors)
-          Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
-        },
-        tokenRequest => {
+  ): Action[JsValue] = if (serviceId == "ngc"){
+    Action.async(controllerComponents.parsers.json) { implicit request =>
+      request.body
+        .validate[TokenRequest]
+        .fold(
+          errors => {
+            logger.warn("Received error with service token: " + errors)
+            Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
+          },
+          tokenRequest => {
 
-          def buildHeaderCarrier = {
-            val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
-              proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+            def buildHeaderCarrier = {
+              val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
+                proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+              }
+              hc.withExtraHeaders(headers.toSeq: _*)
             }
-            hc.withExtraHeaders(headers.toSeq: _*)
+
+            (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+
+              case (Some(_: String), Some(authcode: String)) =>
+                Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
+
+              case (None, Some(authCode: String)) =>
+                getToken(service.getTokenFromAccessCode(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
+
+              case (Some(refreshToken: String), None) =>
+                getToken(service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec))
+
+              case _ =>
+                Future.successful(BadRequest)
+            }
           }
+        )
+    }
+  }
+  else {
+    Action.async(controllerComponents.parsers.json) { implicit request =>
+      request.body
+        .validate[TokenRequest]
+        .fold(
+          errors => {
+            logger.warn("Received error with service token: " + errors)
+            Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
+          },
+          tokenRequest => {
 
-          (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+            def buildHeaderCarrier = {
+              val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
+                proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+              }
+              hc.withExtraHeaders(headers.toSeq: _*)
+            }
 
-            case (Some(_: String), Some(authcode: String)) =>
-              Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
+            (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
-            case (None, Some(authCode: String)) =>
-              getToken(service.getTokenFromAccessCode(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
+              case (Some(_: String), Some(authcode: String)) =>
+                Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
-            case (Some(refreshToken: String), None) =>
-              getToken(service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec))
+              case (None, Some(authCode: String)) =>
+                getToken(service.getTokenFromAccessCodeTest(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
 
-            case _ =>
-              Future.successful(BadRequest)
+              case (Some(refreshToken: String), None) =>
+                getToken(service.getTokenFromRefreshTokenTest(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec))
+
+              case _ =>
+                Future.successful(BadRequest)
+            }
           }
-        }
-      )
+        )
+    }
   }
 
-  def tokenV2(journeyId: JourneyId): Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) {
-    implicit form: MessagesRequest[Map[String, Seq[String]]] =>
-      def buildHeaderCarrier = {
-        val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
-          proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+  def tokenV2(
+               journeyId: JourneyId,
+               serviceId: String
+             ): Action[Map[String, Seq[String]]] = if (serviceId == "ngc"){
+    Action.async(parse.formUrlEncoded) {
+      implicit form: MessagesRequest[Map[String, Seq[String]]] =>
+        def buildHeaderCarrier = {
+          val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
+            proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+          }
+          hc.withExtraHeaders(headers.toSeq: _*)
         }
-        hc.withExtraHeaders(headers.toSeq: _*)
-      }
 
-      (form.body.get("refreshToken"), form.body.get("authorizationCode")) match {
+        (form.body.get("refreshToken"), form.body.get("authorizationCode")) match {
 
-        case (Some(_: Seq[String]), Some(_: Seq[String])) =>
-          Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
+          case (Some(_: Seq[String]), Some(_: Seq[String])) =>
+            Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
-        case (None, Some(authCode: Seq[String])) =>
-          getToken(
-            service.getTokenFromAccessCode(
-              authCode.headOption.getOrElse(throw new BadRequestException("auth token not found")),
-              journeyId,
-              v2 = true
-            )(buildHeaderCarrier, ec)
-          )
+          case (None, Some(authCode: Seq[String])) =>
+            getToken(
+              service.getTokenFromAccessCode(
+                authCode.headOption.getOrElse(throw new BadRequestException("auth token not found")),
+                journeyId,
+                v2 = true
+              )(buildHeaderCarrier, ec)
+            )
 
-        case (Some(refreshToken: Seq[String]), None) =>
-          getToken(
-            service.getTokenFromRefreshToken(
-              refreshToken.headOption.getOrElse(throw new BadRequestException("refresh token not found")),
-              journeyId,
-              v2 = true
-            )(buildHeaderCarrier, ec)
-          )
+          case (Some(refreshToken: Seq[String]), None) =>
+            getToken(
+              service.getTokenFromRefreshToken(
+                refreshToken.headOption.getOrElse(throw new BadRequestException("refresh token not found")),
+                journeyId,
+                v2 = true
+              )(buildHeaderCarrier, ec)
+            )
 
-        case _ =>
-          Future.successful(BadRequest)
-      }
+          case _ =>
+            Future.successful(BadRequest)
+        }
+
+    }
+  }
+  else{
+
+    Action.async(parse.formUrlEncoded) {
+      implicit form: MessagesRequest[Map[String, Seq[String]]] =>
+        def buildHeaderCarrier = {
+          val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
+            proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+          }
+          hc.withExtraHeaders(headers.toSeq: _*)
+        }
+
+        (form.body.get("refreshToken"), form.body.get("authorizationCode")) match {
+
+          case (Some(_: Seq[String]), Some(_: Seq[String])) =>
+            Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
+
+          case (None, Some(authCode: Seq[String])) =>
+            getToken(
+              service.getTokenFromAccessCodeTest(
+                authCode.headOption.getOrElse(throw new BadRequestException("auth token not found")),
+                journeyId,
+                v2 = true
+              )(buildHeaderCarrier, ec)
+            )
+
+          case (Some(refreshToken: Seq[String]), None) =>
+            getToken(
+              service.getTokenFromRefreshTokenTest(
+                refreshToken.headOption.getOrElse(throw new BadRequestException("refresh token not found")),
+                journeyId,
+                v2 = true
+              )(buildHeaderCarrier, ec)
+            )
+
+          case _ =>
+            Future.successful(BadRequest)
+        }
+
+    }
 
   }
 
