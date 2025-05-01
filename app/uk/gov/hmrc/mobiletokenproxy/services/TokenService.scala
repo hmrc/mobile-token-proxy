@@ -45,20 +45,20 @@ trait TokenService {
   ): Future[TokenOauthResponse]
 
   def getTokenFromAccessCodeTest(
-                              authCode:    String,
-                              journeyId:   JourneyId,
-                              v2:          Boolean
-                            )(implicit hc: HeaderCarrier,
-                              ex:          ExecutionContext
-                            ): Future[TokenOauthResponse]
+    authCode:    String,
+    journeyId:   JourneyId,
+    v2:          Boolean
+  )(implicit hc: HeaderCarrier,
+    ex:          ExecutionContext
+  ): Future[TokenOauthResponse]
 
   def getTokenFromRefreshTokenTest(
-                                refreshToken: String,
-                                journeyId:    JourneyId,
-                                v2:           Boolean
-                              )(implicit hc:  HeaderCarrier,
-                                ex:           ExecutionContext
-                              ): Future[TokenOauthResponse]
+    refreshToken: String,
+    journeyId:    JourneyId,
+    v2:           Boolean
+  )(implicit hc:  HeaderCarrier,
+    ex:           ExecutionContext
+  ): Future[TokenOauthResponse]
 }
 
 trait LiveTokenService extends TokenService {
@@ -96,21 +96,21 @@ trait LiveTokenService extends TokenService {
     getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, v2)
 
   def getTokenFromAccessCodeTest(
-                              authCode:    String,
-                              journeyId:   JourneyId,
-                              v2:          Boolean
-                            )(implicit hc: HeaderCarrier,
-                              ex:          ExecutionContext
-                            ): Future[TokenOauthResponse] =
+    authCode:    String,
+    journeyId:   JourneyId,
+    v2:          Boolean
+  )(implicit hc: HeaderCarrier,
+    ex:          ExecutionContext
+  ): Future[TokenOauthResponse] =
     getAPIGatewayTokenTest("code", authCode, "authorization_code", journeyId, v2)
 
   def getTokenFromRefreshTokenTest(
-                                refreshToken: String,
-                                journeyId:    JourneyId,
-                                v2:           Boolean
-                              )(implicit hc:  HeaderCarrier,
-                                ex:           ExecutionContext
-                              ): Future[TokenOauthResponse] =
+    refreshToken: String,
+    journeyId:    JourneyId,
+    v2:           Boolean
+  )(implicit hc:  HeaderCarrier,
+    ex:           ExecutionContext
+  ): Future[TokenOauthResponse] =
     getAPIGatewayTokenTest("refresh_token", refreshToken, "refresh_token", journeyId, v2)
 
   def getAPIGatewayToken(
@@ -183,14 +183,14 @@ trait LiveTokenService extends TokenService {
   }
 
   def getAPIGatewayTokenTest(
-                          key:         String,
-                          code:        String,
-                          grantType:   String,
-                          journeyId:   JourneyId,
-                          v2:          Boolean
-                        )(implicit hc: HeaderCarrier,
-                          ex:          ExecutionContext
-                        ): Future[TokenOauthResponse] = {
+    key:         String,
+    code:        String,
+    grantType:   String,
+    journeyId:   JourneyId,
+    v2:          Boolean
+  )(implicit hc: HeaderCarrier,
+    ex:          ExecutionContext
+  ): Future[TokenOauthResponse] = {
 
     val form = {
       if (v2) {
@@ -232,19 +232,19 @@ trait LiveTokenService extends TokenService {
 
           case 400 =>
             throw UpstreamErrorResponse(s"BAD REQUEST from APIGatewayTokenService: ${result.status}",
-              BAD_REQUEST,
-              BAD_REQUEST,
-              Map.empty)
+                                        BAD_REQUEST,
+                                        BAD_REQUEST,
+                                        Map.empty)
           case 401 =>
             throw UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: ${result.status}",
-              UNAUTHORIZED,
-              UNAUTHORIZED,
-              Map.empty)
+                                        UNAUTHORIZED,
+                                        UNAUTHORIZED,
+                                        Map.empty)
           case 403 =>
             throw UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: ${result.status}",
-              FORBIDDEN,
-              FORBIDDEN,
-              Map.empty)
+                                        FORBIDDEN,
+                                        FORBIDDEN,
+                                        Map.empty)
           case _ =>
             throw new RuntimeException(s"Unexpected response code from APIGatewayTokenService: $result.status")
         }
@@ -280,5 +280,4 @@ class LiveTokenServiceImpl @Inject() (
   @Named("api-gateway.ngc-test.redirect_uri") override val ngcRedirectUriTest:                  String,
   @Named("api-gateway.ngc-test.v2.client_id") override val ngcClientIdV2Test:                   String,
   @Named("api-gateway.ngc-test.v2.redirect_uri") override val ngcRedirectUriV2Test:             String)
-
-extends LiveTokenService {}
+    extends LiveTokenService {}

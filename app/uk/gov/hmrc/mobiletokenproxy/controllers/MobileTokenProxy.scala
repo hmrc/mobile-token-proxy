@@ -80,91 +80,97 @@ class MobileTokenProxy @Inject() (
       case _ =>
         s"$pathToAPIGatewayAuthService?client_id=$ngcTestClientIdV2&redirect_uri=$ngcTestRedirectUriV2&scope=$ngcTestScopeV2&response_type=$responseType"
     }
-    Future.successful(Redirect(redirectUrl).withHeaders((request.headers.toSimpleMap + ("User-Agent" -> userAgent)).toSeq: _*))
+    Future.successful(
+      Redirect(redirectUrl).withHeaders((request.headers.toSimpleMap + ("User-Agent" -> userAgent)).toSeq: _*)
+    )
   }
 
   def token(
     journeyId: JourneyId,
     serviceId: String = "ngc"
-  ): Action[JsValue] = if (serviceId == "ngc"){
-    Action.async(controllerComponents.parsers.json) { implicit request =>
-      request.body
-        .validate[TokenRequest]
-        .fold(
-          errors => {
-            logger.warn("Received error with service token: " + errors)
-            Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
-          },
-          tokenRequest => {
+  ): Action[JsValue] =
+    if (serviceId == "ngc") {
+      Action.async(controllerComponents.parsers.json) { implicit request =>
+        request.body
+          .validate[TokenRequest]
+          .fold(
+            errors => {
+              logger.warn("Received error with service token: " + errors)
+              Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
+            },
+            tokenRequest => {
 
-            def buildHeaderCarrier = {
-              val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
-                proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+              def buildHeaderCarrier = {
+                val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
+                  proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+                }
+                hc.withExtraHeaders(headers.toSeq: _*)
               }
-              hc.withExtraHeaders(headers.toSeq: _*)
-            }
 
-            (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+              (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
-              case (Some(_: String), Some(authcode: String)) =>
-                Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
+                case (Some(_: String), Some(authcode: String)) =>
+                  Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
-              case (None, Some(authCode: String)) =>
-                getToken(service.getTokenFromAccessCode(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
+                case (None, Some(authCode: String)) =>
+                  getToken(service.getTokenFromAccessCode(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
 
-              case (Some(refreshToken: String), None) =>
-                getToken(service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec))
+                case (Some(refreshToken: String), None) =>
+                  getToken(
+                    service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec)
+                  )
 
-              case _ =>
-                Future.successful(BadRequest)
-            }
-          }
-        )
-    }
-  }
-  else {
-    Action.async(controllerComponents.parsers.json) { implicit request =>
-      request.body
-        .validate[TokenRequest]
-        .fold(
-          errors => {
-            logger.warn("Received error with service token: " + errors)
-            Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
-          },
-          tokenRequest => {
-
-            def buildHeaderCarrier = {
-              val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
-                proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+                case _ =>
+                  Future.successful(BadRequest)
               }
-              hc.withExtraHeaders(headers.toSeq: _*)
             }
+          )
+      }
+    } else {
+      Action.async(controllerComponents.parsers.json) { implicit request =>
+        request.body
+          .validate[TokenRequest]
+          .fold(
+            errors => {
+              logger.warn("Received error with service token: " + errors)
+              Future.successful(BadRequest(Json.obj("message" -> JsError.toJson(errors))))
+            },
+            tokenRequest => {
 
-            (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+              def buildHeaderCarrier = {
+                val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
+                  proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
+                }
+                hc.withExtraHeaders(headers.toSeq: _*)
+              }
 
-              case (Some(_: String), Some(authcode: String)) =>
-                Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
+              (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
-              case (None, Some(authCode: String)) =>
-                getToken(service.getTokenFromAccessCodeTest(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
+                case (Some(_: String), Some(authcode: String)) =>
+                  Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
-              case (Some(refreshToken: String), None) =>
-                getToken(service.getTokenFromRefreshTokenTest(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec))
+                case (None, Some(authCode: String)) =>
+                  getToken(service.getTokenFromAccessCodeTest(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
 
-              case _ =>
-                Future.successful(BadRequest)
+                case (Some(refreshToken: String), None) =>
+                  getToken(
+                    service.getTokenFromRefreshTokenTest(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec)
+                  )
+
+                case _ =>
+                  Future.successful(BadRequest)
+              }
             }
-          }
-        )
+          )
+      }
     }
-  }
 
   def tokenV2(
-               journeyId: JourneyId,
-               serviceId: String
-             ): Action[Map[String, Seq[String]]] = if (serviceId == "ngc"){
-    Action.async(parse.formUrlEncoded) {
-      implicit form: MessagesRequest[Map[String, Seq[String]]] =>
+    journeyId: JourneyId,
+    serviceId: String
+  ): Action[Map[String, Seq[String]]] =
+    if (serviceId == "ngc") {
+      Action.async(parse.formUrlEncoded) { implicit form: MessagesRequest[Map[String, Seq[String]]] =>
         def buildHeaderCarrier = {
           val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
             proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
@@ -199,12 +205,10 @@ class MobileTokenProxy @Inject() (
             Future.successful(BadRequest)
         }
 
-    }
-  }
-  else{
+      }
+    } else {
 
-    Action.async(parse.formUrlEncoded) {
-      implicit form: MessagesRequest[Map[String, Seq[String]]] =>
+      Action.async(parse.formUrlEncoded) { implicit form: MessagesRequest[Map[String, Seq[String]]] =>
         def buildHeaderCarrier = {
           val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
             proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
@@ -239,9 +243,9 @@ class MobileTokenProxy @Inject() (
             Future.successful(BadRequest)
         }
 
-    }
+      }
 
-  }
+    }
 
   private def getToken(func: => Future[TokenOauthResponse])(implicit hc: HeaderCarrier): Future[Result] =
     func
@@ -253,7 +257,7 @@ class MobileTokenProxy @Inject() (
       }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case _: BadRequestException =>  Unauthorized
+    case _: BadRequestException => Unauthorized
     case UpstreamErrorResponse(_, 400, _, _) => Unauthorized
     case UpstreamErrorResponse(_, 401, _, _) => Unauthorized
     case UpstreamErrorResponse(_, 403, _, _) => Forbidden
