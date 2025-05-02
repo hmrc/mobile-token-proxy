@@ -31,7 +31,8 @@ trait TokenService {
   def getTokenFromAccessCode(
     authCode:    String,
     journeyId:   JourneyId,
-    v2:          Boolean
+    v2:          Boolean,
+    serviceId:   String = "ngc"
   )(implicit hc: HeaderCarrier,
     ex:          ExecutionContext
   ): Future[TokenOauthResponse]
@@ -39,26 +40,12 @@ trait TokenService {
   def getTokenFromRefreshToken(
     refreshToken: String,
     journeyId:    JourneyId,
-    v2:           Boolean
+    v2:           Boolean,
+    serviceId:    String = "ngc"
   )(implicit hc:  HeaderCarrier,
     ex:           ExecutionContext
   ): Future[TokenOauthResponse]
 
-  def getTokenFromAccessCodeTest(
-    authCode:    String,
-    journeyId:   JourneyId,
-    v2:          Boolean
-  )(implicit hc: HeaderCarrier,
-    ex:          ExecutionContext
-  ): Future[TokenOauthResponse]
-
-  def getTokenFromRefreshTokenTest(
-    refreshToken: String,
-    journeyId:    JourneyId,
-    v2:           Boolean
-  )(implicit hc:  HeaderCarrier,
-    ex:           ExecutionContext
-  ): Future[TokenOauthResponse]
 }
 
 trait LiveTokenService extends TokenService {
@@ -80,38 +67,29 @@ trait LiveTokenService extends TokenService {
   def getTokenFromAccessCode(
     authCode:    String,
     journeyId:   JourneyId,
-    v2:          Boolean
+    v2:          Boolean,
+    serviceId:   String
   )(implicit hc: HeaderCarrier,
     ex:          ExecutionContext
   ): Future[TokenOauthResponse] =
-    getAPIGatewayToken("code", authCode, "authorization_code", journeyId, v2)
+    if (serviceId == "ngc") {
+      getAPIGatewayToken("code", authCode, "authorization_code", journeyId, v2)
+    } else {
+      getAPIGatewayTokenTest("code", authCode, "authorization_code", journeyId, v2)
+    }
 
   def getTokenFromRefreshToken(
     refreshToken: String,
     journeyId:    JourneyId,
-    v2:           Boolean
+    v2:           Boolean,
+    serviceId:    String
   )(implicit hc:  HeaderCarrier,
     ex:           ExecutionContext
   ): Future[TokenOauthResponse] =
-    getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, v2)
-
-  def getTokenFromAccessCodeTest(
-    authCode:    String,
-    journeyId:   JourneyId,
-    v2:          Boolean
-  )(implicit hc: HeaderCarrier,
-    ex:          ExecutionContext
-  ): Future[TokenOauthResponse] =
-    getAPIGatewayTokenTest("code", authCode, "authorization_code", journeyId, v2)
-
-  def getTokenFromRefreshTokenTest(
-    refreshToken: String,
-    journeyId:    JourneyId,
-    v2:           Boolean
-  )(implicit hc:  HeaderCarrier,
-    ex:           ExecutionContext
-  ): Future[TokenOauthResponse] =
-    getAPIGatewayTokenTest("refresh_token", refreshToken, "refresh_token", journeyId, v2)
+    if (serviceId == "ngc")
+      getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, v2)
+    else
+      getAPIGatewayTokenTest("refresh_token", refreshToken, "refresh_token", journeyId, v2)
 
   def getAPIGatewayToken(
     key:         String,

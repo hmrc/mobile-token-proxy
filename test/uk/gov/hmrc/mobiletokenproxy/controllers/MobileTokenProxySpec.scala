@@ -142,8 +142,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "successfully return access-token and refresh token for a valid request" in {
         (service
-      .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+      .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+      .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestWithAuthCode))
@@ -153,8 +153,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "Return Unauthorized error if getTokenFromAccessCode service failed with BAD RequestException" in {
       (service
-        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
             new BadRequestException(s"BAD Request Exception from APIGatewayTokenService: 400")
@@ -167,8 +167,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "Return Unauthorized error if getTokenFromAccessCode service failed with BAD Request" in {
       (service
-        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
             UpstreamErrorResponse(s"BAD Request from APIGatewayTokenService: 400", BAD_REQUEST, BAD_REQUEST, Map.empty)
@@ -181,8 +181,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "Return Unauthorized error if getTokenFromAccessCode service failed with Unauthorized Request" in {
       (service
-        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
             UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: 401",
@@ -199,8 +199,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "Return FORBIDDEN error if getTokenFromAccessCode service failed with FORBIDDEN Request" in {
       (service
-        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(authCode, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
             UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: 403",
@@ -223,8 +223,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "successfully return access-token and refresh-token for a valid request + pass configured TxM HTTP headers to backend services " in {
       (service
-        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestRequestWithRefreshToken))
@@ -234,8 +234,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "successfully return access-token and refresh-token for a valid request + pass configured TxM HTTP headers to backend services with serviceId as ngc-test" in {
       (service
-        .getTokenFromRefreshTokenTest(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, "ngc-test", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.token(journeyId, "ngc-test")(requestWithHttpHeaders(jsonRequestRequestWithRefreshToken))
@@ -246,8 +246,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "Return Unauthorized error if getTokenFromRefreshToken service failed with BAd Request Exception" in {
       (service
-        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
             new BadRequestException(s"BAD Request from APIGatewayTokenService: 400")
@@ -261,8 +261,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "Return Unauthorized error if getTokenFromRefreshToken service failed with BAd Request " in {
       (service
-        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
             UpstreamErrorResponse(s"BAD Request from APIGatewayTokenService: 400", BAD_REQUEST, BAD_REQUEST, Map.empty)
@@ -276,8 +276,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "Return Unauthorized error if getTokenFromRefreshToken service failed with UNAUTHORIZED Request " in {
       (service
-        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
             UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: 401",
@@ -294,8 +294,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "Return FORBIDDEN error if getTokenFromRefreshToken service failed with FORBIDDEN Request " in {
       (service
-        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId, false, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
             UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: 400",
@@ -339,8 +339,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "successfully return access-token and refresh token for a valid request" in {
       (service
-        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(authCode, journeyId, true, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, true, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.tokenV2(journeyId, "ngc")(requestWithHttpHeaders(formRequestWithAuthCode))
@@ -357,8 +357,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
     "successfully return access-token and refresh-token for a valid request + pass configured TxM HTTP headers to backend services " in {
       (service
-        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId, true, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, true, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.tokenV2(journeyId, "ngc")(requestWithHttpHeaders(formRequestWithAuthCode))
@@ -368,8 +368,8 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     }
     "successfully return access-token and refresh-token for a valid request + pass configured TxM HTTP headers to backend services with ngc-test " in {
       (service
-        .getTokenFromRefreshTokenTest(_: String, _: JourneyId, _: Boolean)(_: HeaderCarrier, _: ExecutionContext))
-        .expects(refreshToken, journeyId, true, headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+        .getTokenFromRefreshToken(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(refreshToken, journeyId, true, "ngc-test", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.tokenV2(journeyId, "ngc-test")(requestWithHttpHeaders(formRequestWithAuthCode))

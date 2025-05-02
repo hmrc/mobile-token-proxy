@@ -113,11 +113,14 @@ class MobileTokenProxy @Inject() (
                   Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
                 case (None, Some(authCode: String)) =>
-                  getToken(service.getTokenFromAccessCode(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
+                  getToken(
+                    service.getTokenFromAccessCode(authCode, journeyId, v2 = false, serviceId)(buildHeaderCarrier, ec)
+                  )
 
                 case (Some(refreshToken: String), None) =>
                   getToken(
-                    service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec)
+                    service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false, serviceId)(buildHeaderCarrier,
+                                                                                                     ec)
                   )
 
                 case _ =>
@@ -150,11 +153,14 @@ class MobileTokenProxy @Inject() (
                   Future.successful(BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!"))
 
                 case (None, Some(authCode: String)) =>
-                  getToken(service.getTokenFromAccessCodeTest(authCode, journeyId, v2 = false)(buildHeaderCarrier, ec))
+                  getToken(
+                    service.getTokenFromAccessCode(authCode, journeyId, v2 = false, serviceId)(buildHeaderCarrier, ec)
+                  )
 
                 case (Some(refreshToken: String), None) =>
                   getToken(
-                    service.getTokenFromRefreshTokenTest(refreshToken, journeyId, v2 = false)(buildHeaderCarrier, ec)
+                    service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false, serviceId)(buildHeaderCarrier,
+                                                                                                     ec)
                   )
 
                 case _ =>
@@ -188,7 +194,8 @@ class MobileTokenProxy @Inject() (
               service.getTokenFromAccessCode(
                 authCode.headOption.getOrElse(throw new BadRequestException("auth token not found")),
                 journeyId,
-                v2 = true
+                v2 = true,
+                serviceId
               )(buildHeaderCarrier, ec)
             )
 
@@ -197,7 +204,8 @@ class MobileTokenProxy @Inject() (
               service.getTokenFromRefreshToken(
                 refreshToken.headOption.getOrElse(throw new BadRequestException("refresh token not found")),
                 journeyId,
-                v2 = true
+                v2 = true,
+                serviceId
               )(buildHeaderCarrier, ec)
             )
 
@@ -223,19 +231,21 @@ class MobileTokenProxy @Inject() (
 
           case (None, Some(authCode: Seq[String])) =>
             getToken(
-              service.getTokenFromAccessCodeTest(
+              service.getTokenFromAccessCode(
                 authCode.headOption.getOrElse(throw new BadRequestException("auth token not found")),
                 journeyId,
-                v2 = true
+                v2 = true,
+                serviceId
               )(buildHeaderCarrier, ec)
             )
 
           case (Some(refreshToken: Seq[String]), None) =>
             getToken(
-              service.getTokenFromRefreshTokenTest(
+              service.getTokenFromRefreshToken(
                 refreshToken.headOption.getOrElse(throw new BadRequestException("refresh token not found")),
                 journeyId,
-                v2 = true
+                v2 = true,
+                serviceId
               )(buildHeaderCarrier, ec)
             )
 
