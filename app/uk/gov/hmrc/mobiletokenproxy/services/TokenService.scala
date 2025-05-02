@@ -31,7 +31,8 @@ trait TokenService {
   def getTokenFromAccessCode(
     authCode:    String,
     journeyId:   JourneyId,
-    v2:          Boolean
+    v2:          Boolean,
+    serviceId:   String = "ngc"
   )(implicit hc: HeaderCarrier,
     ex:          ExecutionContext
   ): Future[TokenOauthResponse]
@@ -39,10 +40,12 @@ trait TokenService {
   def getTokenFromRefreshToken(
     refreshToken: String,
     journeyId:    JourneyId,
-    v2:           Boolean
+    v2:           Boolean,
+    serviceId:    String = "ngc"
   )(implicit hc:  HeaderCarrier,
     ex:           ExecutionContext
   ): Future[TokenOauthResponse]
+
 }
 
 trait LiveTokenService extends TokenService {
@@ -55,24 +58,38 @@ trait LiveTokenService extends TokenService {
   val ngcClientSecret:              String
   val ngcClientIdV2:                String
   val ngcRedirectUriV2:             String
+  val ngcClientIdTest:              String
+  val ngcClientSecretTest:          String
+  val ngcRedirectUriTest:           String
+  val ngcClientIdV2Test:            String
+  val ngcRedirectUriV2Test:         String
 
   def getTokenFromAccessCode(
     authCode:    String,
     journeyId:   JourneyId,
-    v2:          Boolean
+    v2:          Boolean,
+    serviceId:   String
   )(implicit hc: HeaderCarrier,
     ex:          ExecutionContext
   ): Future[TokenOauthResponse] =
-    getAPIGatewayToken("code", authCode, "authorization_code", journeyId, v2)
+    if (serviceId == "ngc") {
+      getAPIGatewayToken("code", authCode, "authorization_code", journeyId, v2)
+    } else {
+      getAPIGatewayTokenTest("code", authCode, "authorization_code", journeyId, v2)
+    }
 
   def getTokenFromRefreshToken(
     refreshToken: String,
     journeyId:    JourneyId,
-    v2:           Boolean
+    v2:           Boolean,
+    serviceId:    String
   )(implicit hc:  HeaderCarrier,
     ex:           ExecutionContext
   ): Future[TokenOauthResponse] =
-    getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, v2)
+    if (serviceId == "ngc")
+      getAPIGatewayToken("refresh_token", refreshToken, "refresh_token", journeyId, v2)
+    else
+      getAPIGatewayTokenTest("refresh_token", refreshToken, "refresh_token", journeyId, v2)
 
   def getAPIGatewayToken(
     key:         String,
@@ -143,6 +160,75 @@ trait LiveTokenService extends TokenService {
       }
   }
 
+  def getAPIGatewayTokenTest(
+    key:         String,
+    code:        String,
+    grantType:   String,
+    journeyId:   JourneyId,
+    v2:          Boolean
+  )(implicit hc: HeaderCarrier,
+    ex:          ExecutionContext
+  ): Future[TokenOauthResponse] = {
+
+    val form = {
+      if (v2) {
+        Map(
+          key             -> Seq(code),
+          "client_id"     -> Seq(ngcClientIdV2Test),
+          "client_secret" -> Seq(ngcClientSecretTest),
+          "grant_type"    -> Seq(grantType),
+          "redirect_uri"  -> Seq(ngcRedirectUriV2Test)
+        )
+      } else {
+        Map(
+          key             -> Seq(code),
+          "client_id"     -> Seq(ngcClientIdTest),
+          "client_secret" -> Seq(ngcClientSecretTest),
+          "grant_type"    -> Seq(grantType),
+          "redirect_uri"  -> Seq(ngcRedirectUriTest)
+        )
+      }
+
+    }
+
+    genericConnector
+      .doPostForm(pathToAPIGatewayTokenService, form)
+      .map { result =>
+        result.status match {
+          case 200 =>
+            val accessToken  = (result.json \ "access_token").asOpt[String]
+            val refreshToken = (result.json \ "refresh_token").asOpt[String]
+            val expiresIn    = (result.json \ "expires_in").asOpt[Long]
+
+            if (accessToken.isDefined && refreshToken.isDefined && expiresIn.isDefined) {
+
+              TokenOauthResponse(accessToken.get, refreshToken.get, appyDecrementConfig(expiresIn.get))
+
+            } else {
+              throw new IllegalArgumentException(s"Failed to read the JSON result attributes from ${result.json}.")
+            }
+
+          case 400 =>
+            throw UpstreamErrorResponse(s"BAD REQUEST from APIGatewayTokenService: ${result.status}",
+                                        BAD_REQUEST,
+                                        BAD_REQUEST,
+                                        Map.empty)
+          case 401 =>
+            throw UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: ${result.status}",
+                                        UNAUTHORIZED,
+                                        UNAUTHORIZED,
+                                        Map.empty)
+          case 403 =>
+            throw UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: ${result.status}",
+                                        FORBIDDEN,
+                                        FORBIDDEN,
+                                        Map.empty)
+          case _ =>
+            throw new RuntimeException(s"Unexpected response code from APIGatewayTokenService: $result.status")
+        }
+      }
+  }
+
   private def appyDecrementConfig(expiresIn: Long): Long = {
     val expiryDecrementConfig = expiryDecrement
     val logger: Logger = Logger(this.getClass)
@@ -166,5 +252,10 @@ class LiveTokenServiceImpl @Inject() (
   @Named("api-gateway.ngc.redirect_uri") override val ngcRedirectUri:                           String,
   @Named("api-gateway.ngc.client_secret") override val ngcClientSecret:                         String,
   @Named("api-gateway.ngc.v2.client_id") override val ngcClientIdV2:                            String,
-  @Named("api-gateway.ngc.v2.redirect_uri") override val ngcRedirectUriV2:                      String)
+  @Named("api-gateway.ngc.v2.redirect_uri") override val ngcRedirectUriV2:                      String,
+  @Named("api-gateway.ngc-test.client_secret") override val ngcClientIdTest:                    String,
+  @Named("api-gateway.ngc-test.client_secret") override val ngcClientSecretTest:                String,
+  @Named("api-gateway.ngc-test.redirect_uri") override val ngcRedirectUriTest:                  String,
+  @Named("api-gateway.ngc-test.v2.client_id") override val ngcClientIdV2Test:                   String,
+  @Named("api-gateway.ngc-test.v2.redirect_uri") override val ngcRedirectUriV2Test:             String)
     extends LiveTokenService {}
