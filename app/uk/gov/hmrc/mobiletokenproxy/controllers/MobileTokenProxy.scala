@@ -76,7 +76,6 @@ class MobileTokenProxy @Inject() (
     val redirectUrl = serviceId.toLowerCase match {
       case "ngc" =>
         s"$pathToAPIGatewayAuthService?client_id=$ngcClientIdV2&redirect_uri=$ngcRedirectUriV2&scope=$ngcScopeV2&response_type=$responseType"
-
       case _ =>
         s"$pathToAPIGatewayAuthService?client_id=$ngcTestClientIdV2&redirect_uri=$ngcTestRedirectUriV2&scope=$ngcTestScopeV2&response_type=$responseType"
     }
@@ -215,7 +214,6 @@ class MobileTokenProxy @Inject() (
 
       }
     } else {
-
       Action.async(parse.formUrlEncoded) { implicit form: MessagesRequest[Map[String, Seq[String]]] =>
         def buildHeaderCarrier = {
           val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
