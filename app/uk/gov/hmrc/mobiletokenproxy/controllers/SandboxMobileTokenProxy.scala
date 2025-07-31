@@ -22,49 +22,46 @@ import com.google.inject.name.Named
 import javax.inject.{Inject, Singleton}
 import play.api.Logger
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc._
-import uk.gov.hmrc.mobiletokenproxy.model._
-import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
+import play.api.mvc.*
+import uk.gov.hmrc.mobiletokenproxy.model.*
+import uk.gov.hmrc.mobiletokenproxy.types.JourneyId
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
 @Singleton
-class SandboxMobileTokenProxy @Inject() (
-  @Named("mobile-auth-stub") mobileAuthStubUrl: String,
-  cc:                                           MessagesControllerComponents)
+class SandboxMobileTokenProxy @Inject() (@Named("mobile-auth-stub") mobileAuthStubUrl: String, cc: MessagesControllerComponents)
     extends FrontendController(cc) {
 
   val logger: Logger = Logger(this.getClass)
 
-  def token(journeyId: JourneyId): Action[JsValue] = Action.async(controllerComponents.parsers.json) {
-    implicit request =>
-      request.body
-        .validate[TokenRequest]
-        .fold(
-          errors => {
-            logger.warn("Received error with service token: " + errors)
-            Future successful BadRequest(Json.obj("message" -> JsError.toJson(errors)))
-          },
-          tokenRequest =>
-            (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
+  def token(journeyId: JourneyId): Action[JsValue] = Action.async(controllerComponents.parsers.json) { implicit request =>
+    request.body
+      .validate[TokenRequest]
+      .fold(
+        errors => {
+          logger.warn("Received error with service token: " + errors)
+          Future successful BadRequest(Json.obj("message" -> JsError.toJson(errors)))
+        },
+        tokenRequest =>
+          (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
 
-              case (Some(_), Some(_)) =>
-                Future successful BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!")
+            case (Some(_), Some(_)) =>
+              Future successful BadRequest("Only authorizationCode or refreshToken can be supplied! Not both!")
 
-              case (None, Some(_)) =>
-                Future successful Ok(
-                  Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
-                )
-              case (Some(_), None) =>
-                Future successful Ok(
-                  Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
-                )
+            case (None, Some(_)) =>
+              Future successful Ok(
+                Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
+              )
+            case (Some(_), None) =>
+              Future successful Ok(
+                Json.toJson(TokenOauthResponse(UUID.randomUUID().toString, UUID.randomUUID().toString, 13800))
+              )
 
-              case _ =>
-                Future successful BadRequest
-            }
-        )
+            case _ =>
+              Future successful BadRequest
+          }
+      )
   }
 
   def authorize(journeyId: JourneyId): Action[AnyContent] = Action.async {

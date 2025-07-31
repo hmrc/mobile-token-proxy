@@ -20,7 +20,9 @@ import com.google.inject.{Inject, Singleton}
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
+import play.api.libs.ws.WSBodyWritables.writeableOf_JsValue
+import play.api.libs.ws.WSBodyWritables.writeableOf_urlEncodedForm
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,31 +30,25 @@ import scala.concurrent.{ExecutionContext, Future}
 class GenericConnector @Inject() (val http: HttpClientV2) {
 
   def doGet(
-    path:        String
-  )(implicit ec: ExecutionContext,
-    hc:          HeaderCarrier
-  ): Future[HttpResponse] =
+    path: String
+  )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[HttpResponse] =
     http
       .get(url"$path")
       .execute[HttpResponse]
 
   def doPost(
-    path:        String,
-    json:        JsValue
-  )(implicit ec: ExecutionContext,
-    hc:          HeaderCarrier
-  ): Future[HttpResponse] =
+    path: String,
+    json: JsValue
+  )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[HttpResponse] =
     http
       .post(url"$path")
       .withBody(json)
       .execute[HttpResponse]
 
   def doPostForm(
-    path:        String,
-    form:        Map[String, Seq[String]]
-  )(implicit ec: ExecutionContext,
-    hc:          HeaderCarrier
-  ): Future[HttpResponse] =
+    path: String,
+    form: Map[String, Seq[String]]
+  )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[HttpResponse] =
     http
       .post(url"$path")
       .withBody(form)

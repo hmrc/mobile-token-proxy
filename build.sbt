@@ -10,12 +10,12 @@ lazy val microservice = Project(appName, file("."))
   .configs(IntegrationTest)
   .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(
-    routesImport ++= Seq("uk.gov.hmrc.mobiletokenproxy.types._", "uk.gov.hmrc.mobiletokenproxy.types.ModelTypes._")
+    routesImport ++= Seq("uk.gov.hmrc.mobiletokenproxy.types.JourneyId._")
   )
   .settings(
     majorVersion := 1,
     playDefaultPort := 8239,
-    scalaVersion := "2.13.12",
+    scalaVersion := "3.6.4",
     ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;.*(config|views.*);.*(AuthService|BuildInfo|Routes).*",
     ScoverageKeys.coverageExcludedFiles := "<empty>;Reverse.*;.*filters.*;.*handlers.*;.*components.*;.*models.*;.*repositories.*;" +
     ".*BuildInfo.*;.*javascript.*;.*FrontendAuditConnector.*;.*Routes.*;.*GuiceInjector;.*DataCacheConnector;" +
@@ -26,8 +26,6 @@ lazy val microservice = Project(appName, file("."))
     ScoverageKeys.coverageHighlighting := true,
     libraryDependencies ++= AppDependencies.appDependencies,
     update / evictionWarningOptions := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
-    resolvers += Resolver.jcenterRepo,
     IntegrationTest / unmanagedSourceDirectories := (IntegrationTest / baseDirectory)(base => Seq(base / "it")).value,
     IntegrationTest / parallelExecution := false
   )
-
