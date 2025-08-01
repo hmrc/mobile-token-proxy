@@ -24,7 +24,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.libs.json.Json.parse
 import play.api.libs.json.JsValue
 import play.api.libs.ws.BodyWritable
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.mobiletokenproxy.controllers.StubApplicationConfiguration
 
@@ -34,21 +34,16 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-class GenericConnectorSpec
-    extends AnyWordSpecLike
-    with ScalaFutures
-    with StubApplicationConfiguration
-    with MockFactory
-    with Matchers {
+class GenericConnectorSpec extends AnyWordSpecLike with ScalaFutures with StubApplicationConfiguration with MockFactory with Matchers {
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
-  implicit val mockHttpClient:     HttpClientV2     = mock[HttpClientV2]
-  implicit val mockRequestBuilder: RequestBuilder   = mock[RequestBuilder]
-  val connector:                   GenericConnector = new GenericConnector(mockHttpClient)
+  implicit val mockHttpClient: HttpClientV2 = mock[HttpClientV2]
+  implicit val mockRequestBuilder: RequestBuilder = mock[RequestBuilder]
+  val connector: GenericConnector = new GenericConnector(mockHttpClient)
 
   val url = "https://somepath"
-  val someJson: JsValue                  = parse("""{"test":1234}""")
+  val someJson: JsValue = parse("""{"test":1234}""")
   val somePost: Map[String, Seq[String]] = Map("test" -> Seq("1234"))
 
   val http500Response: Future[HttpResponse] = Future.failed(UpstreamErrorResponse("Error", 500, 500))
@@ -64,7 +59,7 @@ class GenericConnectorSpec
         .returns(mockRequestBuilder)
 
       (mockRequestBuilder
-        .execute[T](_: HttpReads[T], _: ExecutionContext))
+        .execute[T](using _: HttpReads[T], _: ExecutionContext))
         .expects(*, *)
         .returns(response)
     }
@@ -104,12 +99,12 @@ class GenericConnectorSpec
         .returns(mockRequestBuilder)
 
       (mockRequestBuilder
-        .withBody(_: T)(_: BodyWritable[T], _: Tag[T], _: ExecutionContext))
+        .withBody(_: T)(using _: BodyWritable[T], _: Tag[T], _: ExecutionContext))
         .expects(*, *, *, *)
         .returns(mockRequestBuilder)
 
       (mockRequestBuilder
-        .execute[T](_: HttpReads[T], _: ExecutionContext))
+        .execute[T](using _: HttpReads[T], _: ExecutionContext))
         .expects(*, *)
         .returns(response)
 
@@ -150,14 +145,16 @@ class GenericConnectorSpec
         .returns(mockRequestBuilder)
 
       (mockRequestBuilder
-        .withBody(_: Map[String, Seq[String]])(_: BodyWritable[Map[String, Seq[String]]],
-                                               _: Tag[Map[String, Seq[String]]],
-                                               _: ExecutionContext))
+        .withBody(_: Map[String, Seq[String]])(using
+          _: BodyWritable[Map[String, Seq[String]]],
+          _: Tag[Map[String, Seq[String]]],
+          _: ExecutionContext
+        ))
         .expects(*, *, *, *)
         .returns(mockRequestBuilder)
 
       (mockRequestBuilder
-        .execute[T](_: HttpReads[T], _: ExecutionContext))
+        .execute[T](using _: HttpReads[T], _: ExecutionContext))
         .expects(*, *)
         .returns(response)
     }

@@ -10,6 +10,7 @@ import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import stubs.APIGatewayAuthServiceStub._
 import utils.{WireMockSupport, WsScalaTestClient}
+import play.api.libs.ws.WSBodyWritables.*
 
 class MobileTokenProxyISpec
     extends AnyWordSpecLike

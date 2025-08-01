@@ -18,7 +18,7 @@ package uk.gov.hmrc.mobiletokenproxy.controllers
 
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
-import eu.timepit.refined.auto._
+import eu.timepit.refined.auto.*
 import org.scalamock.matchers.MatcherBase
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -26,32 +26,32 @@ import org.scalatestplus.play.PlaySpec
 import play.api.http.Status.{BAD_REQUEST, FORBIDDEN, UNAUTHORIZED}
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.parse
-import play.api.mvc._
+import play.api.mvc.*
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.TokenService
-import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
+import uk.gov.hmrc.mobiletokenproxy.types.JourneyId
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with ScalaFutures {
-  implicit val system:       ActorSystem  = ActorSystem()
+  implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: Materializer = Materializer(system)
 
-  private val journeyId:   JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
-  private val tokenExpory: Long      = 14400
+  private val journeyId: JourneyId = JourneyId.from("dd1ebd2e-7156-47c7-842b-8308099c5e75").toOption.get
+  private val tokenExpory: Long = 14400
 
-  private val service         = mock[TokenService]
-  private val vendorHeader    = "X-Vendor-Instance-Id"
-  private val deviceIdHeader  = "X-Client-Device-ID"
+  private val service = mock[TokenService]
+  private val vendorHeader = "X-Vendor-Instance-Id"
+  private val deviceIdHeader = "X-Client-Device-ID"
   private val userAgentHeader = "User-Agent"
-  private val authCode        = "authCode123"
-  private val refreshToken    = "refreshToken123"
-  private val accessToken     = "495b5b1725d590eb87d0f6b7dcea32a9"
+  private val authCode = "authCode123"
+  private val refreshToken = "refreshToken123"
+  private val accessToken = "495b5b1725d590eb87d0f6b7dcea32a9"
 
   private val testHTTPHeadersWithScrambledCase: Seq[(String, String)] =
     Seq(vendorHeader.toUpperCase() -> "header vendor", deviceIdHeader.toLowerCase() -> "header device Id")
@@ -106,14 +106,14 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     FakeRequest(POST, "url").withBody(parse(body)).withHeaders("Content-Type" -> "application/json")
 
   def requestWithHttpHeaders[T](fakeRequest: FakeRequest[T]): FakeRequest[T] =
-    fakeRequest.withHeaders(testHTTPHeadersWithScrambledCase: _*)
+    fakeRequest.withHeaders(testHTTPHeadersWithScrambledCase*)
 
   def requestWithFormEncodedBody(body: Map[String, Seq[String]]): FakeRequest[Map[String, Seq[String]]] =
     FakeRequest(POST, "url").withBody(body).withHeaders("Content-Type" -> "application/x-www-form-urlencoded")
 
   "token request payloads" should {
     val requestWithEmptyJsonBody: FakeRequest[JsValue] = requestWithJsonBody("{}")
-    val requestWithBadJsonBody:   FakeRequest[JsValue] = requestWithJsonBody("""{"baddata":"error"}""")
+    val requestWithBadJsonBody: FakeRequest[JsValue] = requestWithJsonBody("""{"baddata":"error"}""")
 
     "return Error if invalid token  Request is send " in {
       val result = controller.token(journeyId, "ngc")(requestWithBadJsonBody).futureValue
@@ -141,9 +141,9 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
     lazy val jsonRequestWithAuthCode: FakeRequest[JsValue] = requestWithJsonBody(tokenRequestWithAuthCode)
 
     "successfully return access-token and refresh token for a valid request" in {
-        (service
-      .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
-      .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
+      (service
+        .getTokenFromAccessCode(_: String, _: JourneyId, _: Boolean, _: String)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(Future.successful(TokenOauthResponse(accessToken, refreshToken, tokenExpory)))
 
       val result = controller.token(journeyId)(requestWithHttpHeaders(jsonRequestWithAuthCode))
@@ -185,10 +185,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
         .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
-            UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: 401",
-                                  UNAUTHORIZED,
-                                  UNAUTHORIZED,
-                                  Map.empty)
+            UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: 401", UNAUTHORIZED, UNAUTHORIZED, Map.empty)
           )
         )
 
@@ -203,10 +200,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
         .expects(authCode, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
-            UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: 403",
-                                  FORBIDDEN,
-                                  FORBIDDEN,
-                                  Map.empty)
+            UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: 403", FORBIDDEN, FORBIDDEN, Map.empty)
           )
         )
 
@@ -280,10 +274,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
         .expects(refreshToken, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
-            UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: 401",
-                                  UNAUTHORIZED,
-                                  UNAUTHORIZED,
-                                  Map.empty)
+            UpstreamErrorResponse(s"UNAUTHORIZED Request from APIGatewayTokenService: 401", UNAUTHORIZED, UNAUTHORIZED, Map.empty)
           )
         )
 
@@ -298,10 +289,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
         .expects(refreshToken, journeyId, false, "ngc", headerCarrierWith(testHTTPHeadersWithScrambledCase), *)
         .returning(
           Future.failed(
-            UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: 400",
-                                  FORBIDDEN,
-                                  FORBIDDEN,
-                                  Map.empty)
+            UpstreamErrorResponse(s"FORBIDDEN Request from APIGatewayTokenService: 400", FORBIDDEN, FORBIDDEN, Map.empty)
           )
         )
 
@@ -385,7 +373,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
-      "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
+        "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
       header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }
@@ -394,7 +382,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
 
       result.futureValue.header.status mustBe 303
       header("Location", result).get mustBe
-      "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
+        "http://localhost:8236/oauth/authorize?client_id=ngc-client-id&redirect_uri=ngc_redirect_uri&scope=ngc-some-scopes&response_type=code"
       header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
     }
@@ -421,7 +409,7 @@ class MobileTokenProxySpec extends PlaySpec with Results with MockFactory with S
       result.futureValue.header.status mustBe 303
 
       header("Location", result).get mustBe
-      "http://localhost:8236/oauth/authorize?client_id=ngc-client-id-v2&redirect_uri=ngc_redirect_uri-v2&scope=ngc-some-scopes-v2&response_type=code"
+        "http://localhost:8236/oauth/authorize?client_id=ngc-client-id-v2&redirect_uri=ngc_redirect_uri-v2&scope=ngc-some-scopes-v2&response_type=code"
       header(vendorHeader, result).get mustBe "header vendor"
       header(deviceIdHeader, result).get mustBe "header device Id"
       header(userAgentHeader, result).get mustBe "userAgentHeader"

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.mobiletokenproxy.service
 
-import eu.timepit.refined.auto._
+import eu.timepit.refined.auto.*
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Assertion
 import org.scalatest.concurrent.ScalaFutures
@@ -24,14 +24,14 @@ import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.parse
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.mobiletokenproxy.connectors.GenericConnector
 import uk.gov.hmrc.mobiletokenproxy.model.TokenOauthResponse
 import uk.gov.hmrc.mobiletokenproxy.services.LiveTokenServiceImpl
-import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
+import uk.gov.hmrc.mobiletokenproxy.types.JourneyId
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.reflect.ClassTag
@@ -39,24 +39,24 @@ import scala.reflect.ClassTag
 class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
   val connector: GenericConnector = mock[GenericConnector]
 
-  val pathToAPIGatewayTokenService: String    = "http://localhost:8236/oauth/token"
-  val ngcClientId:                  String    = "client_id"
-  val ngcRedirectUri:               String    = "redirect_uri"
-  val ngcClientSecret:              String    = "client_secret"
-  val pathToAPIGatewayAuthService:  String    = "http://localhost:8236/oauth/authorize"
-  val expiryDecrement:              Long      = 0
-  val accessToken:                  String    = "495b5b1725d590eb87d0f6b7dcea32a9"
-  val refreshToken:                 String    = "b75f2ed960898b4cd38f23934c6befb2"
-  val expiresIn:                    Int       = 14400
-  val journeyId:                    JourneyId = "dd1ebd2e-7156-47c7-842b-8308099c5e75"
-  val defaultServiceId:             String    = "ngc"
-  val ngcClientIdV2:                String    = "client_id_v2"
-  val ngcRedirectUriV2:             String    = "redirect_uri_v2"
-  val ngcClientIdTest:              String    = "ngc_client_id_test"
-  val ngcRedirectUriTest:           String    = "ngc_redirect_uri_test"
-  val ngcClientSecretTest:          String    = "ngc_client_secretId_test"
-  val ngcClientIdV2Test:            String    = "ngc_clientId_v2_test"
-  val ngcRedirectUriV2Test:         String    = "ngc_redirect_uri_v2_test"
+  val pathToAPIGatewayTokenService: String = "http://localhost:8236/oauth/token"
+  val ngcClientId: String = "client_id"
+  val ngcRedirectUri: String = "redirect_uri"
+  val ngcClientSecret: String = "client_secret"
+  val pathToAPIGatewayAuthService: String = "http://localhost:8236/oauth/authorize"
+  val expiryDecrement: Long = 0
+  val accessToken: String = "495b5b1725d590eb87d0f6b7dcea32a9"
+  val refreshToken: String = "b75f2ed960898b4cd38f23934c6befb2"
+  val expiresIn: Int = 14400
+  val journeyId: JourneyId = JourneyId.from("dd1ebd2e-7156-47c7-842b-8308099c5e75").toOption.get
+  val defaultServiceId: String = "ngc"
+  val ngcClientIdV2: String = "client_id_v2"
+  val ngcRedirectUriV2: String = "redirect_uri_v2"
+  val ngcClientIdTest: String = "ngc_client_id_test"
+  val ngcRedirectUriTest: String = "ngc_redirect_uri_test"
+  val ngcClientSecretTest: String = "ngc_client_secretId_test"
+  val ngcClientIdV2Test: String = "ngc_clientId_v2_test"
+  val ngcRedirectUriV2Test: String = "ngc_redirect_uri_v2_test"
 
   val service: LiveTokenServiceImpl = new LiveTokenServiceImpl(
     genericConnector             = connector,
@@ -70,7 +70,7 @@ class TokenServiceSpec extends PlaySpec with MockFactory with ScalaFutures {
     ngcRedirectUriV2             = ngcRedirectUriV2,
     ngcClientIdTest              = ngcClientIdTest,
     ngcClientSecretTest          = ngcClientSecretTest,
-    ngcRedirectUriTest           =ngcRedirectUriTest,
+    ngcRedirectUriTest           = ngcRedirectUriTest,
     ngcClientIdV2Test            = ngcClientIdV2Test,
     ngcRedirectUriV2Test         = ngcRedirectUriV2Test
   )

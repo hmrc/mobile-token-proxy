@@ -9,13 +9,9 @@ import play.api.libs.ws.{WSClient, WSResponse}
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import stubs.MobileAuthStub.ggSignInSuccess
 import utils.{WireMockSupport, WsScalaTestClient}
+import play.api.libs.ws.WSBodyWritables.*
 
-class SandboxMobileTokenProxyISpec
-    extends AnyWordSpecLike
-    with Matchers
-    with GuiceOneServerPerSuite
-    with WsScalaTestClient
-    with WireMockSupport {
+class SandboxMobileTokenProxyISpec extends AnyWordSpecLike with Matchers with GuiceOneServerPerSuite with WsScalaTestClient with WireMockSupport {
   override implicit lazy val app: Application = appBuilder.build()
 
   def appBuilder: GuiceApplicationBuilder = new GuiceApplicationBuilder().configure(
@@ -84,8 +80,8 @@ class SandboxMobileTokenProxyISpec
           .addHttpHeaders(mobileUserId)
           .get()
       )
-      call.status shouldBe 200
-      call.body   should include("Success code=sandboxSuccess")
+      call.status  shouldBe 200
+      call.body.trim should include("Success code=sandboxSuccess")
     }
   }
 }

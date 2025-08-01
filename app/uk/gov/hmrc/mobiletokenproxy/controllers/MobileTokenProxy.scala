@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,36 +20,36 @@ import javax.inject.{Inject, Named, Singleton}
 import play.api.Logger
 import play.api.libs.json.Json.toJson
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.mobiletokenproxy.config.ProxyPassThroughHttpHeaders
-import uk.gov.hmrc.mobiletokenproxy.model._
-import uk.gov.hmrc.mobiletokenproxy.services._
-import uk.gov.hmrc.mobiletokenproxy.types.ModelTypes.JourneyId
+import uk.gov.hmrc.mobiletokenproxy.model.*
+import uk.gov.hmrc.mobiletokenproxy.services.*
+import uk.gov.hmrc.mobiletokenproxy.types.JourneyId
 import uk.gov.hmrc.play.bootstrap.frontend.controller.FrontendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class MobileTokenProxy @Inject() (
-  service:                                                                       TokenService,
-  proxyPassthroughHttpHeaders:                                                   ProxyPassThroughHttpHeaders,
-  @Named("api-gateway.response_type") responseType:                              String,
+  service: TokenService,
+  proxyPassthroughHttpHeaders: ProxyPassThroughHttpHeaders,
+  @Named("api-gateway.response_type") responseType: String,
   @Named("api-gateway.pathToAPIGatewayAuthService") pathToAPIGatewayAuthService: String,
-  @Named("api-gateway.ngc.client_id") ngcClientId:                               String,
-  @Named("api-gateway.ngc.scope") ngcScope:                                      String,
-  @Named("api-gateway.ngc.redirect_uri") ngcRedirectUri:                         String,
-  @Named("api-gateway.ngc-test.client_id") ngcTestClientId:                      String,
-  @Named("api-gateway.ngc-test.scope") ngcTestScope:                             String,
-  @Named("api-gateway.ngc-test.redirect_uri") ngcTestRedirectUri:                String,
-  @Named("api-gateway.ngc.v2.client_id") ngcClientIdV2:                          String,
-  @Named("api-gateway.ngc.v2.scope") ngcScopeV2:                                 String,
-  @Named("api-gateway.ngc.v2.redirect_uri") ngcRedirectUriV2:                    String,
-  @Named("api-gateway.ngc-test.v2.client_id") ngcTestClientIdV2:                 String,
-  @Named("api-gateway.ngc-test.v2.scope") ngcTestScopeV2:                        String,
-  @Named("api-gateway.ngc-test.v2.redirect_uri") ngcTestRedirectUriV2:           String,
-  messagesControllerComponents:                                                  MessagesControllerComponents
-)(implicit ec:                                                                   ExecutionContext)
+  @Named("api-gateway.ngc.client_id") ngcClientId: String,
+  @Named("api-gateway.ngc.scope") ngcScope: String,
+  @Named("api-gateway.ngc.redirect_uri") ngcRedirectUri: String,
+  @Named("api-gateway.ngc-test.client_id") ngcTestClientId: String,
+  @Named("api-gateway.ngc-test.scope") ngcTestScope: String,
+  @Named("api-gateway.ngc-test.redirect_uri") ngcTestRedirectUri: String,
+  @Named("api-gateway.ngc.v2.client_id") ngcClientIdV2: String,
+  @Named("api-gateway.ngc.v2.scope") ngcScopeV2: String,
+  @Named("api-gateway.ngc.v2.redirect_uri") ngcRedirectUriV2: String,
+  @Named("api-gateway.ngc-test.v2.client_id") ngcTestClientIdV2: String,
+  @Named("api-gateway.ngc-test.v2.scope") ngcTestScopeV2: String,
+  @Named("api-gateway.ngc-test.v2.redirect_uri") ngcTestRedirectUriV2: String,
+  messagesControllerComponents: MessagesControllerComponents
+)(implicit ec: ExecutionContext)
     extends FrontendController(messagesControllerComponents) {
 
   val logger: Logger = Logger(this.getClass)
@@ -65,7 +65,7 @@ class MobileTokenProxy @Inject() (
         s"$pathToAPIGatewayAuthService?client_id=$ngcTestClientId&redirect_uri=$ngcTestRedirectUri&scope=$ngcTestScope&response_type=$responseType"
       case _ => throw new IllegalArgumentException("Invalid service id")
     }
-    Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq: _*))
+    Future.successful(Redirect(redirectUrl).withHeaders(request.headers.toSimpleMap.toSeq*))
   }
 
   def authorizeV2(
@@ -80,7 +80,7 @@ class MobileTokenProxy @Inject() (
         s"$pathToAPIGatewayAuthService?client_id=$ngcTestClientIdV2&redirect_uri=$ngcTestRedirectUriV2&scope=$ngcTestScopeV2&response_type=$responseType"
     }
     Future.successful(
-      Redirect(redirectUrl).withHeaders((request.headers.toSimpleMap + ("User-Agent" -> userAgent)).toSeq: _*)
+      Redirect(redirectUrl).withHeaders((request.headers.toSimpleMap + ("User-Agent" -> userAgent)).toSeq*)
     )
   }
 
@@ -103,7 +103,7 @@ class MobileTokenProxy @Inject() (
                 val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
                   proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
                 }
-                hc.withExtraHeaders(headers.toSeq: _*)
+                hc.withExtraHeaders(headers.toSeq*)
               }
 
               (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
@@ -118,8 +118,7 @@ class MobileTokenProxy @Inject() (
 
                 case (Some(refreshToken: String), None) =>
                   getToken(
-                    service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false, serviceId)(buildHeaderCarrier,
-                                                                                                     ec)
+                    service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false, serviceId)(buildHeaderCarrier, ec)
                   )
 
                 case _ =>
@@ -143,7 +142,7 @@ class MobileTokenProxy @Inject() (
                 val headers: Map[String, String] = request.headers.toSimpleMap.filter { a =>
                   proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
                 }
-                hc.withExtraHeaders(headers.toSeq: _*)
+                hc.withExtraHeaders(headers.toSeq*)
               }
 
               (tokenRequest.refreshToken, tokenRequest.authorizationCode) match {
@@ -158,8 +157,7 @@ class MobileTokenProxy @Inject() (
 
                 case (Some(refreshToken: String), None) =>
                   getToken(
-                    service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false, serviceId)(buildHeaderCarrier,
-                                                                                                     ec)
+                    service.getTokenFromRefreshToken(refreshToken, journeyId, v2 = false, serviceId)(buildHeaderCarrier, ec)
                   )
 
                 case _ =>
@@ -180,7 +178,7 @@ class MobileTokenProxy @Inject() (
           val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
             proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
           }
-          hc.withExtraHeaders(headers.toSeq: _*)
+          hc.withExtraHeaders(headers.toSeq*)
         }
 
         (form.body.get("refreshToken"), form.body.get("authorizationCode")) match {
@@ -219,7 +217,7 @@ class MobileTokenProxy @Inject() (
           val headers: Map[String, String] = form.headers.toSimpleMap.filter { a =>
             proxyPassthroughHttpHeaders.exists(b => b.compareToIgnoreCase(a._1) == 0)
           }
-          hc.withExtraHeaders(headers.toSeq: _*)
+          hc.withExtraHeaders(headers.toSeq*)
         }
 
         (form.body.get("refreshToken"), form.body.get("authorizationCode")) match {
@@ -265,7 +263,7 @@ class MobileTokenProxy @Inject() (
       }
 
   private def recoverError: scala.PartialFunction[scala.Throwable, Result] = {
-    case _: BadRequestException => Unauthorized
+    case _: BadRequestException              => Unauthorized
     case UpstreamErrorResponse(_, 400, _, _) => Unauthorized
     case UpstreamErrorResponse(_, 401, _, _) => Unauthorized
     case UpstreamErrorResponse(_, 403, _, _) => Forbidden
