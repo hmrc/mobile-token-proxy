@@ -222,7 +222,7 @@ class LiveTokenServiceImpl @Inject() (override val genericConnector: GenericConn
                                       @Named("api-gateway.ngc.client_secret") override val ngcClientSecret: String,
                                       @Named("api-gateway.ngc.v2.client_id") override val ngcClientIdV2: String,
                                       @Named("api-gateway.ngc.v2.redirect_uri") override val ngcRedirectUriV2: String,
-                                      @Named("api-gateway.ngc-test.client_secret") override val ngcClientIdTest: String,
+                                      @Named("api-gateway.ngc-test.client_id") override val ngcClientIdTest: String,
                                       @Named("api-gateway.ngc-test.client_secret") override val ngcClientSecretTest: String,
                                       @Named("api-gateway.ngc-test.redirect_uri") override val ngcRedirectUriTest: String,
                                       @Named("api-gateway.ngc-test.v2.client_id") override val ngcClientIdV2Test: String,
