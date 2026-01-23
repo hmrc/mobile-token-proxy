@@ -2,11 +2,11 @@ import sbt.*
 
 object AppDependencies {
 
-  private val bootstrapPlayVersion = "10.3.0"
+  private val bootstrapPlayVersion = "10.5.0"
   private val playHmrcApiVersion = "8.3.0"
   private val domainVersion = "13.0.0"
 
-  private val scalaMockVersion = "7.5.0"
+  private val scalaMockVersion = "7.5.3"
   private val refinedVersion = "0.11.3"
 
   lazy val appDependencies: Seq[ModuleID] =
