@@ -29,10 +29,10 @@ class MobileTokenProxyISpec
       "api-gateway.ngc.client_id"                -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
       "api-gateway.ngc.redirect_uri"             -> "urn:ietf:wg:oauth:2.0:oob:auto",
       "api-gateway.ngc.client_secret"            -> "client_secret",
-      "api-gateway.ngc.scope"                    -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary",
+      "api-gateway.ngc.scope"                    -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration",
       "api-gateway.ngc.v2.client_id"             -> "i_whTXqBWq9xj0BqdtJ4b_YaxV8a",
       "api-gateway.ngc.v2.redirect_uri"          -> "uk.gov.hmrc://hmrcapp",
-      "api-gateway.ngc.v2.scope"                 -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary",
+      "api-gateway.ngc.v2.scope"                 -> "read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration",
       "api-gateway.expiry_decrement"             -> 0,
       "auditing.enabled"                         -> false
     )

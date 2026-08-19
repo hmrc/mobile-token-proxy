@@ -8,7 +8,7 @@ object APIGatewayAuthServiceStub {
     val redirectUrl =
       s"/oauth/authorize?client_id=i_whTXqBWq9xj0BqdtJ4b_YaxV8a&" +
       s"redirect_uri=$redirectUri" +
-      "&scope=read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration+read:mobile-tax-credits-summary" +
+      "&scope=read:personal-income+read:customer-profile+read:messages+read:submission-tracker+read:web-session+read:native-apps-api-orchestration" +
       "&response_type=code"
 
     stubFor(get(urlEqualTo(redirectUrl)).willReturn(aResponse().withStatus(200)))
